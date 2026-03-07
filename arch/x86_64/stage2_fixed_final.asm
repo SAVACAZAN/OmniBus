@@ -1,0 +1,161 @@
+; ============================================================================
+; OmniBus Bootloader - Stage 2 FINAL FIXED VERSION
+; Entry point: 0x7E00 (loaded by Stage 1)
+; KEY FIX: Place protected mode code immediately after far jump
+;         (so pmode_entry offset is within 16-bit range for far jmp)
+; ============================================================================
+
+[BITS 16]
+[ORG 0x7E00]
+
+stage2_start:
+    cli
+    cld
+
+    ; ========================================================================
+    ; Setup GDT (Global Descriptor Table) - must be before LGDT
+    ; ========================================================================
+
+    lgdt [gdt_descriptor]
+
+    ; ========================================================================
+    ; Setup IDT (Interrupt Descriptor Table) - must be before protected mode
+    ; ========================================================================
+
+    call setup_idt
+
+    ; ========================================================================
+    ; Enter Protected Mode
+    ; ========================================================================
+
+    mov eax, cr0
+    or eax, 1                        ; Set PE bit
+    mov cr0, eax
+
+    ; ========================================================================
+    ; Far jump to protected mode (flushes pipeline & reloads CS)
+    ; CRITICAL: Must use offset-from-origin, not absolute address!
+    ; ========================================================================
+
+    jmp 0x08:(pmode_entry - $$)
+
+; ========================================================================
+; PROTECTED MODE CODE MUST BE HERE (immediately after far jump)
+; ========================================================================
+
+align 4
+[BITS 32]
+
+pmode_entry:
+    ; ========================================================================
+    ; Protected mode entry - we made it!
+    ; ========================================================================
+
+    ; Setup segment registers
+    mov eax, 0x10                   ; Data segment selector
+    mov ds, eax
+    mov es, eax
+    mov fs, eax
+    mov gs, eax
+    mov ss, eax
+
+    ; Setup stack
+    mov esp, 0x7E000
+
+    ; ========================================================================
+    ; Print "PMODE OK" to VGA to confirm protected mode works
+    ; ========================================================================
+
+    mov eax, 0xB8000                ; VGA text buffer
+    mov dword [eax], 0x4F4F4F50     ; "POO" in white
+    mov dword [eax+4], 0x4F454D4F   ; "OMED" in white
+
+    ; ========================================================================
+    ; Infinite loop - kernel is ready!
+    ; ========================================================================
+
+    jmp $
+
+; ========================================================================
+; Return to 16-bit section for data definitions
+; ========================================================================
+
+[BITS 16]
+
+; ========================================================================
+; Setup IDT with 256 dummy entries (all pointing to address 0)
+; ========================================================================
+
+setup_idt:
+    mov edi, idt_start
+    xor eax, eax
+    mov ecx, 256
+
+.idt_loop:
+    ; Build proper interrupt gate entry (8 bytes each)
+    mov word [edi], 0x0000          ; Offset low (0x0000)
+    mov word [edi+2], 0x08          ; Code segment selector (0x08)
+    mov byte [edi+4], 0x00          ; Reserved (0x00)
+    mov byte [edi+5], 0x8E          ; Type/DPL (0x8E = interrupt gate, present)
+    mov word [edi+6], 0x0000        ; Offset high (0x0000)
+
+    add edi, 8
+    loop .idt_loop
+
+    ; Load IDT register
+    lidt [idt_descriptor]
+
+    ret
+
+; ========================================================================
+; DATA: GDT - Global Descriptor Table (8 bytes per descriptor, REQUIRED!)
+; ========================================================================
+
+align 8
+gdt_start:
+
+    ; Descriptor 0: NULL (REQUIRED - must be 8 bytes!)
+    dq 0x0000000000000000
+
+    ; Descriptor 1: Code Segment (selector 0x08)
+    dw 0xFFFF                       ; Limit (bits 0-15)
+    dw 0x0000                       ; Base (bits 0-15)
+    db 0x00                         ; Base (bits 16-23)
+    db 0x9A                         ; Access: present | ring 0 | code | readable
+    db 0xCF                         ; Flags: granular | 32-bit | limit(19:16)
+    db 0x00                         ; Base (bits 24-31)
+
+    ; Descriptor 2: Data Segment (selector 0x10)
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 0x92                         ; Access: present | ring 0 | data | writable
+    db 0xCF
+    db 0x00
+
+gdt_end:
+
+; GDT Descriptor (used by LGDT instruction)
+align 8
+gdt_descriptor:
+    dw gdt_end - gdt_start - 1      ; Size (limit) in bytes - 1
+    dd gdt_start                    ; Base address (absolute)
+
+; ========================================================================
+; DATA: IDT - Interrupt Descriptor Table (2048 bytes for 256 entries)
+; ========================================================================
+
+align 8
+idt_start:
+    ; 256 IDT entries × 8 bytes = 2048 bytes
+    times 256 * 8 db 0
+
+idt_descriptor:
+    dw 256 * 8 - 1                  ; Size (limit) in bytes - 1
+    dd idt_start                    ; Base address (absolute)
+
+; ========================================================================
+; Padding to 4KB (required by boot sector which reads 8 sectors = 4KB)
+; ========================================================================
+
+times (0x1000 - ($ - $$)) db 0
