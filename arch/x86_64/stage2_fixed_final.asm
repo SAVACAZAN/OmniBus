@@ -71,10 +71,10 @@ pmode_entry:
     mov dword [eax+4], 0x4F454D4F   ; "OMED" in white
 
     ; ========================================================================
-    ; Infinite loop - kernel is ready!
+    ; Jump to Ada Kernel at 0x100030 (startup_begin entry point)
     ; ========================================================================
 
-    jmp $
+    jmp 0x100030
 
 ; ========================================================================
 ; Return to 16-bit section for data definitions
