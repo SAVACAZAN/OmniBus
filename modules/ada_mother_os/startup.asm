@@ -108,5 +108,22 @@ startup_begin:
     jmp $ - 2
 
 ; ============================================
+; UART I/O ROUTINES (Assembly Implementation)
+; ============================================
+; These routines are called by Ada kernel UART functions
+
+BITS 64
+
+; uart_write_byte: Write byte to UART port 0x3F8
+; Input: RDI = byte to output (first argument, System V x86-64 ABI)
+; Clobbers: RAX, RDX
+GLOBAL uart_write_byte
+uart_write_byte:
+    mov al, dil                 ; AL = byte from RDI
+    mov dx, 0x3F8               ; DX = UART port address
+    out dx, al                  ; Output byte to UART port
+    ret
+
+; ============================================
 ; END OF STARTUP CODE
 ; ============================================

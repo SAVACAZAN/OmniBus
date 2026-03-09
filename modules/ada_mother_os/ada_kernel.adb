@@ -5,7 +5,11 @@
 -- Manages task dispatch, memory isolation, and exception handling
 
 with Interfaces;
+with System;
+with System.Machine_Code;
 use Interfaces;
+use System;
+use System.Machine_Code;
 
 package body Ada_Kernel is
 
@@ -20,13 +24,13 @@ package body Ada_Kernel is
    -- =============================================
 
    --  Low-level UART output - write byte to port 0x3F8
+   --  Implemented in startup assembly (uart_write_byte in startup.asm)
    procedure UART_Out_Byte (Byte : Unsigned_8) is
       pragma Inline (UART_Out_Byte);
+      procedure Write_Byte (B : Unsigned_8)
+        with Import, Convention => C, External_Name => "uart_write_byte";
    begin
-      --  In a real implementation, this would use inline ASM:
-      --  out dx, al (where DX = 0x3F8, AL = byte)
-      --  For now, we'll simulate
-      null;  -- Placeholder - actual I/O happens via inline asm
+      Write_Byte (Byte);
    end UART_Out_Byte;
 
    -- =============================================
@@ -83,13 +87,16 @@ package body Ada_Kernel is
    -- AUTHORIZATION & CONTROL GATE
    -- =============================================
 
+   --  Volatile variable at auth gate address (0x100050)
+   Auth_Gate : Unsigned_8
+      with Address => System'To_Address(16#100050#),
+           Volatile;
+
    function Is_Authorized return Boolean is
-      --  Simplified version: just check the magic constant
-      --  In production, this would read from volatile memory at 0x100050
-      --  For now, we'll use pragma Volatile on a module-level variable
+      --  Read auth gate flag from volatile memory at 0x100050
+      --  Returns True if value == 0x70 (authorization code)
    begin
-      --  TODO: Implement proper volatile memory read
-      return False;  -- Placeholder - boot process sets auth gate in GDB
+      return Auth_Gate = 16#70#;
    end Is_Authorized;
 
    procedure Increment_Cycle is
