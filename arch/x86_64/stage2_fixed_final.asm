@@ -12,6 +12,12 @@ stage2_start:
     cli
     cld
 
+    ; DEBUG: Print "S2" to VGA text buffer using segment:offset addressing
+    mov ax, 0xB800                 ; VGA text segment
+    mov es, ax                     ; Load into extra segment
+    mov word [es:0x0000], 0x4F53   ; "S" in white at 0xB8000
+    mov word [es:0x0002], 0x4F32   ; "2" in white at 0xB8002
+
     ; ========================================================================
     ; Setup GDT (Global Descriptor Table) - must be before LGDT
     ; ========================================================================
@@ -40,7 +46,7 @@ stage2_start:
     ; CRITICAL: Must use offset-from-origin, not absolute address!
     ; ========================================================================
 
-    jmp 0x08:(pmode_entry - $$)
+    jmp 0x08:dword 0x7e1e
 
 ; ========================================================================
 ; PROTECTED MODE CODE MUST BE HERE (immediately after far jump)
@@ -104,7 +110,7 @@ gdt_start:
     dw 0x0000                       ; Base (bits 0-15)
     db 0x00                         ; Base (bits 16-23)
     db 0x9A                         ; Access: present | ring 0 | code | readable
-    db 0xCF                         ; Flags: granular | 32-bit | limit(19:16)
+    db 0x8F                         ; Flags: granular | 16-bit | limit(19:16)
     db 0x00                         ; Base (bits 24-31)
 
     ; Descriptor 2: Data Segment (selector 0x10)
@@ -112,7 +118,7 @@ gdt_start:
     dw 0x0000
     db 0x00
     db 0x92                         ; Access: present | ring 0 | data | writable
-    db 0xCF
+    db 0x8F                         ; Flags: granular | 16-bit | limit(19:16)
     db 0x00
 
 gdt_end:
