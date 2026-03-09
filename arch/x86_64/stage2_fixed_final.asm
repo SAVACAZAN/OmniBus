@@ -13,6 +13,19 @@ stage2_start:
     cld
 
     ; ========================================================================
+    ; Load Ada Kernel from disk using LBA mode (int 0x13 AH=0x42)
+    ; Load sectors 2048-2063 (16 sectors = 8KB) into memory at 0x100000
+    ; DISABLED: LBA mode not working in QEMU BIOS - causes reboot loop
+    ; TODO: Investigate BIOS compatibility or use fallback (CHS) mode
+    ; ========================================================================
+
+    ; mov ah, 0x42                    ; Extended Read (LBA mode)
+    ; mov dl, 0x80                    ; Drive 0
+    ; mov si, kernel_dap              ; DS:SI points to Disk Address Packet
+    ; int 0x13
+    ; jc kernel_load_error            ; Jump if error (CF set)
+
+    ; ========================================================================
     ; Setup GDT (Global Descriptor Table) - must be before LGDT
     ; ========================================================================
 
@@ -79,10 +92,30 @@ pmode_entry:
     jmp 0x100030
 
 ; ========================================================================
+; Error handler
+; ========================================================================
+
+kernel_load_error:
+    ; If kernel load fails, just hang (better than crash)
+    jmp $
+
+; ========================================================================
 ; Return to 16-bit section for data definitions
 ; ========================================================================
 
 [BITS 16]
+
+; ========================================================================
+; DATA: Disk Address Packet (DAP) for LBA disk read
+; ========================================================================
+
+kernel_dap:
+    db 0x10                         ; DAP size (16 bytes)
+    db 0x00                         ; Reserved
+    dw 16                           ; Number of sectors to read (16 sectors = 8KB kernel)
+    dw 0x0000                       ; Buffer offset (0x0000)
+    dw 0x1000                       ; Buffer segment (0x1000:0x0000 = 0x10000 = 0x100000 in real mode)
+    dq 2048                         ; Starting LBA sector (sector 2048 = kernel start)
 
 ; ========================================================================
 ; Align to next 16-byte boundary to ensure GDT is properly aligned
