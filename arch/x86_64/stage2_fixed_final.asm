@@ -14,16 +14,18 @@ stage2_start:
 
     ; ========================================================================
     ; Load Ada Kernel from disk using LBA mode (int 0x13 AH=0x42)
-    ; Load sectors 2048-2063 (16 sectors = 8KB) into memory at 0x100000
-    ; DISABLED: LBA mode not working in QEMU BIOS - causes reboot loop
-    ; TODO: Investigate BIOS compatibility or use fallback (CHS) mode
+    ; CRITICAL FIX: BIOS real mode cannot access >1MB memory!
+    ; Solution: Load to temporary buffer at 0x8000, copy to 0x100000 later
     ; ========================================================================
 
-    ; mov ah, 0x42                    ; Extended Read (LBA mode)
-    ; mov dl, 0x80                    ; Drive 0
-    ; mov si, kernel_dap              ; DS:SI points to Disk Address Packet
-    ; int 0x13
-    ; jc kernel_load_error            ; Jump if error (CF set)
+    mov ah, 0x42                    ; Extended Read (LBA mode)
+    mov dl, 0x80                    ; Drive 0
+    mov si, kernel_dap              ; DS:SI points to Disk Address Packet
+    int 0x13
+    jc kernel_load_error            ; Jump if error (CF set)
+
+    ; Kernel is now at 0x8000 in memory (temporary buffer)
+    ; It will be copied to 0x100000 in protected mode later
 
     ; ========================================================================
     ; Setup GDT (Global Descriptor Table) - must be before LGDT
@@ -50,10 +52,10 @@ stage2_start:
 
     ; ========================================================================
     ; Far jump to protected mode (flushes pipeline & reloads CS)
-    ; CRITICAL: Must use offset-from-origin, not absolute address!
+    ; CRITICAL: Jump offset must match actual pmode_entry location
     ; ========================================================================
 
-    jmp 0x08:dword 0x7e1e
+    jmp 0x08:dword pmode_entry
 
 ; ========================================================================
 ; PROTECTED MODE CODE MUST BE HERE (immediately after far jump)
@@ -86,6 +88,15 @@ pmode_entry:
     mov dword [eax+4], 0x4F454D4F   ; "OMED" in white
 
     ; ========================================================================
+    ; Copy kernel from temporary buffer 0x8000 to final location 0x100000
+    ; ========================================================================
+
+    mov esi, 0x8000                 ; Source: temporary buffer
+    mov edi, 0x100000               ; Destination: kernel location
+    mov ecx, 2048                   ; Copy 2048 dwords = 8KB (16 sectors × 512 bytes)
+    rep movsd                       ; Copy kernel to proper location
+
+    ; ========================================================================
     ; Jump to Ada Kernel at 0x100030 (startup_begin entry point)
     ; ========================================================================
 
@@ -114,7 +125,7 @@ kernel_dap:
     db 0x00                         ; Reserved
     dw 16                           ; Number of sectors to read (16 sectors = 8KB kernel)
     dw 0x0000                       ; Buffer offset (0x0000)
-    dw 0x1000                       ; Buffer segment (0x1000:0x0000 = 0x10000 = 0x100000 in real mode)
+    dw 0x8000                       ; Buffer segment (0x8000:0x0000 = temporary buffer below 1MB)
     dq 2048                         ; Starting LBA sector (sector 2048 = kernel start)
 
 ; ========================================================================
