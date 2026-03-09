@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLOCKCHAIN HUB - 100+ Chains Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root {
+            --bg-deep: #0a0c12;
+            --bg-card: #12161e;
+            --bg-panel: #1a202a;
+            --bg-success: #00a86b;
+            --bg-warning: #f0b400;
+            --bg-danger: #dc3545;
+            --bg-info: #17a2b8;
+            --bg-purple: #6f42c1;
+            --bg-pink: #d63384;
+            --bg-gold: #ffd700;
+            --text-primary: #e9f1ff;
+            --text-secondary: #8b9bb5;
+            --text-muted: #5f6c80;
+            --border: #2a3442;
+            --accent-cyan: #00ffff;
+            --accent-green: #00ff88;
+            --accent-purple: #aa80ff;
+            --accent-pink: #ff66b2;
+            --accent-orange: #ffaa66;
+            --accent-gold: #ffd700;
+            --gradient-1: linear-gradient(135deg, #00ffff, #aa80ff);
+            --gradient-2: linear-gradient(135deg, #00ff88, #00ffff);
+            --gradient-3: linear-gradient(135deg, #ff66b2, #aa80ff);
+            --gradient-4: linear-gradient(135deg, #ffd700, #ffaa66);
+            --shadow: 0 8px 32px rgba(0, 255, 255, 0.15);
+            --glow: 0 0 20px rgba(0, 255, 255, 0.3);
+            --glow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-card); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-green); }
+
+        /* Layout principal */
+        .blockchain-hub {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(145deg, var(--bg-card), var(--bg-deep));
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5em;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 0.7em;
+        }
+
+        .stats-badge {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: var(--bg-panel);
+            border-radius: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 15px;
+        }
+
+        .menu-category {
+            margin-bottom: 25px;
+        }
+
+        .menu-category-title {
+            padding: 10px 15px;
+            color: var(--text-secondary);
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin: 2px 0;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 255, 255, 0.05);
+            color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--accent-cyan);
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .menu-item i { width: 24px; }
+
+        .badge {
+            margin-left: auto;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Topbar */
+        .topbar {
+            height: 80px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            gap: 20px;
+        }
+
+        .page-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 500px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            width: 100%;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .filter-btn.active {
+            background: var(--gradient-1);
+            border: none;
+            color: white;
+        }
+
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-3px);
+        }
+
+        .stat-icon {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            color: var(--text-secondary);
+        }
+
+        /* Consensus Grid */
+        .consensus-section {
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 1.3em;
+            border-left: 4px solid var(--accent-cyan);
+            padding-left: 15px;
+        }
+
+        .consensus-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .consensus-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .consensus-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .consensus-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .consensus-desc {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+        }
+
+        /* RPC Provider Grid */
+        .rpc-section {
+            margin-bottom: 30px;
+        }
+
+        .rpc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .rpc-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .rpc-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-3px);
+        }
+
+        .rpc-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .rpc-logo {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .rpc-name {
+            font-weight: 600;
+        }
+
+        .rpc-stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .rpc-price {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .rpc-features {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+        }
+
+        /* Blockchain Table */
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover td {
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        .chain-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .chain-pow { background: rgba(220, 53, 69, 0.2); color: #ff6b6b; }
+        .chain-pos { background: rgba(0, 168, 107, 0.2); color: #00a86b; }
+        .chain-dpos { background: rgba(240, 180, 0, 0.2); color: #f0b400; }
+        .chain-posw { background: rgba(106, 76, 219, 0.2); color: #aa80ff; }
+
+        .status-online { color: var(--accent-green); }
+        .status-offline { color: var(--bg-danger); }
+        .status-warning { color: var(--bg-warning); }
+
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background: var(--bg-panel);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 5px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="blockchain-hub">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🔗</div>
+                    <div class="logo-text">
+                        <h1>BLOCKCHAIN HUB</h1>
+                        <p>100+ CHAINS • RPC • TOKENS • CONSENSUS</p>
+                    </div>
+                </div>
+                
+                <div class="stats-badge">
+                    <div class="stat-item">
+                        <div class="stat-number">124</div>
+                        <div class="stat-label">CHAINURI</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">847</div>
+                        <div class="stat-label">RPC NODES</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">23</div>
+                        <div class="stat-label">PROVIDERI</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-category">
+                    <div class="menu-category-title">CONSENSUS</div>
+                    <div class="menu-item"><i>⚡</i> Proof of Work (PoW)</div>
+                    <div class="menu-item"><i>💎</i> Proof of Stake (PoS)</div>
+                    <div class="menu-item"><i>🗳️</i> Delegated PoS (DPoS)</div>
+                    <div class="menu-item"><i>🔬</i> PoSW (Aleo)</div>
+                    <div class="menu-item"><i>🔄</i> Hybrid</div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">RPC PROVIDERS</div>
+                    <div class="menu-item"><i>🚀</i> GetBlock</div>
+                    <div class="menu-item"><i>⚙️</i> Alchemy</div>
+                    <div class="menu-item"><i>🌐</i> dRPC</div>
+                    <div class="menu-item"><i>⚡</i> QuickNode</div>
+                    <div class="menu-item"><i>🔷</i> Chainstack</div>
+                    <div class="menu-item"><i>🛡️</i> Ankr</div>
+                    <div class="menu-item"><i>📡</i> Infura</div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">TOKEN STANDARDS</div>
+                    <div class="menu-item"><i>🪙</i> ERC-20 (Fungible)</div>
+                    <div class="menu-item"><i>🖼️</i> ERC-721 (NFT)</div>
+                    <div class="menu-item"><i>🎭</i> ERC-1155 (Multi)</div>
+                    <div class="menu-item"><i>⚡</i> SPL (Solana)</div>
+                    <div class="menu-item"><i>🔷</i> Token-2022</div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">INDEXERS & TOOLS</div>
+                    <div class="menu-item"><i>📊</i> The Graph</div>
+                    <div class="menu-item"><i>📈</i> Dune Analytics</div>
+                    <div class="menu-item"><i>🔍</i> Etherscan</div>
+                    <div class="menu-item"><i>💹</i> DeFiLlama</div>
+                    <div class="menu-item"><i>📱</i> Nansen</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="page-title">🔍 EXPLORER 100+ BLOCKCHAIN</div>
+                <div class="search-box">
+                    <i>🔍</i>
+                    <input type="text" placeholder="Caută după chain, RPC, token, consens..." id="searchInput">
+                </div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterChains('all')">Toate</button>
+                    <button class="filter-btn" onclick="filterChains('pow')">PoW</button>
+                    <button class="filter-btn" onclick="filterChains('pos')">PoS</button>
+                    <button class="filter-btn" onclick="filterChains('evm')">EVM</button>
+                </div>
+            </div>
+            
+            <!-- Workspace -->
+            <div class="workspace">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-icon">⛏️</div><div class="stat-value">23</div><div class="stat-label">PoW Chains</div></div>
+                    <div class="stat-card"><div class="stat-icon">💎</div><div class="stat-value">47</div><div class="stat-label">PoS Chains</div></div>
+                    <div class="stat-card"><div class="stat-icon">🗳️</div><div class="stat-value">18</div><div class="stat-label">DPoS</div></div>
+                    <div class="stat-card"><div class="stat-icon">🔬</div><div class="stat-value">3</div><div class="stat-label">PoSW</div></div>
+                    <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-value">33</div><div class="stat-label">Hybrid</div></div>
+                    <div class="stat-card"><div class="stat-icon">🔷</div><div class="stat-value">47</div><div class="stat-label">EVM</div></div>
+                </div>
+                
+                <!-- Consensus Section -->
+                <div class="consensus-section">
+                    <div class="section-header">
+                        <h2>⚙️ MECANISME DE CONSENS [citation:3][citation:8]</h2>
+                    </div>
+                    
+                    <div class="consensus-grid">
+                        <div class="consensus-card">
+                            <div class="consensus-icon">⛏️</div>
+                            <div class="consensus-name">Proof of Work (PoW)</div>
+                            <div class="consensus-desc">Mineri, hash rate, energie</div>
+                            <div style="margin-top: 10px; font-size: 0.8em;">Bitcoin, Litecoin, Dogecoin</div>
+                        </div>
+                        <div class="consensus-card">
+                            <div class="consensus-icon">💎</div>
+                            <div class="consensus-name">Proof of Stake (PoS)</div>
+                            <div class="consensus-desc">Validatori, staking, slashing</div>
+                            <div style="margin-top: 10px; font-size: 0.8em;">Ethereum, Solana, Cardano</div>
+                        </div>
+                        <div class="consensus-card">
+                            <div class="consensus-icon">🗳️</div>
+                            <div class="consensus-name">Delegated PoS (DPoS)</div>
+                            <div class="consensus-desc">Witnesses, delegați, vot</div>
+                            <div style="margin-top: 10px; font-size: 0.8em;">EOS, TRON, BitShares</div>
+                        </div>
+                        <div class="consensus-card">
+                            <div class="consensus-icon">🔬</div>
+                            <div class="consensus-name">Proof of Succinct Work (PoSW)</div>
+                            <div class="consensus-desc">SNARK-uri, eficiență, Aleo</div>
+                            <div style="margin-top: 10px; font-size: 0.8em;">Aleo</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- RPC Providers Section [citation:1][citation:6] -->
+                <div class="rpc-section">
+                    <div class="section-header">
+                        <h2>🌐 TOP RPC PROVIDERS 2026</h2>
+                        <span class="badge">SOC2 • 99.9% uptime</span>
+                    </div>
+                    
+                    <div class="rpc-grid">
+                        <div class="rpc-card">
+                            <div class="rpc-header">
+                                <div class="rpc-logo">⚡</div>
+                                <div class="rpc-name">GetBlock</div>
+                            </div>
+                            <div class="rpc-stats">
+                                <span>⚡ 100+ chains</span>
+                                <span>📊 18.6ms</span>
+                            </div>
+                            <div class="rpc-price">Free / $49+</div>
+                            <div class="rpc-features">MEV protection • Geo endpoints • 20-1000+ RPS</div>
+                        </div>
+                        
+                        <div class="rpc-card">
+                            <div class="rpc-header">
+                                <div class="rpc-logo">⚙️</div>
+                                <div class="rpc-name">Alchemy</div>
+                            </div>
+                            <div class="rpc-stats">
+                                <span>⚡ 80+ chains</span>
+                                <span>📊 35ms</span>
+                            </div>
+                            <div class="rpc-price">Free / $5+ PAYG</div>
+                            <div class="rpc-features">NFT API • Token API • Webhooks • SDKs</div>
+                        </div>
+                        
+                        <div class="rpc-card">
+                            <div class="rpc-header">
+                                <div class="rpc-logo">🌐</div>
+                                <div class="rpc-name">dRPC</div>
+                            </div>
+                            <div class="rpc-stats">
+                                <span>⚡ 100+ chains</span>
+                                <span>📊 40-100ms</span>
+                            </div>
+                            <div class="rpc-price">Free / $6 per 1M</div>
+                            <div class="rpc-features">Decentralizat • Load balancer • 5K RPS</div>
+                        </div>
+                        
+                        <div class="rpc-card">
+                            <div class="rpc-header">
+                                <div class="rpc-logo">⚡</div>
+                                <div class="rpc-name">QuickNode</div>
+                            </div>
+                            <div class="rpc-stats">
+                                <span>⚡ 70+ chains</span>
+                                <span>📊 25ms</span>
+                            </div>
+                            <div class="rpc-price">Free / $49+</div>
+                            <div class="rpc-features">Marketplace • Streams • Webhooks • SOC2</div>
+                        </div>
+                        
+                        <div class="rpc-card">
+                            <div class="rpc-header">
+                                <div class="rpc-logo">🔷</div>
+                                <div class="rpc-name">Chainstack</div>
+                            </div>
+                            <div class="rpc-stats">
+                                <span>⚡ 70+ chains</span>
+                                <span>📊 20ms</span>
+                            </div>
+                            <div class="rpc-price">Free / $49+</div>
+                            <div class="rpc-features">RU billing • MCP • SOC2 Type II • Flashblocks</div>
+                        </div>
+                        
+                        <div class="rpc-card">
+                            <div class="rpc-header">
+                                <div class="rpc-logo">🛡️</div>
+                                <div class="rpc-name">Ankr</div>
+                            </div>
+                            <div class="rpc-stats">
+                                <span>⚡ 40+ chains</span>
+                                <span>📊 56ms</span>
+                            </div>
+                            <div class="rpc-price">Free / PAYG</div>
+                            <div class="rpc-features">Multi-chain • Staking • 30 RPS free</div>
+                        </div>
+                        
+                        <div class="rpc-card">
+                            <div class="rpc-header">
+                                <div class="rpc-logo">📡</div>
+                                <div class="rpc-name">Infura</div>
+                            </div>
+                            <div class="rpc-stats">
+                                <span>⚡ 20+ chains</span>
+                                <span>📊 45ms</span>
+                            </div>
+                            <div class="rpc-price">Free / $50+</div>
+                            <div class="rpc-features">Ethereum • IPFS • Archive</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Blockchain Table -->
+                <div class="table-container">
+                    <div class="section-header">
+                        <h2>📋 100+ BLOCKCHAIN - DETALII COMPLETE</h2>
+                        <span class="badge">RPC • TOKENS • CONSENSUS • STAKING</span>
+                    </div>
+                    
+                    <table id="chainsTable">
+                        <thead>
+                            <tr>
+                                <th>Chain</th>
+                                <th>Consens</th>
+                                <th>RPC Status</th>
+                                <th>Token Standard</th>
+                                <th>Staking</th>
+                                <th>Explorer</th>
+                                <th>Metadata</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- L1: Bitcoin / PoW -->
+                            <tr class="chain-row" data-consensus="pow">
+                                <td><strong>Bitcoin</strong> (BTC)</td>
+                                <td><span class="chain-badge chain-pow">PoW</span> SHA-256</td>
+                                <td class="status-online">✅ 12 RPC active</td>
+                                <td>UTXO</td>
+                                <td>❌</td>
+                                <td>blockchain.com</td>
+                                <td class="tooltip" data-tooltip="Mining pools: F2Pool, Antpool">Hashrate: 650 EH/s</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pow">
+                                <td><strong>Litecoin</strong> (LTC)</td>
+                                <td><span class="chain-badge chain-pow">PoW</span> Scrypt</td>
+                                <td class="status-online">✅ 8 RPC active</td>
+                                <td>UTXO</td>
+                                <td>❌</td>
+                                <td>ltc.space</td>
+                                <td>Block time: 2.5min</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pow">
+                                <td><strong>Dogecoin</strong> (DOGE)</td>
+                                <td><span class="chain-badge chain-pow">PoW</span> Scrypt</td>
+                                <td class="status-online">✅ 6 RPC active</td>
+                                <td>UTXO</td>
+                                <td>❌</td>
+                                <td>dogechain.info</td>
+                                <td>Inflație 5B/an</td>
+                            </tr>
+                            
+                            <!-- Ethereum / PoS -->
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Ethereum</strong> (ETH)</td>
+                                <td><span class="chain-badge chain-pos">PoS</span> Gasper</td>
+                                <td class="status-online">✅ 47 RPC active</td>
+                                <td>ERC-20 / ERC-721 / ERC-1155 [citation:4][citation:9]</td>
+                                <td>✅ 4-5% APY</td>
+                                <td>etherscan.io</td>
+                                <td>Validatori: 1.2M • Staked: 38M ETH</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Solana</strong> (SOL)</td>
+                                <td><span class="chain-badge chain-pos">PoS</span> Tower BFT</td>
+                                <td class="status-online">✅ 23 RPC active</td>
+                                <td>SPL / Token-2022 [citation:5]</td>
+                                <td>✅ 7% APY</td>
+                                <td>solscan.io</td>
+                                <td>Metadata Pointer • 65k TPS</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Cardano</strong> (ADA)</td>
+                                <td><span class="chain-badge chain-pos">PoS</span> Ouroboros</td>
+                                <td class="status-online">✅ 9 RPC active</td>
+                                <td>Native tokens</td>
+                                <td>✅ 3-4% APY</td>
+                                <td>cexplorer.io</td>
+                                <td>Stake pools: 3,000+</td>
+                            </tr>
+                            
+                            <!-- DPoS -->
+                            <tr class="chain-row" data-consensus="dpos">
+                                <td><strong>EOS</strong> (EOS)</td>
+                                <td><span class="chain-badge chain-dpos">DPoS</span></td>
+                                <td class="status-warning">⚠️ 4 RPC active</td>
+                                <td>EOSIO</td>
+                                <td>✅ Votare</td>
+                                <td>bloks.io</td>
+                                <td>21 block producers</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="dpos">
+                                <td><strong>TRON</strong> (TRX)</td>
+                                <td><span class="chain-badge chain-dpos">DPoS</span></td>
+                                <td class="status-online">✅ 15 RPC active</td>
+                                <td>TRC-20 / TRC-721</td>
+                                <td>✅ 4% APY</td>
+                                <td>tronscan.org</td>
+                                <td>27 Super Representatives</td>
+                            </tr>
+                            
+                            <!-- PoSW -->
+                            <tr class="chain-row" data-consensus="posw">
+                                <td><strong>Aleo</strong> (ALEO)</td>
+                                <td><span class="chain-badge chain-posw">PoSW</span></td>
+                                <td class="status-online">✅ 3 RPC active</td>
+                                <td>Aleo credits</td>
+                                <td>✅ SNARK-based</td>
+                                <td>aleo.info</td>
+                                <td>zk-SNARK • Leo language [citation:8]</td>
+                            </tr>
+                            
+                            <!-- L2 / EVM -->
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Base</strong></td>
+                                <td><span class="chain-badge chain-pos">PoS (L2)</span></td>
+                                <td class="status-online">✅ 8 RPC active</td>
+                                <td>ERC-20 / ERC-721</td>
+                                <td>❌</td>
+                                <td>basescan.org</td>
+                                <td>Flashblocks 200ms • 48.54% TVL rollup [citation:6]</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Arbitrum</strong></td>
+                                <td><span class="chain-badge chain-pos">PoS (L2)</span></td>
+                                <td class="status-online">✅ 12 RPC active</td>
+                                <td>ERC-20</td>
+                                <td>❌</td>
+                                <td>arbiscan.io</td>
+                                <td>Optimistic rollup</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Polygon</strong> (MATIC)</td>
+                                <td><span class="chain-badge chain-pos">PoS (sidechain)</span></td>
+                                <td class="status-online">✅ 18 RPC active</td>
+                                <td>ERC-20 / ERC-721</td>
+                                <td>✅ 5% APY</td>
+                                <td>polygonscan.com</td>
+                                <td>Validatori: 100</td>
+                            </tr>
+                            
+                            <!-- Alte PoW -->
+                            <tr class="chain-row" data-consensus="pow">
+                                <td><strong>Monero</strong> (XMR)</td>
+                                <td><span class="chain-badge chain-pow">PoW</span> RandomX</td>
+                                <td class="status-warning">⚠️ 5 RPC active</td>
+                                <td>UTXO privat</td>
+                                <td>❌</td>
+                                <td>monero.org</td>
+                                <td>RingCT • Privacy focus</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pow">
+                                <td><strong>Ravencoin</strong> (RVN)</td>
+                                <td><span class="chain-badge chain-pow">PoW</span> KawPow</td>
+                                <td class="status-online">✅ 4 RPC active</td>
+                                <td>Asset layer</td>
+                                <td>❌</td>
+                                <td>ravencoin.net</td>
+                                <td>Asset creation</td>
+                            </tr>
+                            
+                            <!-- Cosmos ecosystem -->
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Cosmos</strong> (ATOM)</td>
+                                <td><span class="chain-badge chain-pos">PoS</span> Tendermint</td>
+                                <td class="status-online">✅ 10 RPC active</td>
+                                <td>ICS-20 / ICS-721</td>
+                                <td>✅ 8% APY</td>
+                                <td>mintscan.io</td>
+                                <td>IBC • 50+ zones</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Osmosis</strong> (OSMO)</td>
+                                <td><span class="chain-badge chain-pos">PoS</span> Tendermint</td>
+                                <td class="status-online">✅ 6 RPC active</td>
+                                <td>ICS-20</td>
+                                <td>✅ 12% APY</td>
+                                <td>osmosis.zone</td>
+                                <td>DEX principal Cosmos</td>
+                            </tr>
+                            
+                            <!-- Altele -->
+                            <tr class="chain-row" data-consensus="dpos">
+                                <td><strong>Tezos</strong> (XTZ)</td>
+                                <td><span class="chain-badge chain-dpos">LPoS</span></td>
+                                <td class="status-online">✅ 5 RPC active</td>
+                                <td>FA1.2 / FA2</td>
+                                <td>✅ 5% APY</td>
+                                <td>tzkt.io</td>
+                                <td>Liquid PoS • On-chain gov</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pow">
+                                <td><strong>Zcash</strong> (ZEC)</td>
+                                <td><span class="chain-badge chain-pow">PoW</span> Equihash</td>
+                                <td class="status-warning">⚠️ 3 RPC active</td>
+                                <td>UTXO privat</td>
+                                <td>❌</td>
+                                <td>zcash.blockexplorer</td>
+                                <td>Shielded transactions</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>MultiversX</strong> (EGLD)</td>
+                                <td><span class="chain-badge chain-pos">PoS</span> Secure PoS</td>
+                                <td class="status-online">✅ 7 RPC active</td>
+                                <td>ESDT / NFT</td>
+                                <td>✅ 8% APY</td>
+                                <td>explorer.multiversx.com</td>
+                                <td>Sharding • 15k TPS</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Near</strong> (NEAR)</td>
+                                <td><span class="chain-badge chain-pos">PoS</span> Nightshade</td>
+                                <td class="status-online">✅ 8 RPC active</td>
+                                <td>NEP-141 / NEP-171</td>
+                                <td>✅ 6% APY</td>
+                                <td>nearblocks.io</td>
+                                <td>Sharding • 100k TPS</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Avalanche</strong> (AVAX)</td>
+                                <td><span class="chain-badge chain-pos">PoS</span> Snowman</td>
+                                <td class="status-online">✅ 14 RPC active</td>
+                                <td>ARC-20</td>
+                                <td>✅ 7% APY</td>
+                                <td>snowtrace.io</td>
+                                <td>3 subnets • 4.5k TPS</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Fantom</strong> (FTM)</td>
+                                <td><span class="chain-badge chain-pos">PoS</span> Lachesis</td>
+                                <td class="status-warning">⚠️ 6 RPC active</td>
+                                <td>ERC-20</td>
+                                <td>✅ 5% APY</td>
+                                <td>ftmscan.com</td>
+                                <td>DAG • 2 sec finality</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Polkadot</strong> (DOT)</td>
+                                <td><span class="chain-badge chain-pos">NPoS</span></td>
+                                <td class="status-online">✅ 11 RPC active</td>
+                                <td>PSP-22 / PSP-34</td>
+                                <td>✅ 10% APY</td>
+                                <td>polkadot.subscan.io</td>
+                                <td>Parachains • 297 validatori</td>
+                            </tr>
+                            <tr class="chain-row" data-consensus="pos">
+                                <td><strong>Kusama</strong> (KSM)</td>
+                                <td><span class="chain-badge chain-pos">NPoS</span></td>
+                                <td class="status-online">✅ 6 RPC active</td>
+                                <td>PSP-22</td>
+                                <td>✅ 12% APY</td>
+                                <td>kusama.subscan.io</td>
+                                <td>Canary network • 24h auctions</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div style="margin-top: 20px; text-align: center; color: var(--text-secondary); font-size: 0.9em;">
+                        <span style="color: var(--accent-cyan);">🔷 EVM chains: 47 active</span> • 
+                        <span style="color: var(--bg-success);">💎 PoS: 47</span> • 
+                        <span style="color: var(--bg-danger);">⛏️ PoW: 23</span> • 
+                        <span style="color: var(--bg-warning);">🗳️ DPoS: 18</span> • 
+                        <span style="color: var(--accent-purple);">🔬 PoSW: 3</span>
+                    </div>
+                </div>
+                
+                <!-- Indexers Section [citation:2] -->
+                <div style="margin-top: 30px;">
+                    <div class="section-header">
+                        <h2>📊 BLOCKCHAIN INDEXERS & TOOLS</h2>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;">
+                        <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value">The Graph</div><div class="stat-label">Subgraphs</div></div>
+                        <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">Dune</div><div class="stat-label">SQL analytics</div></div>
+                        <div class="stat-card"><div class="stat-icon">🔍</div><div class="stat-value">Etherscan</div><div class="stat-label">Block explorer</div></div>
+                        <div class="stat-card"><div class="stat-icon">💹</div><div class="stat-value">DeFiLlama</div><div class="stat-label">TVL rankings</div></div>
+                        <div class="stat-card"><div class="stat-icon">🐳</div><div class="stat-value">Nansen</div><div class="stat-label">Whale tracking</div></div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="footer">
+                    <p>🔗 BLOCKCHAIN HUB • 124 chains • 847 RPC nodes • 23 providers • 2026</p>
+                    <p>Date actualizate: martie 2026 • surse: GetBlock, Alchemy, Chainstack, Ethereum.org [citation:1][citation:2][citation:4]</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterChains(type) {
+            const rows = document.querySelectorAll('.chain-row');
+            const btns = document.querySelectorAll('.filter-btn');
+            
+            btns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            rows.forEach(row => {
+                if (type === 'all') {
+                    row.style.display = '';
+                } else {
+                    const consensus = row.getAttribute('data-consensus');
+                    if (consensus === type) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.chain-row');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(search)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+┌─────────────────────────────────────────┐
+│         OmniBus Solidity Module         │
+├─────────────────────────────────────────┤
+│  Layer 1: Solidity Parser & Compiler    │
+│  (Off-chain - Development)               │
+├─────────────────────────────────────────┤
+│  Layer 2: Bytecode Interpreter (On-chain)│
+│  - EVM-compatible VM                     │
+│  - Gas metering                           │
+│  - State management                       │
+├─────────────────────────────────────────┤
+│  Layer 3: Integration Layer               │
+│  - OmniBus Message Bus Interface          │
+│  - Trading Engine Hooks                    │
+│  - Flash Loan Integration                  │
+└─────────────────────────────────────────┘

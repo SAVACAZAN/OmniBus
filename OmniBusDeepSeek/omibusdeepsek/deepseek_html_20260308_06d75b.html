@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniBus MasterTool - Sistem Complet de Dezvoltare</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        :root {
+            --bg-primary: #0a0c0e;
+            --bg-secondary: #141a1f;
+            --bg-card: #1e262c;
+            --accent-cyan: #00ffff;
+            --accent-green: #00ff88;
+            --accent-purple: #aa80ff;
+            --accent-pink: #ff66b2;
+            --accent-orange: #ffaa66;
+            --text-primary: #e0f0ff;
+            --text-secondary: #8b9aad;
+            --border-color: #2a3a4a;
+            --success: #00cc88;
+            --warning: #ffaa33;
+            --error: #ff5577;
+            --gradient-1: linear-gradient(135deg, #00ffff, #aa80ff);
+            --gradient-2: linear-gradient(135deg, #00ff88, #00ffff);
+            --gradient-3: linear-gradient(135deg, #ff66b2, #aa80ff);
+            --shadow: 0 8px 32px rgba(0, 255, 255, 0.1);
+            --glow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Scrollbar personalizată */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-green);
+            box-shadow: var(--glow);
+        }
+
+        /* Layout principal */
+        .mastertool {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Sidebar îmbunătățit */
+        .sidebar {
+            width: 320px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            box-shadow: 5px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-1);
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .sidebar-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-header h1 {
+            font-size: 2em;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+        }
+
+        .sidebar-header p {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-header .version {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .sidebar-search {
+            padding: 20px 25px;
+        }
+
+        .search-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .search-box:focus-within {
+            border-color: var(--accent-cyan);
+            box-shadow: var(--glow);
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            width: 100%;
+            outline: none;
+            font-size: 0.9em;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-box i {
+            color: var(--text-secondary);
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 15px;
+        }
+
+        .menu-category {
+            margin-bottom: 25px;
+        }
+
+        .menu-category-title {
+            padding: 10px 15px;
+            color: var(--text-secondary);
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            margin: 2px 0;
+            border-radius: 10px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--gradient-1);
+            transform: scaleY(0);
+            transition: transform 0.2s;
+        }
+
+        .menu-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 255, 255, 0.05);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: rgba(0, 255, 255, 0.1);
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .menu-item i {
+            width: 24px;
+            font-size: 1.2em;
+            color: var(--accent-cyan);
+        }
+
+        .menu-item .badge {
+            margin-left: auto;
+            background: var(--accent-purple);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .menu-item .badge.new {
+            background: var(--accent-green);
+        }
+
+        .menu-item .badge.hot {
+            background: var(--accent-orange);
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-primary);
+            position: relative;
+        }
+
+        /* Topbar */
+        .topbar {
+            height: 80px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+            z-index: 5;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .menu-toggle {
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-secondary);
+            display: none;
+        }
+
+        .page-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--accent-cyan);
+        }
+
+        .breadcrumb .separator {
+            color: var(--border-color);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .topbar-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .topbar-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: var(--glow);
+            transform: translateY(-2px);
+        }
+
+        .topbar-btn.primary {
+            background: var(--gradient-1);
+            border: none;
+            color: white;
+        }
+
+        .topbar-btn.primary:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 10px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-profile:hover {
+            background: var(--border-color);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .user-info {
+            line-height: 1.4;
+        }
+
+        .user-name {
+            font-weight: 600;
+        }
+
+        .user-role {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+        }
+
+        /* Page container */
+        .page-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* Stats cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 25px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+            border-color: var(--accent-cyan);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+        }
+
+        .stat-title {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85em;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--error);
+        }
+
+        /* Module grid */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 40px 0 20px;
+        }
+
+        .section-header h2 {
+            font-size: 1.5em;
+            font-weight: 600;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-header .view-all {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .section-header .view-all:hover {
+            text-shadow: var(--glow);
+            transform: translateX(5px);
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .module-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 25px;
+            transition: all 0.3s;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-cyan);
+            box-shadow: var(--shadow);
+        }
+
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .module-id {
+            font-size: 0.8em;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .module-ring {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .ring0 { background: rgba(255, 0, 0, 0.2); color: #ff5577; border: 1px solid #ff5577; }
+        .ring1 { background: rgba(255, 255, 0, 0.2); color: #ffaa33; border: 1px solid #ffaa33; }
+        .ring2 { background: rgba(0, 255, 0, 0.2); color: #00cc88; border: 1px solid #00cc88; }
+        .ring3 { background: rgba(0, 255, 255, 0.2); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+        .ring-meta { background: rgba(170, 128, 255, 0.2); color: var(--accent-purple); border: 1px solid var(--accent-purple); }
+
+        .module-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .module-desc {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .module-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .module-meta i {
+            color: var(--accent-cyan);
+            margin-right: 5px;
+        }
+
+        .module-progress {
+            margin-bottom: 20px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-1);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .module-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            transform: scale(1.1);
+        }
+
+        .btn-text {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .btn-text:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        /* Quick actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .quick-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .quick-action:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .quick-action-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .quick-action-info h4 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .quick-action-info p {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+        }
+
+        /* Tabele */
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9em;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:hover td {
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-warning {
+            background: rgba(255, 170, 51, 0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .status-error {
+            background: rgba(255, 85, 119, 0.2);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        /* Grafice */
+        .chart-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 30px;
+            max-width: 600px;
+            width: 90%;
+            padding: 40px;
+            position: relative;
+            animation: modalSlide 0.3s;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+        }
+
+        @keyframes modalSlide {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: var(--error);
+        }
+
+        .modal-header {
+            margin-bottom: 25px;
+        }
+
+        .modal-header h2 {
+            font-size: 2em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-body {
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        /* Notificări */
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .notification-close {
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.3s;
+        }
+
+        .notification-close:hover {
+            color: var(--error);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                left: -320px;
+                height: 100vh;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                padding: 0 15px;
+            }
+
+            .topbar-actions {
+                display: none;
+            }
+
+            .page-container {
+                padding: 15px;
+            }
+        }
+
+        /* Tooltip */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 5px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        [data-tooltip]:hover:before {
+            opacity: 1;
+            visibility: visible;
+            bottom: 120%;
+        }
+
+        /* Animații */
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .glow {
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(0, 255, 255, 0.6); }
+        }
+    </style>
+</head>
+<body>
+    <div class="mastertool">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>OMNIBUS</h1>
+                <p>MasterTool v2.0</p>
+                <span class="version">25 PAGES</span>
+            </div>
+            
+            <div class="sidebar-search">
+                <div class="search-box">
+                    <i>🔍</i>
+                    <input type="text" placeholder="Search modules, pages..." id="searchInput">
+                </div>
+            </div>
+            
+            <div class="sidebar-menu" id="sidebarMenu">
+                <!-- Dashboard -->
+                <div class="menu-category">
+                    <div class="menu-category-title">DASHBOARD</div>
+                    <div class="menu-item active" onclick="loadPage(1)">
+                        <i>📊</i> Overview
+                        <span class="badge new">NEW</span>
+                    </div>
+                    <div class="menu-item" onclick="loadPage(2)">
+                        <i>📈</i> Analytics
+                    </div>
+                    <div class="menu-item" onclick="loadPage(3)">
+                        <i>🔔</i> Notifications
+                        <span class="badge">3</span>
+                    </div>
+                </div>
+                
+                <!-- Kernel Studio -->
+                <div class="menu-category">
+                    <div class="menu-category-title">KERNEL STUDIO</div>
+                    <div class="menu-item" onclick="loadPage(4)">
+                        <i>🧠</i> Memory Layout
+                    </div>
+                    <div class="menu-item" onclick="loadPage(5)">
+                        <i>⚙️</i> Scheduler
+                    </div>
+                    <div class="menu-item" onclick="loadPage(6)">
+                        <i>🔌</i> Interrupts
+                    </div>
+                    <div class="menu-item" onclick="loadPage(7)">
+                        <i>🔄</i> IPC Bus
+                    </div>
+                </div>
+                
+                <!-- Trading Engine -->
+                <div class="menu-category">
+                    <div class="menu-category-title">TRADING ENGINE</div>
+                    <div class="menu-item" onclick="loadPage(8)">
+                        <i>📊</i> Grid Strategies
+                    </div>
+                    <div class="menu-item" onclick="loadPage(9)">
+                        <i>🔄</i> Arbitrage Detector
+                    </div>
+                    <div class="menu-item" onclick="loadPage(10)">
+                        <i>📖</i> Order Book
+                    </div>
+                    <div class="menu-item" onclick="loadPage(11)">
+                        <i>⚡</i> Latency Profiler
+                    </div>
+                </div>
+                
+                <!-- AI & Neuro -->
+                <div class="menu-category">
+                    <div class="menu-category-title">AI & NEURO</div>
+                    <div class="menu-item" onclick="loadPage(12)">
+                        <i>🧬</i> Genetic Arena
+                    </div>
+                    <div class="menu-item" onclick="loadPage(13)">
+                        <i>📈</i> Evolution Visualizer
+                    </div>
+                    <div class="menu-item" onclick="loadPage(14)">
+                        <i>🧪</i> BinaryCodex4AI
+                        <span class="badge hot">HOT</span>
+                    </div>
+                </div>
+                
+                <!-- Security -->
+                <div class="menu-category">
+                    <div class="menu-category-title">SECURITY</div>
+                    <div class="menu-item" onclick="loadPage(15)">
+                        <i>🔐</i> PQC Vault
+                    </div>
+                    <div class="menu-item" onclick="loadPage(16)">
+                        <i>⚔️</i> Attack Simulator
+                    </div>
+                </div>
+                
+                <!-- Cluster -->
+                <div class="menu-category">
+                    <div class="menu-category-title">CLUSTER</div>
+                    <div class="menu-item" onclick="loadPage(17)">
+                        <i>🌐</i> P2P Gossip
+                    </div>
+                    <div class="menu-item" onclick="loadPage(18)">
+                        <i>🤝</i> Consensus
+                    </div>
+                </div>
+                
+                <!-- SIMLINK -->
+                <div class="menu-category">
+                    <div class="menu-category-title">SIMLINK</div>
+                    <div class="menu-item" onclick="loadPage(19)">
+                        <i>🧠</i> SAVAos
+                    </div>
+                    <div class="menu-item" onclick="loadPage(20)">
+                        <i>⚖️</i> CAZANos
+                    </div>
+                    <div class="menu-item" onclick="loadPage(21)">
+                        <i>👤</i> SAVACAZANos
+                    </div>
+                </div>
+                
+                <!-- Mathos -->
+                <div class="menu-category">
+                    <div class="menu-category-title">MATHOS LAB</div>
+                    <div class="menu-item" onclick="loadPage(22)">
+                        <i>∞</i> Transfinite
+                    </div>
+                    <div class="menu-item" onclick="loadPage(23)">
+                        <i>🧮</i> Set Theory
+                    </div>
+                </div>
+                
+                <!-- Hardware -->
+                <div class="menu-category">
+                    <div class="menu-category-title">HARDWARE</div>
+                    <div class="menu-item" onclick="loadPage(24)">
+                        <i>⚙️</i> FPGA Designer
+                    </div>
+                    <div class="menu-item" onclick="loadPage(25)">
+                        <i>🔌</i> NIC Bypass
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <span class="menu-toggle" onclick="toggleSidebar()">☰</span>
+                    <div>
+                        <div class="page-title" id="pageTitle">Dashboard Overview</div>
+                        <div class="breadcrumb" id="breadcrumb">
+                            <a href="#" onclick="loadPage(1)">Home</a>
+                            <span class="separator">/</span>
+                            <span>Overview</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="topbar-actions">
+                    <button class="topbar-btn" onclick="showNotification('info', 'System', 'Refreshing data...')">
+                        <i>🔄</i> Sync
+                    </button>
+                    <button class="topbar-btn" onclick="showModal('build')">
+                        <i>⚡</i> Build All
+                    </button>
+                    <button class="topbar-btn primary" onclick="showModal('deploy')">
+                        <i>🚀</i> Deploy
+                    </button>
+                </div>
+                
+                <div class="user-profile" onclick="showModal('profile')">
+                    <div class="user-avatar">SC</div>
+                    <div class="user-info">
+                        <div class="user-name">SAVACAZAN</div>
+                        <div class="user-role">Creator</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Page Container -->
+            <div class="page-container" id="pageContainer">
+                <!-- Conținutul dinamic se încarcă aici -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="modalTitle">Modal Title</h2>
+            </div>
+            <div class="modal-body" id="modalBody">
+                Modal content...
+            </div>
+            <div class="modal-footer">
+                <button class="btn-text" onclick="closeModal()">Cancel</button>
+                <button class="btn-text" style="border-color: var(--accent-cyan);" onclick="closeModal()">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // DATELE PROIECTULUI
+        // ============================================
+        
+        const modules = [
+            { id: 'M1', name: 'boot.asm', type: 'Bootloader', ring: 0, address: '0x7C00', status: 'active', progress: 100 },
+            { id: 'M2', name: 'stage2.asm', type: 'Bootloader', ring: 0, address: '0x7E00', status: 'active', progress: 100 },
+            { id: 'M3', name: 'mother_os.adb', type: 'Kernel', ring: 0, address: '0x100000', status: 'active', progress: 95 },
+            { id: 'M4', name: 'pqc_vault.ads', type: 'Security', ring: 0, address: '0x100800', status: 'active', progress: 90 },
+            { id: 'M5', name: 'governance.adb', type: 'Kernel', ring: 0, address: '0x101000', status: 'active', progress: 85 },
+            { id: 'M6', name: 'arbiter.adb', type: 'Kernel', ring: 0, address: '0x102000', status: 'active', progress: 88 },
+            { id: 'M7', name: 'legacy.adb', type: 'Kernel', ring: 0, address: '0x103000', status: 'active', progress: 82 },
+            { id: 'M8', name: 'grid_os.zig', type: 'Engine', ring: 1, address: '0x110000', status: 'active', progress: 92 },
+            { id: 'M9', name: 'analytic_os.zig', type: 'Engine', ring: 1, address: '0x150000', status: 'active', progress: 89 },
+            { id: 'M10', name: 'neuro_os.zig', type: 'AI', ring: 1, address: '0x200000', status: 'active', progress: 78 },
+            { id: 'M11', name: 'consensus.zig', type: 'Engine', ring: 1, address: '0x190000', status: 'active', progress: 86 },
+            { id: 'M12', name: 'nic_driver.c', type: 'Driver', ring: 0, address: '0xFE000000', status: 'active', progress: 94 },
+            { id: 'M13', name: 'uart_driver.asm', type: 'Driver', ring: 0, address: '0x3F8', status: 'active', progress: 100 },
+            { id: 'M14', name: 'crypto_sign.c', type: 'Driver', ring: 0, address: '0x130000', status: 'active', progress: 96 },
+            { id: 'M15', name: 'exchange_router.zig', type: 'Plugin', ring: 2, address: '0x300000', status: 'active', progress: 75 },
+            { id: 'M16', name: 'stealth_ghost.zig', type: 'Plugin', ring: 2, address: '0x302000', status: 'active', progress: 72 },
+            { id: 'M17', name: 'egld_sync.zig', type: 'Plugin', ring: 2, address: '0x304000', status: 'active', progress: 68 },
+            { id: 'M18', name: 'private_strategy.zig', type: 'Plugin', ring: 2, address: '0x306000', status: 'warning', progress: 45 },
+            { id: 'M21', name: 'k8s_deploy.yaml', type: 'Cloud', ring: 3, address: 'N/A', status: 'active', progress: 80 },
+            { id: 'M22', name: 'sel4_glue.c', type: 'Cloud', ring: 3, address: '0x400000', status: 'active', progress: 70 },
+            { id: 'M23', name: 'omnibus_sup.erl', type: 'Cloud', ring: 3, address: 'N/A', status: 'active', progress: 65 },
+            { id: 'M24', name: 'netcool.zig', type: 'Plugin', ring: 2, address: '0x310000', status: 'warning', progress: 55 },
+            { id: 'M-1', name: 'mathos.omnibus', type: 'Meta', ring: 'META', address: '∞', status: 'active', progress: 100 }
+        ];
+        
+        const systemStats = {
+            modules: 24,
+            activeModules: 22,
+            latency: '47ns',
+            consensus: '73%',
+            peers: 1024,
+            uptime: '99.99%',
+            harmony: 98
+        };
+        
+        // ============================================
+        // FUNCȚII UTILITARE
+        // ============================================
+        
+        let currentPage = 1;
+        
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+        
+        function showModal(type) {
+            const modal = document.getElementById('modal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+            
+            switch(type) {
+                case 'build':
+                    title.innerHTML = '⚡ Build System';
+                    body.innerHTML = `
+                        <p>Selectează modulele pentru compilare:</p>
+                        <div style="margin: 20px 0;">
+                            ${modules.slice(0, 5).map(m => `
+                                <label style="display: block; margin: 10px 0;">
+                                    <input type="checkbox" checked> ${m.id}: ${m.name}
+                                </label>
+                            `).join('')}
+                        </div>
+                        <p>Opțiuni de compilare:</p>
+                        <select style="width:100%; padding:10px; background: var(--bg-card); color: white; border:1px solid var(--border-color); border-radius:10px;">
+                            <option>Release (optimizat)</option>
+                            <option>Debug (cu simboluri)</option>
+                            <option>Profile (instrumentat)</option>
+                        </select>
+                    `;
+                    break;
+                    
+                case 'deploy':
+                    title.innerHTML = '🚀 Deploy Cluster';
+                    body.innerHTML = `
+                        <p>Configurare deploy:</p>
+                        <div style="margin: 20px 0;">
+                            <div style="margin: 10px 0;">
+                                <label>Număr noduri:</label>
+                                <input type="number" value="10" style="width:100%; padding:10px; background: var(--bg-card); border:1px solid var(--border-color); border-radius:10px; color:white;">
+                            </div>
+                            <div style="margin: 10px 0;">
+                                <label>Regiune:</label>
+                                <select style="width:100%; padding:10px; background: var(--bg-card); color:white; border:1px solid var(--border-color); border-radius:10px;">
+                                    <option>Europa</option>
+                                    <option>USA</option>
+                                    <option>Asia</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'profile':
+                    title.innerHTML = '👤 User Profile';
+                    body.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 30px; margin-bottom: 30px;">
+                            <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--gradient-1); display: flex; align-items: center; justify-content: center; font-size: 2em;">SC</div>
+                            <div>
+                                <h3>SAVACAZAN</h3>
+                                <p style="color: var(--text-secondary);">Creator & Lead Architect</p>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div><strong>Role:</strong> Creator</div>
+                            <div><strong>Joined:</strong> 2026-03-01</div>
+                            <div><strong>Modules:</strong> 24</div>
+                            <div><strong>Commits:</strong> 156</div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showNotification(type, title, message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <div class="notification-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+                <span class="notification-close" onclick="this.parentElement.remove()">&times;</span>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+        
+        // ============================================
+        // GENERARE CONȚINUT PAGINI
+        // ============================================
+        
+        function loadPage(pageNum) {
+            currentPage = pageNum;
+            
+            // Update breadcrumb
+            const titles = {
+                1: 'Dashboard Overview',
+                2: 'Analytics',
+                3: 'Notifications',
+                4: 'Memory Layout Editor',
+                5: 'Scheduler Visualizer',
+                6: 'Interrupt Controller',
+                7: 'IPC Bus Monitor',
+                8: 'Grid Strategy Builder',
+                9: 'Arbitrage Detector',
+                10: 'Order Book Simulator',
+                11: 'Latency Profiler',
+                12: 'Genetic Arena',
+                13: 'Evolution Visualizer',
+                14: 'BinaryCodex4AI',
+                15: 'PQC Vault',
+                16: 'Attack Simulator',
+                17: 'P2P Gossip Visualizer',
+                18: 'Consensus Validator',
+                19: 'SAVAos Console',
+                20: 'CAZANos Monitor',
+                21: 'SAVACAZANos Interface',
+                22: 'Transfinite Calculator',
+                23: 'Set Theory Explorer',
+                24: 'FPGA Designer',
+                25: 'NIC Bypass Configurator'
+            };
+            
+            document.getElementById('pageTitle').innerText = titles[pageNum] || `Page ${pageNum}`;
+            document.getElementById('breadcrumb').innerHTML = `
+                <a href="#" onclick="loadPage(1)">Home</a>
+                <span class="separator">/</span>
+                <span>${titles[pageNum] || `Page ${pageNum}`}</span>
+            `;
+            
+            // Update active menu
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            event?.target.classList.add('active');
+            
+            generatePageContent(pageNum);
+        }
+        
+        function generatePageContent(pageNum) {
+            const container = document.getElementById('pageContainer');
+            
+            switch(pageNum) {
+                case 1: // Dashboard Overview
+                    container.innerHTML = `
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <div class="stat-icon">📦</div>
+                                    <div class="stat-title">Active Modules</div>
+                                </div>
+                                <div class="stat-value">${systemStats.modules}</div>
+                                <div class="stat-change positive">↑ 2 from last week</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <div class="stat-icon">⚡</div>
+                                    <div class="stat-title">Avg Latency</div>
+                                </div>
+                                <div class="stat-value">${systemStats.latency}</div>
+                                <div class="stat-change positive">↓ 5ns improvement</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <div class="stat-icon">🌐</div>
+                                    <div class="stat-title">P2P Peers</div>
+                                </div>
+                                <div class="stat-value">${systemStats.peers.toLocaleString()}</div>
+                                <div class="stat-change positive">↑ 124 new</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <div class="stat-icon">🎯</div>
+                                    <div class="stat-title">Consensus</div>
+                                </div>
+                                <div class="stat-value">${systemStats.consensus}</div>
+                                <div class="stat-change positive">↑ 2% above threshold</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-actions">
+                            <div class="quick-action" onclick="loadPage(4)">
+                                <div class="quick-action-icon">🧠</div>
+                                <div class="quick-action-info">
+                                    <h4>Kernel Studio</h4>
+                                    <p>Edit memory layout</p>
+                                </div>
+                            </div>
+                            <div class="quick-action" onclick="loadPage(8)">
+                                <div class="quick-action-icon">📊</div>
+                                <div class="quick-action-info">
+                                    <h4>Trading Engine</h4>
+                                    <p>Build strategies</p>
+                                </div>
+                            </div>
+                            <div class="quick-action" onclick="loadPage(12)">
+                                <div class="quick-action-icon">🧬</div>
+                                <div class="quick-action-info">
+                                    <h4>Genetic Arena</h4>
+                                    <p>Evolve AI agents</p>
+                                </div>
+                            </div>
+                            <div class="quick-action" onclick="loadPage(15)">
+                                <div class="quick-action-icon">🔐</div>
+                                <div class="quick-action-info">
+                                    <h4>Security Vault</h4>
+                                    <p>Manage PQC keys</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="section-header">
+                            <h2>📦 Recent Modules</h2>
+                            <a href="#" class="view-all" onclick="loadPage(2)">View All →</a>
+                        </div>
+                        
+                        <div class="modules-grid">
+                            ${modules.slice(0, 4).map(m => `
+                                <div class="module-card" onclick="loadPage(${modules.indexOf(m)+4})">
+                                    <div class="module-header">
+                                        <span class="module-id">${m.id}</span>
+                                        <span class="module-ring ring${m.ring === 'META' ? '-meta' : m.ring}">RING ${m.ring}</span>
+                                    </div>
+                                    <div class="module-name">${m.name}</div>
+                                    <div class="module-desc">${m.type} module at ${m.address}</div>
+                                    <div class="module-meta">
+                                        <span><i>⚡</i> ${m.progress}%</span>
+                                        <span><i>📍</i> ${m.address}</span>
+                                    </div>
+                                    <div class="module-progress">
+                                        <div class="progress-label">
+                                            <span>Progress</span>
+                                            <span>${m.progress}%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: ${m.progress}%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="module-actions">
+                                        <button class="btn-icon" onclick="event.stopPropagation(); showNotification('success', 'Build', '${m.id} compiled')">⚙️</button>
+                                        <button class="btn-icon" onclick="event.stopPropagation(); showNotification('success', 'Install', '${m.id} installed')">📦</button>
+                                        <button class="btn-icon" onclick="event.stopPropagation(); showNotification('info', 'Save', '${m.id} saved')">💾</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <div class="chart-title">📊 System Performance</div>
+                                <div class="chart-legend">
+                                    <div class="legend-item"><span class="legend-color" style="background: var(--accent-cyan);"></span> CPU</div>
+                                    <div class="legend-item"><span class="legend-color" style="background: var(--accent-green);"></span> Memory</div>
+                                    <div class="legend-item"><span class="legend-color" style="background: var(--accent-purple);"></span> Network</div>
+                                </div>
+                            </div>
+                            <div style="height: 300px; display: flex; align-items: flex-end; gap: 20px;">
+                                ${[65, 42, 78, 55, 89, 71, 63, 47, 82, 94, 58, 76].map((val, i) => `
+                                    <div style="flex:1; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                                        <div style="height: ${val}px; width: 100%; background: var(--accent-cyan); border-radius: 5px; transition: height 0.3s;"></div>
+                                        <div style="font-size: 0.7em; color: var(--text-secondary);">${i+1}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table>
+                                <tr>
+                                    <th>Module</th>
+                                    <th>Type</th>
+                                    <th>Ring</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                </tr>
+                                ${modules.slice(0, 5).map(m => `
+                                    <tr>
+                                        <td><strong>${m.id}</strong> ${m.name}</td>
+                                        <td>${m.type}</td>
+                                        <td>RING ${m.ring}</td>
+                                        <td><span class="status-badge status-${m.status}">${m.status}</span></td>
+                                        <td>${m.progress}%</td>
+                                    </tr>
+                                `).join('')}
+                            </table>
+                        </div>
+                    `;
+                    break;
+                    
+                case 4: // Memory Layout Editor
+                    container.innerHTML = `
+                        <div class="section-header">
+                            <h2>🧠 Memory Layout Editor</h2>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">24</div>
+                                <div class="stat-title">Memory Regions</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">1.2 MB</div>
+                                <div class="stat-title">Total Used</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">64B</div>
+                                <div class="stat-title">Cache Line</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: var(--bg-card); border-radius: 20px; padding: 25px; margin: 20px 0;">
+                            <canvas id="memoryCanvas" width="800" height="400" style="width:100%; height:400px; background: var(--bg-primary); border-radius: 10px;"></canvas>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table>
+                                <tr>
+                                    <th>Region</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Size</th>
+                                    <th>Actions</th>
+                                </tr>
+                                ${[
+                                    { name: 'Kernel', start: '0x100000', end: '0x110000', size: '64KB' },
+                                    { name: 'GridOS', start: '0x110000', end: '0x130000', size: '128KB' },
+                                    { name: 'AnalyticsOS', start: '0x130000', end: '0x150000', size: '128KB' },
+                                    { name: 'ExecutionOS', start: '0x150000', end: '0x200000', size: '704KB' },
+                                    { name: 'NeuroOS', start: '0x200000', end: '0x300000', size: '1MB' }
+                                ].map(r => `
+                                    <tr>
+                                        <td><strong>${r.name}</strong></td>
+                                        <td>${r.start}</td>
+                                        <td>${r.end}</td>
+                                        <td>${r.size}</td>
+                                        <td>
+                                            <button class="btn-icon" onclick="showNotification('info', 'Edit', 'Editing ${r.name}')">✏️</button>
+                                            <button class="btn-icon" onclick="showNotification('success', 'Moved', '${r.name} relocated')">🔄</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </table>
+                        </div>
+                    `;
+                    
+                    // Initialize memory canvas after a short delay
+                    setTimeout(() => {
+                        const canvas = document.getElementById('memoryCanvas');
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            const regions = [
+                                { name: 'Kernel', start: 0, end: 0x10000, color: '#ff0000' },
+                                { name: 'GridOS', start: 0x10000, end: 0x30000, color: '#00ff00' },
+                                { name: 'Analytics', start: 0x30000, end: 0x50000, color: '#0000ff' },
+                                { name: 'Neuro', start: 0x50000, end: 0x100000, color: '#ff00ff' }
+                            ];
+                            
+                            const width = canvas.width;
+                            const maxAddr = 0x400000;
+                            
+                            regions.forEach(r => {
+                                const x = (r.start / maxAddr) * width;
+                                const w = ((r.end - r.start) / maxAddr) * width;
+                                
+                                ctx.fillStyle = r.color + '44';
+                                ctx.fillRect(x, 0, w, canvas.height);
+                                ctx.strokeStyle = r.color;
+                                ctx.strokeRect(x, 0, w, canvas.height);
+                                
+                                ctx.fillStyle = '#ffffff';
+                                ctx.font = '12px monospace';
+                                ctx.fillText(r.name, x + 5, 30);
+                            });
+                        }
+                    }, 100);
+                    break;
+                    
+                case 12: // Genetic Arena
+                    container.innerHTML = `
+                        <div class="section-header">
+                            <h2>🧬 Genetic Arena</h2>
+                            <button class="btn-text" onclick="evolveGeneration()"><i>🔄</i> Evolve</button>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">142</div>
+                                <div class="stat-title">Generation</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">0.92</div>
+                                <div class="stat-title">Best Fitness</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">4</div>
+                                <div class="stat-title">Species</div>
+                            </div>
+                        </div>
+                        
+                        <div class="modules-grid" id="arena">
+                            ${[
+                                { name: 'Predator', fitness: 0.85, color: '#ff4444', pop: 25 },
+                                { name: 'Shield', fitness: 0.92, color: '#44ff44', pop: 30 },
+                                { name: 'Mirror', fitness: 0.78, color: '#4444ff', pop: 20 },
+                                { name: 'Surfer', fitness: 0.88, color: '#ffff44', pop: 25 }
+                            ].map(s => `
+                                <div class="module-card" style="border-color: ${s.color};">
+                                    <div class="module-header">
+                                        <span class="module-id">${s.name}</span>
+                                    </div>
+                                    <div class="module-name" style="color: ${s.color};">${s.name}</div>
+                                    <div class="module-progress">
+                                        <div class="progress-label">
+                                            <span>Fitness</span>
+                                            <span>${(s.fitness * 100).toFixed(1)}%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: ${s.fitness * 100}%; background: ${s.color};"></div>
+                                        </div>
+                                    </div>
+                                    <div class="module-meta">
+                                        <span><i>👥</i> Pop: ${s.pop}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <div class="chart-title">📈 Evolution History</div>
+                            </div>
+                            <div style="height: 200px; display: flex; align-items: flex-end; gap: 5px;">
+                                ${[65, 72, 68, 75, 82, 79, 85, 88, 84, 92, 89, 94].map((val, i) => `
+                                    <div style="flex:1; display: flex; flex-direction: column; align-items: center;">
+                                        <div style="height: ${val}px; width: 100%; background: var(--accent-green); border-radius: 3px;"></div>
+                                        <div style="font-size: 0.6em; margin-top: 5px;">Gen ${i*10+10}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 15: // PQC Vault
+                    container.innerHTML = `
+                        <div class="section-header">
+                            <h2>🔐 Post-Quantum Cryptography Vault</h2>
+                            <button class="btn-text" onclick="showNotification('success', 'Key', 'New master key generated')">✨ Generate New Key</button>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">Kyber-1024</div>
+                                <div class="stat-title">Algorithm</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">3</div>
+                                <div class="stat-title">Active Keys</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">256-bit</div>
+                                <div class="stat-title">Security Level</div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table>
+                                <tr>
+                                    <th>Key ID</th>
+                                    <th>Type</th>
+                                    <th>Created</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                                <tr>
+                                    <td><code>0x7C0DE...A3F4</code></td>
+                                    <td>Master Key</td>
+                                    <td>2026-03-08</td>
+                                    <td><span class="status-badge status-active">Active</span></td>
+                                    <td>
+                                        <button class="btn-icon" onclick="showNotification('info', 'Export', 'Key exported')">📤</button>
+                                        <button class="btn-icon" onclick="showNotification('warning', 'Revoke', 'Key revoked')">🗑️</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><code>0xBEEF...CAFE</code></td>
+                                    <td>Signing Key</td>
+                                    <td>2026-03-07</td>
+                                    <td><span class="status-badge status-active">Active</span></td>
+                                    <td>
+                                        <button class="btn-icon" onclick="showNotification('info', 'Export', 'Key exported')">📤</button>
+                                        <button class="btn-icon" onclick="showNotification('warning', 'Revoke', 'Key revoked')">🗑️</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><code>0xDEAD...BEEF</code></td>
+                                    <td>Session Key</td>
+                                    <td>2026-03-06</td>
+                                    <td><span class="status-badge status-warning">Expiring</span></td>
+                                    <td>
+                                        <button class="btn-icon" onclick="showNotification('info', 'Export', 'Key exported')">📤</button>
+                                        <button class="btn-icon" onclick="showNotification('success', 'Renew', 'Key renewed')">🔄</button>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <div class="chart-title">🔬 Quantum Resistance Level</div>
+                            </div>
+                            <div style="text-align: center; padding: 40px;">
+                                <div style="font-size: 4em; color: var(--accent-cyan); margin-bottom: 20px;">⚡⚡⚡</div>
+                                <div style="font-size: 1.5em; margin-bottom: 10px;">Level 3 - Quantum Safe</div>
+                                <div style="color: var(--text-secondary);">Resistant to known quantum attacks</div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 22: // Transfinite Calculator
+                    container.innerHTML = `
+                        <div class="section-header">
+                            <h2>∞ Transfinite Calculator</h2>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">ℵ₀</div>
+                                <div class="stat-title">Countable Infinity</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">ℵ₁</div>
+                                <div class="stat-title">Uncountable</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">𝔠</div>
+                                <div class="stat-title">Continuum</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: var(--bg-card); border-radius: 20px; padding: 30px; margin: 20px 0;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                                <div>
+                                    <h3 style="margin-bottom: 20px;">Operations</h3>
+                                    <div style="margin: 15px 0;">
+                                        <label>ℵ₀ + ℵ₀ = <span style="color: var(--accent-cyan); float:right;">ℵ₀</span></label>
+                                    </div>
+                                    <div style="margin: 15px 0;">
+                                        <label>ℵ₀ × ℵ₀ = <span style="color: var(--accent-cyan); float:right;">ℵ₀</span></label>
+                                    </div>
+                                    <div style="margin: 15px 0;">
+                                        <label>2^ℵ₀ = <span style="color: var(--accent-cyan); float:right;">ℵ₁</span></label>
+                                    </div>
+                                    <div style="margin: 15px 0;">
+                                        <label>ℵ₀^ℵ₀ = <span style="color: var(--accent-cyan); float:right;">ℵ₁</span></label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 style="margin-bottom: 20px;">Theorems</h3>
+                                    <div style="margin: 15px 0;">
+                                        <label>Cantor's Theorem:</label>
+                                        <div style="color: var(--text-secondary);">|A| < |P(A)|</div>
+                                    </div>
+                                    <div style="margin: 15px 0;">
+                                        <label>Continuum Hypothesis:</label>
+                                        <div style="color: var(--text-secondary);">∄ set between ℵ₀ and 𝔠</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container">
+                            <h3 style="margin-bottom: 20px;">Infinite Sets</h3>
+                            <table>
+                                <tr>
+                                    <th>Set</th>
+                                    <th>Cardinality</th>
+                                    <th>Examples</th>
+                                </tr>
+                                <tr>
+                                    <td>ℕ (Natural)</td>
+                                    <td>ℵ₀</td>
+                                    <td>1,2,3,...</td>
+                                </tr>
+                                <tr>
+                                    <td>ℤ (Integers)</td>
+                                    <td>ℵ₀</td>
+                                    <td>...,-2,-1,0,1,2,...</td>
+                                </tr>
+                                <tr>
+                                    <td>ℚ (Rational)</td>
+                                    <td>ℵ₀</td>
+                                    <td>Fractions</td>
+                                </tr>
+                                <tr>
+                                    <td>ℝ (Real)</td>
+                                    <td>𝔠 = 2^ℵ₀</td>
+                                    <td>π, e, √2</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="chart-container" style="text-align: center;">
+                            <h3 style="margin-bottom: 20px;">🌟 WE ARE HERE</h3>
+                            <div style="font-size: 3em; margin: 30px;">∞</div>
+                            <p style="color: var(--text-secondary);">At the limit of iteration, forever and beyond</p>
+                        </div>
+                    `;
+                    break;
+                    
+                default:
+                    container.innerHTML = `
+                        <div class="section-header">
+                            <h2>${document.getElementById('pageTitle').innerText}</h2>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">24</div>
+                                <div class="stat-title">Modules</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">47ns</div>
+                                <div class="stat-title">Latency</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">73%</div>
+                                <div class="stat-title">Consensus</div>
+                            </div>
+                        </div>
+                        
+                        <div class="modules-grid">
+                            ${modules.slice((pageNum-1)*3 % modules.length, (pageNum-1)*3 % modules.length + 3).map(m => `
+                                <div class="module-card">
+                                    <div class="module-header">
+                                        <span class="module-id">${m.id}</span>
+                                        <span class="module-ring ring${m.ring === 'META' ? '-meta' : m.ring}">RING ${m.ring}</span>
+                                    </div>
+                                    <div class="module-name">${m.name}</div>
+                                    <div class="module-desc">${m.type} module</div>
+                                    <div class="module-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: ${m.progress}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+            }
+        }
+        
+        // Funcții pentru simulări
+        function evolveGeneration() {
+            showNotification('info', 'Evolution', 'Evolving next generation...');
+            setTimeout(() => {
+                showNotification('success', 'Evolution Complete', 'New generation created with improved fitness');
+                // Refresh arena if on page 12
+                if (currentPage === 12) loadPage(12);
+            }, 2000);
+        }
+        
+        // Inițializare
+        window.onload = function() {
+            loadPage(1);
+            
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                const search = e.target.value.toLowerCase();
+                const items = document.querySelectorAll('.menu-item');
+                
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(search)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Close modal on outside click
+            window.onclick = function(event) {
+                const modal = document.getElementById('modal');
+                if (event.target === modal) {
+                    modal.classList.remove('active');
+                }
+            };
+        };
+    </script>
+</body>
+</html>

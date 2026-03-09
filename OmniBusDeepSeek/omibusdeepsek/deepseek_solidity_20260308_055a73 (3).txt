@@ -1,0 +1,21 @@
+// Exemplu contract pentru trading
+contract ArbitrageBot {
+    address[] public exchanges;
+    mapping(address => uint) public prices;
+    
+    event ArbitrageDetected(uint profit, address buyEx, address sellEx);
+    
+    function executeArbitrage(
+        address buyExchange,
+        address sellExchange,
+        uint amount
+    ) external returns (bool) {
+        // Logică arbitraj
+        uint profit = calculateProfit(buyExchange, sellExchange, amount);
+        if (profit > 0) {
+            emit ArbitrageDetected(profit, buyExchange, sellExchange);
+            return true;
+        }
+        return false;
+    }
+}

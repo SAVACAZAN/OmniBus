@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>🤖 OmniBus AI - Asistent Inteligent</title>
+    
+    <!-- PWA Settings -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="data:application/manifest+json,{
+        &quot;name&quot;: &quot;OmniBus AI&quot;,
+        &quot;short_name&quot;: &quot;OmniBus&quot;,
+        &quot;start_url&quot;: &quot;.&quot;,
+        &quot;display&quot;: &quot;standalone&quot;,
+        &quot;background_color&quot;: &quot;#667eea&quot;,
+        &quot;theme_color&quot;: &quot;#667eea&quot;,
+        &quot;icons&quot;: [{
+            &quot;src&quot;: &quot;data:image/svg+xml,...&quot;,
+            &quot;sizes&quot;: &quot;192x192&quot;,
+            &quot;type&quot;: &quot;image/svg+xml&quot;
+        }]
+    }">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            color: #4a2f8c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Notification Bell */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.5em;
+            padding: 10px;
+            background: #f0f2f5;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .notification-bell:hover {
+            background: #e2e8f0;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #f56565;
+            color: white;
+            font-size: 0.7em;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Notifications Panel */
+        .notifications-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 350px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .notifications-panel.show {
+            display: block;
+        }
+
+        .notifications-header {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notifications-list {
+            padding: 10px;
+        }
+
+        .notification-item {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .notification-item:hover {
+            transform: translateX(5px);
+        }
+
+        .notification-item.unread {
+            background: #ebf4ff;
+            border-left-color: #48bb78;
+        }
+
+        .notification-time {
+            font-size: 0.8em;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        /* AI Chat Sidebar */
+        .ai-sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            height: calc(100vh - 200px);
+            position: sticky;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .ai-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+        }
+
+        .ai-info h3 {
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+            color: #48bb78;
+        }
+
+        .ai-status-dot {
+            width: 8px;
+            height: 8px;
+            background: #48bb78;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* AI Personality Selector */
+        .ai-personality {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .personality-btn {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .personality-btn:hover {
+            border-color: #667eea;
+        }
+
+        .personality-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message.ai {
+            flex-direction: row;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .message.ai .message-avatar {
+            background: #667eea;
+            color: white;
+        }
+
+        .message.user .message-avatar {
+            background: #48bb78;
+            color: white;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 15px;
+            border-radius: 15px;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .message.ai .message-content {
+            background: white;
+            border-top-left-radius: 5px;
+        }
+
+        .message.user .message-content {
+            background: #667eea;
+            color: white;
+            border-top-right-radius: 5px;
+        }
+
+        .message-time {
+            font-size: 0.7em;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 50px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            padding: 10px 15px;
+            font-size: 1em;
+            outline: none;
+            background: transparent;
+        }
+
+        .chat-send {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: transform 0.2s;
+        }
+
+        .chat-send:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-send:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        /* Quick Questions */
+        .quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-q {
+            background: #f0f2f5;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+
+        .quick-q:hover {
+            background: #e2e8f0;
+        }
+
+        /* Content Area */
+        .content-area {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        /* Learning Path */
+        .learning-path {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .path-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .path-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .path-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .path-progress {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .path-progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+
+        /* Recommended Content */
+        .recommended-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .rec-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rec-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 50px;
+            font-size: 0.8em;
+        }
+
+        /* Study Reminder */
+        .reminder-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reminder-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .reminder-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Achievement Popup */
+        .achievement-popup {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 15px 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: none;
+            align-items: center;
+            gap: 15px;
+            animation: slideIn 0.5s;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .achievement-popup.show {
+            display: flex;
+        }
+
+        .achievement-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+        }
+
+        /* Notifications Permission */
+        .permission-request {
+            background: #f0f2f5;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .permission-request.show {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .ai-sidebar {
+                height: 500px;
+                position: static;
+            }
+            
+            .notifications-panel {
+                width: 300px;
+                right: 10px;
+            }
+            
+            .learning-path {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with Notifications -->
+        <div class="header">
+            <h1>
+                <span>🤖</span>
+                <span>OmniBus AI Learning Assistant</span>
+            </h1>
+            <div style="display: flex; gap: 10px;">
+                <div class="notification-bell" onclick="toggleNotifications()" id="notificationBell">
+                    🔔
+                    <span class="notification-badge" id="notificationBadge">3</span>
+                </div>
+                <div class="notification-bell" onclick="checkNotificationsPermission()">
+                    🔕
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Panel -->
+        <div class="notifications-panel" id="notificationsPanel">
+            <div class="notifications-header">
+                <h3>🔔 Notificări</h3>
+                <button onclick="markAllAsRead()" style="background: none; border: none; color: #667eea; cursor: pointer;">Mark all read</button>
+            </div>
+            <div class="notifications-list" id="notificationsList">
+                <!-- Notificări generate dinamic -->
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- AI Chat Sidebar -->
+            <div class="ai-sidebar">
+                <div class="ai-header">
+                    <div class="ai-avatar">🤖</div>
+                    <div class="ai-info">
+                        <h3>AI Assistant</h3>
+                        <div class="ai-status">
+                            <span class="ai-status-dot"></span>
+                            <span>Online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Personalities -->
+                <div class="ai-personality">
+                    <button class="personality-btn active" onclick="setPersonality('mentor')" id="personality-mentor">👨‍🏫 Mentor</button>
+                    <button class="personality-btn" onclick="setPersonality('coder')" id="personality-coder">💻 Coder</button>
+                    <button class="personality-btn" onclick="setPersonality('debugger')" id="personality-debugger">🐛 Debugger</button>
+                    <button class="personality-btn" onclick="setPersonality('motivator')" id="personality-motivator">🎯 Motivator</button>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            Salut! Sunt asistentul tău AI pentru OmniBus. Cu ce te pot ajuta azi?
+                            <div class="message-time">Acum</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Questions -->
+                <div class="quick-questions">
+                    <span class="quick-q" onclick="askQuickQuestion('Ce este OmniBus?')">Ce este OmniBus?</span>
+                    <span class="quick-q" onclick="askQuickQuestion('Cum instalez KVM?')">Cum instalez KVM?</span>
+                    <span class="quick-q" onclick="askQuickQuestion('Ce e auth gate?')">Ce e auth gate?</span>
+                    <span class="quick-q" onclick="askQuickQuestion('Cum fac debug?')">Cum fac debug?</span>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Scrie un mesaj..." onkeypress="handleKeyPress(event)">
+                    <button class="chat-send" onclick="sendMessage()" id="sendButton">📤</button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Learning Path -->
+                <h2>📚 Learning Path Recomandat de AI</h2>
+                <div class="learning-path">
+                    <div class="path-card" onclick="startLesson('intro')">
+                        <div class="path-icon">🚀</div>
+                        <h3>Introducere</h3>
+                        <p>Bazele OmniBus</p>
+                        <div class="path-progress">
+                            <div class="path-progress-fill" style="width: 100%"></div>
+                        </div>
+                        <span style="color: #48bb78;">Completat</span>
+                    </div>
+                    
+                    <div class="path-card" onclick="startLesson('install')">
+                        <div class="path-icon">🔧</div>
+                        <h3>Instalare</h3>
+                        <p>KVM, Zig, compilare</p>
+                        <div class="path-progress">
+                            <div class="path-progress-fill" style="width: 60%"></div>
+                        </div>
+                        <span style="color: #667eea;">În progres</span>
+                    </div>
+                    
+                    <div class="path-card" onclick="startLesson('arch')">
+                        <div class="path-icon">🏗️</div>
+                        <h3>Arhitectură</h3>
+                        <p>7 layere, memory map</p>
+                        <div class="path-progress">
+                            <div class="path-progress-fill" style="width: 30%"></div>
+                        </div>
+                        <span style="color: #f59e0b;">Începe</span>
+                    </div>
+                    
+                    <div class="path-card" onclick="startLesson('modules')">
+                        <div class="path-icon">📦</div>
+                        <h3>Module Avansate</h3>
+                        <p>Analytics, Grid, Execution</p>
+                        <div class="path-progress">
+                            <div class="path-progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span style="color: #f59e0b;">Începe</span>
+                    </div>
+                </div>
+
+                <!-- AI Recommended Content -->
+                <h2 style="margin-top: 30px;">🎯 Recomandări Personalizate</h2>
+                <div class="recommended-grid" id="recommendedContent">
+                    <!-- Populate dinamic -->
+                </div>
+
+                <!-- Study Reminder -->
+                <div class="reminder-card">
+                    <div>
+                        <h3>📅 Program de studiu</h3>
+                        <p>AI-ul a detectat că studiezi cel mai bine seara</p>
+                    </div>
+                    <button class="reminder-btn" onclick="setReminder()">Setează reminder zilnic</button>
+                </div>
+
+                <!-- Learning Stats -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px;">
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 2em; color: #667eea;">12</div>
+                        <div>Lecții completate</div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 2em; color: #667eea;">3</div>
+                        <div>Zile consecutiv</div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 2em; color: #667eea;">89%</div>
+                        <div>Quiz score mediu</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Popup -->
+    <div class="achievement-popup" id="achievementPopup">
+        <div class="achievement-icon">🏆</div>
+        <div>
+            <h4 id="achievementTitle">Achievement deblocat!</h4>
+            <p id="achievementDesc">AI Learning - 10 întrebări</p>
+        </div>
+    </div>
+
+    <!-- Permission Request -->
+    <div class="permission-request" id="permissionRequest">
+        <p>🔔 Activează notificările pentru a primi reminder-e de studiu</p>
+        <button onclick="requestNotificationPermission()" style="background: #667eea; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">Activează</button>
+    </div>
+
+    <script>
+        // ==================== AI CHAT SYSTEM ====================
+        let currentPersonality = 'mentor';
+        let chatHistory = [];
+        let questionCount = 0;
+
+        // AI Knowledge Base
+        const aiKnowledge = {
+            mentor: {
+                greetings: "Salut! Sunt mentorul tău pentru OmniBus. Te învăț pas cu pas.",
+                responses: {
+                    'ce este omnibus': 'OmniBus este un sistem de trading de mare frecvență (HFT) care rulează direct pe hardware, fără sistem de operare. Are 7 straturi, de la bootloader în Assembly până la Neuro OS cu algoritmi genetici.',
+                    'cum instalez': 'Pentru instalare ai nevoie de: 1) KVM, 2) Zig compiler, 3) NASM. Rulează: sudo apt install qemu-kvm libvirt-daemon-system && wget ziglang.org/download/zig-linux-x86_64-0.13.0.tar.xz',
+                    'auth gate': 'Auth gate e la adresa 0x100050. Trebuie să pui valoarea 0x70 în GDB pentru a activa sistemul: set {char}0x100050 = 0x70',
+                    'debug': 'Pentru debug: make qemu-debug, apoi în alt terminal gdb, target remote localhost:1234, break *0x110000, continue',
+                }
+            },
+            coder: {
+                greetings: "Salut! Sunt programatorul. Hai să scriem cod împreună!",
+                responses: {
+                    'ce este omnibus': 'E un sistem scris în Assembly, Ada SPARK, Zig și Rust. Folosește fixed-point arithmetic și zero dynamic allocations pentru viteză maximă.',
+                    'cum instalez': 'Instalează Zig 0.13.0, NASM 2.15+, și KVM. Codul e pe GitHub: git clone https://github.com/SAVACAZAN/OmniBus',
+                    'auth gate': 'În execution_os.zig, verifică auth = @as(*volatile u8, @ptrFromInt(0x100050)); if (auth.* != 0x70) return;',
+                    'debug': 'Folosește GDB: break grid_os.zig:150, print order_array[head], x/10x 0x110840',
+                }
+            },
+            debugger: {
+                greetings: "Bună! Sunt debugger-ul. Rezolvăm probleme împreună!",
+                responses: {
+                    'ce este omnibus': 'E un sistem bare-metal complex. Cele mai comune bug-uri sunt la auth gate și ring buffer overflow.',
+                    'cum instalez': 'Dacă ai erori la compilare, verifică versiunea Zig (trebuie 0.13.0) și NASM (≥2.15).',
+                    'auth gate': 'Dacă nu vezi output în QEMU, probabil nu ai activat auth gate. Conectează-te cu GDB și set {char}0x100050 = 0x70',
+                    'debug': 'Pentru ring buffer: verifică head/tail la 0x130040. Dacă head == tail, nu sunt date noi.',
+                }
+            },
+            motivator: {
+                greetings: "Salut! Sunt aici să te motivez! Hai să învățăm împreună! 🚀",
+                responses: {
+                    'ce este omnibus': 'E un proiect ambițios care te va face un programator mai bun. O să înveți assembly, kernel programming, criptografie și trading algorithms!',
+                    'cum instalez': 'Primul pas e cel mai greu, dar după ce vezi primul boot, o să fii mândru! Urmează tutorialul pas cu pas.',
+                    'auth gate': 'Auth gate e ca o ușă secretă. Odată ce o deschizi, totul prinde viață! Setează 0x70 și vezi magia.',
+                    'debug': 'Debugging-ul e ca un puzzle. Fiecare bug rezolvat te face mai bun!',
+                }
+            }
+        };
+
+        function setPersonality(personality) {
+            currentPersonality = personality;
+            
+            // Update UI
+            document.querySelectorAll('.personality-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`personality-${personality}`).classList.add('active');
+            
+            // Add system message
+            addMessage('ai', aiKnowledge[personality].greetings);
+            
+            // Save preference
+            localStorage.setItem('aiPersonality', personality);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+            
+            // Disable send button temporarily
+            document.getElementById('sendButton').disabled = true;
+            
+            // Simulate AI thinking
+            setTimeout(() => {
+                const response = generateAIResponse(message);
+                addMessage('ai', response);
+                document.getElementById('sendButton').disabled = false;
+                
+                // Check for achievements
+                questionCount++;
+                if (questionCount === 5) {
+                    showAchievement('🤖 Chat Activ', 'Ai pus 5 întrebări AI-ului!');
+                }
+                if (questionCount === 10) {
+                    showAchievement('🏆 Master Conversator', '10 întrebări - ești pe cale să devii expert!');
+                }
+            }, 1000);
+        }
+
+        function generateAIResponse(message) {
+            const lowerMsg = message.toLowerCase();
+            const knowledge = aiKnowledge[currentPersonality];
+            
+            // Check for keywords
+            for (let [key, response] of Object.entries(knowledge.responses)) {
+                if (lowerMsg.includes(key)) {
+                    return response;
+                }
+            }
+            
+            // Default responses based on personality
+            const defaultResponses = {
+                mentor: "Interesantă întrebare! Hai să explorăm împreună. Ce anume te interesează mai exact?",
+                coder: "Bună întrebare de programare! Poți verifica în documentația oficială pentru detalii.",
+                debugger: "Hmm, să vedem... Verifică log-urile și spune-mi ce erori primești.",
+                motivator: "Excelentă întrebare! Arată că ești pe drumul cel bun! Continuă așa! 💪"
+            };
+            
+            return defaultResponses[currentPersonality];
+        }
+
+        function addMessage(type, content) {
+            const chat = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const time = new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${type === 'ai' ? '🤖' : '👤'}</div>
+                <div class="message-content">
+                    ${content}
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            chat.appendChild(messageDiv);
+            chat.scrollTop = chat.scrollHeight;
+            
+            // Save to history
+            chatHistory.push({ type, content, time });
+        }
+
+        function askQuickQuestion(question) {
+            document.getElementById('chatInput').value = question;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // ==================== NOTIFICATION SYSTEM ====================
+        let notifications = [
+            { id: 1, title: '🎯 Lecție nouă: Debugging avansat', time: 'Acum 5 min', read: false, type: 'lesson' },
+            { id: 2, title: '🏆 Ai deblocat: Bootloader Expert', time: 'Acum 2 ore', read: false, type: 'achievement' },
+            { id: 3, title: '📅 Reminder: Studiază arhitectura', time: 'Acum 3 ore', read: false, type: 'reminder' },
+            { id: 4, title: '💡 AI Recomandare: Începe modulul Grid OS', time: 'Ieri', read: true, type: 'recommendation' },
+        ];
+
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationsPanel');
+            panel.classList.toggle('show');
+            updateNotificationsList();
+        }
+
+        function updateNotificationsList() {
+            const list = document.getElementById('notificationsList');
+            const unreadCount = notifications.filter(n => !n.read).length;
+            
+            document.getElementById('notificationBadge').textContent = unreadCount;
+            
+            let html = '';
+            notifications.forEach(notif => {
+                html += `
+                    <div class="notification-item ${!notif.read ? 'unread' : ''}" onclick="markAsRead(${notif.id})">
+                        <div style="display: flex; gap: 10px;">
+                            <span>${getNotificationIcon(notif.type)}</span>
+                            <div>
+                                <strong>${notif.title}</strong>
+                                <div class="notification-time">${notif.time}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            list.innerHTML = html;
+        }
+
+        function getNotificationIcon(type) {
+            const icons = {
+                lesson: '📚',
+                achievement: '🏆',
+                reminder: '⏰',
+                recommendation: '💡'
+            };
+            return icons[type] || '🔔';
+        }
+
+        function markAsRead(id) {
+            const notification = notifications.find(n => n.id === id);
+            if (notification) {
+                notification.read = true;
+                updateNotificationsList();
+            }
+        }
+
+        function markAllAsRead() {
+            notifications.forEach(n => n.read = true);
+            updateNotificationsList();
+        }
+
+        // ==================== BROWSER NOTIFICATIONS ====================
+        function checkNotificationsPermission() {
+            if (Notification.permission === 'granted') {
+                showBrowserNotification('🔔 Notificări activate', 'Vei primi reminder-e de studiu');
+            } else if (Notification.permission !== 'denied') {
+                document.getElementById('permissionRequest').classList.add('show');
+            }
+        }
+
+        function requestNotificationPermission() {
+            Notification.requestPermission().then(perm => {
+                if (perm === 'granted') {
+                    document.getElementById('permissionRequest').classList.remove('show');
+                    showBrowserNotification('✅ Notificări activate', 'Acum poți primi reminder-e');
+                    
+                    // Schedule study reminders
+                    scheduleStudyReminders();
+                }
+            });
+        }
+
+        function showBrowserNotification(title, body) {
+            if (Notification.permission === 'granted') {
+                new Notification(title, { body, icon: 'data:image/svg+xml,...' });
+            }
+        }
+
+        function scheduleStudyReminders() {
+            // Schedule reminders every day at 20:00
+            const now = new Date();
+            const reminder = new Date();
+            reminder.setHours(20, 0, 0);
+            
+            if (now > reminder) {
+                reminder.setDate(reminder.getDate() + 1);
+            }
+            
+            const timeUntilReminder = reminder.getTime() - now.getTime();
+            
+            setTimeout(() => {
+                showBrowserNotification('📚 Time to study!', 'AI-ul recomandă să studiezi modulul Grid OS azi');
+                
+                // Add to internal notifications
+                notifications.unshift({
+                    id: Date.now(),
+                    title: '⏰ Reminder de studiu',
+                    time: 'Acum',
+                    read: false,
+                    type: 'reminder'
+                });
+                updateNotificationsList();
+                
+                // Schedule next day
+                scheduleStudyReminders();
+            }, timeUntilReminder);
+        }
+
+        // ==================== ACHIEVEMENT SYSTEM ====================
+        function showAchievement(title, description) {
+            const popup = document.getElementById('achievementPopup');
+            document.getElementById('achievementTitle').textContent = title;
+            document.getElementById('achievementDesc').textContent = description;
+            
+            popup.classList.add('show');
+            
+            // Add to notifications
+            notifications.unshift({
+                id: Date.now(),
+                title: `🏆 ${title}`,
+                time: 'Acum',
+                read: false,
+                type: 'achievement'
+            });
+            updateNotificationsList();
+            
+            // Show browser notification if permitted
+            if (Notification.permission === 'granted') {
+                new Notification(`🏆 ${title}`, { body: description });
+            }
+            
+            setTimeout(() => {
+                popup.classList.remove('show');
+            }, 5000);
+        }
+
+        // ==================== AI RECOMMENDATIONS ====================
+        function updateRecommendations() {
+            const recContainer = document.getElementById('recommendedContent');
+            
+            const recommendations = [
+                {
+                    title: '📊 Analytics OS Deep Dive',
+                    desc: 'Bazat pe progresul tău, AI-ul recomandă acest modul',
+                    badge: '🔥 Popular',
+                    action: 'Începe'
+                },
+                {
+                    title: '🔐 Cryptography Module',
+                    desc: 'Ai întrebat despre semnături - continuă aici',
+                    badge: '🎯 Recomandat',
+                    action: 'Continuă'
+                },
+                {
+                    title: '🐛 Debugging Workshop',
+                    desc: 'Nivelul tău: Intermediar',
+                    badge: '⚡ Nou',
+                    action: 'Explorează'
+                }
+            ];
+            
+            let html = '';
+            recommendations.forEach(rec => {
+                html += `
+                    <div class="rec-card" onclick="startLesson('${rec.title}')">
+                        <span class="rec-badge">${rec.badge}</span>
+                        <h3>${rec.title}</h3>
+                        <p>${rec.desc}</p>
+                        <button style="background: #667eea; color: white; border: none; padding: 8px 15px; border-radius: 5px; margin-top: 10px; cursor: pointer;">${rec.action}</button>
+                    </div>
+                `;
+            });
+            
+            recContainer.innerHTML = html;
+        }
+
+        function startLesson(lesson) {
+            addMessage('ai', `Excelentă alegere! Hai să începem cu "${lesson}". Te ghidez pas cu pas.`);
+            
+            // Show notification
+            showAchievement('📚 Lecție începută', `Ai început: ${lesson}`);
+        }
+
+        function setReminder() {
+            const times = ['09:00', '14:00', '19:00', '21:00'];
+            const randomTime = times[Math.floor(Math.random() * times.length)];
+            
+            showAchievement('⏰ Reminder setat', `Vei primi notificări zilnic la ${randomTime}`);
+            
+            if (Notification.permission === 'granted') {
+                new Notification('✅ Reminder activat', { body: `Vei fi notificat în fiecare zi la ${randomTime}` });
+            }
+        }
+
+        // ==================== LEARNING PROGRESS ====================
+        function updateLearningStats() {
+            // Simulate progress updates
+            const stats = {
+                lessons: 12,
+                streak: 3,
+                quizScore: 89
+            };
+            
+            // Update UI
+            document.querySelectorAll('.progress-fill').forEach(fill => {
+                fill.style.width = Math.random() * 100 + '%';
+            });
+        }
+
+        // ==================== INITIALIZATION ====================
+        window.onload = function() {
+            // Load saved personality
+            const savedPersonality = localStorage.getItem('aiPersonality');
+            if (savedPersonality) {
+                setPersonality(savedPersonality);
+            }
+            
+            // Initialize notifications
+            updateNotificationsList();
+            
+            // Initialize recommendations
+            updateRecommendations();
+            
+            // Check notification permission
+            if (Notification.permission === 'default') {
+                setTimeout(() => {
+                    document.getElementById('permissionRequest').classList.add('show');
+                }, 5000);
+            }
+            
+            // Auto-send welcome message based on time of day
+            const hour = new Date().getHours();
+            let greeting = '';
+            if (hour < 12) greeting = 'Bună dimineața!';
+            else if (hour < 18) greeting = 'Bună ziua!';
+            else greeting = 'Bună seara!';
+            
+            setTimeout(() => {
+                addMessage('ai', `${greeting} Sunt asistentul tău AI. Azi putem discuta despre ${getTodaysTopic()}.`);
+            }, 1500);
+            
+            // Schedule periodic tips
+            setInterval(() => {
+                if (Math.random() > 0.7) { // 30% chance
+                    const tips = [
+                        '💡 Tip: Folosește make qemu-debug pentru debugging',
+                        '💡 Tip: Auth gate trebuie activat în GDB',
+                        '💡 Tip: Ring buffer-ul e la 0x130040',
+                        '💡 Tip: Poți schimba personalitatea AI-ului oricând'
+                    ];
+                    const randomTip = tips[Math.floor(Math.random() * tips.length)];
+                    addMessage('ai', randomTip);
+                }
+            }, 30000); // Every 30 seconds
+        };
+
+        function getTodaysTopic() {
+            const topics = ['instalare KVM', 'arhitectură', 'debugging', 'cryptography', 'grid OS', 'analytics OS'];
+            const dayOfWeek = new Date().getDay();
+            return topics[dayOfWeek % topics.length];
+        }
+
+        // Close notifications panel when clicking outside
+        document.addEventListener('click', function(event) {
+            const panel = document.getElementById('notificationsPanel');
+            const bell = document.getElementById('notificationBell');
+            
+            if (!panel.contains(event.target) && !bell.contains(event.target)) {
+                panel.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

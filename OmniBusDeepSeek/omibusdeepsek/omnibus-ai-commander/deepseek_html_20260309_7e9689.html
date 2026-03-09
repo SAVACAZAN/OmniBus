@@ -1,0 +1,1175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>🏆 OLIMNIBIADA - Competiții de Matematică și Informatică</title>
+    
+    <style type="text/css">
+        body {
+            background: #0a0a0a;
+            color: #ffffff;
+            font-family: "Courier New", Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 1200px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            padding: 30px;
+            border: 3px solid #ffd700;
+        }
+        
+        h1 {
+            color: #ffd700;
+            font-size: 56px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-family: "Courier New", Courier, monospace;
+            text-shadow: 0 0 20px #ffd700;
+        }
+        
+        h2 {
+            color: #ffd700;
+            font-size: 36px;
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 10px;
+            margin: 40px 0 20px 0;
+        }
+        
+        h3 {
+            color: #ffffff;
+            font-size: 28px;
+            margin: 20px 0 10px 0;
+        }
+        
+        .olympiad-header {
+            background: #000000;
+            border: 3px solid #ffd700;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            width: 100%;
+            overflow: hidden;
+            margin: 30px 0;
+        }
+        
+        .stat-box {
+            width: 220px;
+            height: 120px;
+            background: #000000;
+            border: 2px solid #ffd700;
+            float: left;
+            margin: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 48px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 16px;
+            color: #ffffff;
+            margin-top: 10px;
+        }
+        
+        .clear {
+            clear: both;
+        }
+        
+        .level-container {
+            margin: 40px 0;
+        }
+        
+        .level-card {
+            background: #000000;
+            border: 2px solid #ffd700;
+            margin: 20px 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .level-header {
+            background: #ffd700;
+            color: #000000;
+            padding: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .level-content {
+            padding: 30px;
+            display: block;
+        }
+        
+        .level-title {
+            color: #ffd700;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #000000;
+            border: 2px solid #ffd700;
+        }
+        
+        th {
+            background: #ffd700;
+            color: #000000;
+            padding: 15px;
+            text-align: left;
+            font-size: 18px;
+            font-weight: bold;
+            border: 1px solid #ffd700;
+        }
+        
+        td {
+            padding: 12px;
+            border: 1px solid #ffd700;
+            color: #ffffff;
+            font-size: 16px;
+        }
+        
+        .gold {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .silver {
+            color: #c0c0c0;
+            font-weight: bold;
+        }
+        
+        .bronze {
+            color: #cd7f32;
+            font-weight: bold;
+        }
+        
+        .medal-table {
+            width: 100%;
+            margin: 30px 0;
+        }
+        
+        .medal-row {
+            display: table-row;
+        }
+        
+        .medal-cell {
+            display: table-cell;
+            padding: 15px;
+            border-bottom: 1px solid #ffd700;
+        }
+        
+        .button {
+            display: inline-block;
+            background: #ffd700;
+            color: #000000;
+            padding: 15px 40px;
+            margin: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .button:hover {
+            background: #ffffff;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: #000000;
+            border: 2px solid #ffd700;
+            margin-top: 40px;
+        }
+        
+        hr {
+            border: 2px solid #ffd700;
+            margin: 40px 0;
+        }
+        
+        .timeline {
+            margin: 30px 0;
+        }
+        
+        .timeline-item {
+            margin: 20px 0;
+            padding: 20px;
+            background: #000000;
+            border-left: 10px solid #ffd700;
+        }
+        
+        .timeline-date {
+            color: #ffd700;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- Olimnibiada Header -->
+    <div class="olympiad-header">
+        <h1>🏆 OLIMNIBIADA</h1>
+        <p style="color: #ffd700; font-size: 28px;">Cea mai mare competiție de Matematică și Informatică</p>
+        <div style="margin-top: 20px;">
+            <span style="color: #ffd700; font-size: 20px; margin: 0 20px;">12 Niveluri</span>
+            <span style="color: #ffd700; font-size: 20px; margin: 0 20px;">|</span>
+            <span style="color: #ffd700; font-size: 20px; margin: 0 20px;">92 Țări</span>
+            <span style="color: #ffd700; font-size: 20px; margin: 0 20px;">|</span>
+            <span style="color: #ffd700; font-size: 20px; margin: 0 20px;">1.2M Participanți</span>
+        </div>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-number">12</div>
+            <div class="stat-label">Niveluri</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">92</div>
+            <div class="stat-label">Țări</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">1.2M</div>
+            <div class="stat-label">Participanți</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">45k</div>
+            <div class="stat-label">Medalii</div>
+        </div>
+        <div class="clear"></div>
+    </div>
+    
+    <hr>
+    
+    <!-- NIVELURILE OLIMNIBIADEI -->
+    <h2>📊 CELE 12 NIVELURI ALE OLIMNIBIADEI</h2>
+    
+    <!-- Nivel 1: Clasa Pregătitoare - Clasa 0 -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(1)">🏆 NIVELUL 1: CLASA PREGĂTITOARE (0) ▼</div>
+        <div class="level-content" id="level1">
+            <div class="level-title">Matematică - Nivel Începător</div>
+            
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Numere</td>
+                    <td>1-10, comparare, ordonare</td>
+                    <td>10</td>
+                    <td>30 min</td>
+                </tr>
+                <tr>
+                    <td>Forme geometrice</td>
+                    <td>Cerc, pătrat, triunghi</td>
+                    <td>5</td>
+                    <td>20 min</td>
+                </tr>
+                <tr>
+                    <td>Logică</td>
+                    <td>Șiruri, tipare, asocieri</td>
+                    <td>5</td>
+                    <td>20 min</td>
+                </tr>
+            </table>
+            
+            <div class="level-title" style="margin-top: 30px;">Informatică - Gândire Computatională</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algoritmi vizuali</td>
+                    <td>Labirinturi, succesiuni</td>
+                    <td>8</td>
+                    <td>30 min</td>
+                </tr>
+                <tr>
+                    <td>Programare în blocuri</td>
+                    <td>Scratch Jr, secvențiere</td>
+                    <td>6</td>
+                    <td>25 min</td>
+                </tr>
+            </table>
+            
+            <div style="margin-top: 20px;">
+                <p><span class="gold">🥇 Medalii acordate:</span> 1,000 aur, 2,000 argint, 3,000 bronz</p>
+                <p><span class="gold">📅 Data competiție:</span> 15-20 Mai 2026</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Nivel 2: Clasa I -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(2)">🏆 NIVELUL 2: CLASA I ▼</div>
+        <div class="level-content" id="level2">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Operații</td>
+                    <td>Adunare, scădere 0-20</td>
+                    <td>15</td>
+                    <td>40 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie</td>
+                    <td>Perimetre simple, forme</td>
+                    <td>8</td>
+                    <td>30 min</td>
+                </tr>
+                <tr>
+                    <td>Probleme de logică</td>
+                    <td>Probleme cu imagini</td>
+                    <td>7</td>
+                    <td>30 min</td>
+                </tr>
+            </table>
+            
+            <div class="level-title">Informatică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algoritmi</td>
+                    <td>Sortări simple, căutări</td>
+                    <td>8</td>
+                    <td>35 min</td>
+                </tr>
+                <tr>
+                    <td>Programare vizuală</td>
+                    <td>Scratch, blocuri</td>
+                    <td>7</td>
+                    <td>30 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 3: Clasa a II-a -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(3)">🏆 NIVELUL 3: CLASA a II-a ▼</div>
+        <div class="level-content" id="level3">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Operații</td>
+                    <td>Adunare, scădere 0-100, înmulțire</td>
+                    <td>15</td>
+                    <td>45 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie</td>
+                    <td>Arii, perimetre</td>
+                    <td>8</td>
+                    <td>30 min</td>
+                </tr>
+                <tr>
+                    <td>Fracții</td>
+                    <td>Jumătăți, pătrimi</td>
+                    <td>5</td>
+                    <td>20 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 4: Clasa a III-a -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(4)">🏆 NIVELUL 4: CLASA a III-a ▼</div>
+        <div class="level-content" id="level4">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Operații</td>
+                    <td>Înmulțire, împărțire, ordinea operațiilor</td>
+                    <td>15</td>
+                    <td>50 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie</td>
+                    <td>Perimetre, arii, volume simple</td>
+                    <td>8</td>
+                    <td>35 min</td>
+                </tr>
+                <tr>
+                    <td>Fracții</td>
+                    <td>Fracții echivalente, comparații</td>
+                    <td>7</td>
+                    <td>25 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 5: Clasa a IV-a -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(5)">🏆 NIVELUL 5: CLASA a IV-a ▼</div>
+        <div class="level-content" id="level5">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Numere mari</td>
+                    <td>Operații cu numere până la 1.000.000</td>
+                    <td>12</td>
+                    <td>45 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie</td>
+                    <td>Arii, perimetre, unghiuri</td>
+                    <td>8</td>
+                    <td>35 min</td>
+                </tr>
+                <tr>
+                    <td>Fracții și zecimale</td>
+                    <td>Operații cu fracții, introducere zecimale</td>
+                    <td>10</td>
+                    <td>40 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 6: Clasa a V-a -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(6)">🏆 NIVELUL 6: CLASA a V-a ▼</div>
+        <div class="level-content" id="level6">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algebră</td>
+                    <td>Ecuații simple, inecuații</td>
+                    <td>10</td>
+                    <td>50 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie</td>
+                    <td>Triunghiuri, patrulatere, cercuri</td>
+                    <td>8</td>
+                    <td>45 min</td>
+                </tr>
+                <tr>
+                    <td>Numere raționale</td>
+                    <td>Fracții, procente, rapoarte</td>
+                    <td>10</td>
+                    <td>45 min</td>
+                </tr>
+            </table>
+            
+            <div class="level-title">Informatică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Introducere în C++</td>
+                    <td>Variabile, tipuri de date, citire/afișare</td>
+                    <td>8</td>
+                    <td>60 min</td>
+                </tr>
+                <tr>
+                    <td>Structuri alternative</td>
+                    <td>if, else, switch</td>
+                    <td>6</td>
+                    <td>45 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 7: Clasa a VI-a -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(7)">🏆 NIVELUL 7: CLASA a VI-a ▼</div>
+        <div class="level-content" id="level7">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algebră</td>
+                    <td>Ecuații, sisteme de ecuații</td>
+                    <td>10</td>
+                    <td>55 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie</td>
+                    <td>Triunghiuri, asemănare, teorema lui Pitagora</td>
+                    <td>8</td>
+                    <td>50 min</td>
+                </tr>
+                <tr>
+                    <td>Mulțimi</td>
+                    <td>Operații cu mulțimi, cardinal</td>
+                    <td>6</td>
+                    <td>35 min</td>
+                </tr>
+            </table>
+            
+            <div class="level-title">Informatică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Structuri repetitive</td>
+                    <td>for, while, do-while</td>
+                    <td>8</td>
+                    <td>60 min</td>
+                </tr>
+                <tr>
+                    <td>Tablori unidimensionali</td>
+                    <td>Vectori, operații pe vectori</td>
+                    <td>6</td>
+                    <td>50 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 8: Clasa a VII-a -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(8)">🏆 NIVELUL 8: CLASA a VII-a ▼</div>
+        <div class="level-content" id="level8">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algebră</td>
+                    <td>Funcții, grafice, ecuații de gradul I</td>
+                    <td>10</td>
+                    <td>60 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie</td>
+                    <td>Cercuri, arce, unghiuri în cerc</td>
+                    <td>8</td>
+                    <td>55 min</td>
+                </tr>
+                <tr>
+                    <td>Probabilități</td>
+                    <td>Evenimente, probabilități simple</td>
+                    <td>6</td>
+                    <td>40 min</td>
+                </tr>
+            </table>
+            
+            <div class="level-title">Informatică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Tablori bidimensionali</td>
+                    <td>Matrici, operații pe matrici</td>
+                    <td>8</td>
+                    <td>70 min</td>
+                </tr>
+                <tr>
+                    <td>Algoritmi fundamentali</td>
+                    <td>Căutare, sortare, interclasare</td>
+                    <td>6</td>
+                    <td>60 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 9: Clasa a VIII-a -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(9)">🏆 NIVELUL 9: CLASA a VIII-a ▼</div>
+        <div class="level-content" id="level9">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algebră</td>
+                    <td>Ecuații de gradul II, inegalități</td>
+                    <td>8</td>
+                    <td>60 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie</td>
+                    <td>Geometrie în spațiu, prisme, piramide</td>
+                    <td>6</td>
+                    <td>50 min</td>
+                </tr>
+                <tr>
+                    <td>Statistică</td>
+                    <td>Medii, mediană, mod, abatere</td>
+                    <td>6</td>
+                    <td>40 min</td>
+                </tr>
+            </table>
+            
+            <div class="level-title">Informatică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Șiruri de caractere</td>
+                    <td>String, prelucrări, căutări</td>
+                    <td>6</td>
+                    <td>50 min</td>
+                </tr>
+                <tr>
+                    <td>Funcții și proceduri</td>
+                    <td>Parametri, return, recursivitate</td>
+                    <td>6</td>
+                    <td>60 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 10: Clasa a IX-a (Liceu) -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(10)">🏆 NIVELUL 10: CLASA a IX-a (LICEU) ▼</div>
+        <div class="level-content" id="level10">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algebră</td>
+                    <td>Mulțimi, funcții, ecuații, inecuații</td>
+                    <td>8</td>
+                    <td>70 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie</td>
+                    <td>Vectori, coordonate, drepte</td>
+                    <td>6</td>
+                    <td>60 min</td>
+                </tr>
+                <tr>
+                    <td>Trigonometrie</td>
+                    <td>Funcții trigonometrice, ecuații</td>
+                    <td>6</td>
+                    <td>60 min</td>
+                </tr>
+            </table>
+            
+            <div class="level-title">Informatică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Structuri de date</td>
+                    <td>Liste, stive, cozi</td>
+                    <td>6</td>
+                    <td>70 min</td>
+                </tr>
+                <tr>
+                    <td>Algoritmi fundamentali</td>
+                    <td>Divide et impera, backtracking</td>
+                    <td>4</td>
+                    <td>80 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 11: Clasa a X-a - a XI-a -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(11)">🏆 NIVELUL 11: CLASELE a X-a - a XI-a ▼</div>
+        <div class="level-content" id="level11">
+            <div class="level-title">Matematică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Analiză matematică</td>
+                    <td>Limite, derivate, integrale</td>
+                    <td>6</td>
+                    <td>80 min</td>
+                </tr>
+                <tr>
+                    <td>Algebră liniară</td>
+                    <td>Matrici, determinanți, sisteme</td>
+                    <td>5</td>
+                    <td>70 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie analitică</td>
+                    <td>Conice, cercuri, elipse</td>
+                    <td>5</td>
+                    <td>70 min</td>
+                </tr>
+            </table>
+            
+            <div class="level-title">Informatică</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algoritmi avansați</td>
+                    <td>Programare dinamică, greedy</td>
+                    <td>5</td>
+                    <td>90 min</td>
+                </tr>
+                <tr>
+                    <td>Grafuri</td>
+                    <td>BFS, DFS, drumuri minime</td>
+                    <td>4</td>
+                    <td>80 min</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Nivel 12: Clasa a XII-a + Internațional -->
+    <div class="level-card">
+        <div class="level-header" onclick="toggleLevel(12)">🏆 NIVELUL 12: CLASA a XII-a + NIVEL INTERNAȚIONAL ▼</div>
+        <div class="level-content" id="level12">
+            <div class="level-title">Matematică - Nivel Olimpiadă Internațională</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algebră avansată</td>
+                    <td>Grupuri, inele, corpuri, polinoame</td>
+                    <td>4</td>
+                    <td>120 min</td>
+                </tr>
+                <tr>
+                    <td>Analiză complexă</td>
+                    <td>Funcții complexe, serii, reziduuri</td>
+                    <td>3</td>
+                    <td>100 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie diferențială</td>
+                    <td>Curbe, suprafețe, varietăți</td>
+                    <td>3</td>
+                    <td>100 min</td>
+                </tr>
+                <tr>
+                    <td>Teoria numerelor</td>
+                    <td>Probleme IMO, ecuații diofantice</td>
+                    <td>4</td>
+                    <td>120 min</td>
+                </tr>
+                <tr>
+                    <td>Combinatorică</td>
+                    <td>Principiul includerii, funcții generatoare</td>
+                    <td>3</td>
+                    <td>90 min</td>
+                </tr>
+            </table>
+            
+            <div class="level-title">Informatică - Nivel Olimpiadă Internațională</div>
+            <table>
+                <tr>
+                    <th>Categorie</th>
+                    <th>Subiecte</th>
+                    <th>Număr Probleme</th>
+                    <th>Timp</th>
+                </tr>
+                <tr>
+                    <td>Algoritmi avansați</td>
+                    <td>Fluxuri, cuplaje, arbori, heavy-light</td>
+                    <td>3</td>
+                    <td>150 min</td>
+                </tr>
+                <tr>
+                    <td>Geometrie computațională</td>
+                    <td>Puncte, drepte, poligoane, acoperiri</td>
+                    <td>2</td>
+                    <td>120 min</td>
+                </tr>
+                <tr>
+                    <td>Inteligență Artificială</td>
+                    <td>Algoritmi genetici, rețele neuronale</td>
+                    <td>2</td>
+                    <td>120 min</td>
+                </tr>
+                <tr>
+                    <td>Blockchain</td>
+                    <td>Consensus, criptografie, smart contracts</td>
+                    <td>2</td>
+                    <td>120 min</td>
+                </tr>
+                <tr>
+                    <td>Optimizări</td>
+                    <td>Programare dinamică avansată, memoizare</td>
+                    <td>3</td>
+                    <td>150 min</td>
+                </tr>
+            </table>
+            
+            <div style="margin-top: 30px; background: #332200; padding: 20px; border: 2px solid #ffd700;">
+                <p style="color: #ffd700; font-size: 22px;">🥇 CALIFICAREA LA INTERNAȚIONALĂ</p>
+                <p>Primii 100 de clasați la nivelul 12 se califică direct la:</p>
+                <ul style="margin-top: 10px;">
+                    <li>🌍 Olimpiada Internațională de Matematică (IMO)</li>
+                    <li>💻 Olimpiada Internațională de Informatică (IOI)</li>
+                    <li>🤖 Olimpiada Europeană de Informatică (CEOI)</li>
+                    <li>🧮 Balkan Mathematical Olympiad (BMO)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <hr>
+    
+    <!-- MEDALII ȘI PREMII -->
+    <h2>🏅 MEDALII ȘI PREMII</h2>
+    
+    <table>
+        <tr>
+            <th>Nivel</th>
+            <th>Aur</th>
+            <th>Argint</th>
+            <th>Bronz</th>
+            <th>Mențiuni</th>
+        </tr>
+        <tr>
+            <td>Nivel 1-4 (Clasele 0-IV)</td>
+            <td class="gold">1,000</td>
+            <td class="silver">2,000</td>
+            <td class="bronze">3,000</td>
+            <td>5,000</td>
+        </tr>
+        <tr>
+            <td>Nivel 5-8 (Clasele V-VIII)</td>
+            <td class="gold">500</td>
+            <td class="silver">1,000</td>
+            <td class="bronze">1,500</td>
+            <td>2,500</td>
+        </tr>
+        <tr>
+            <td>Nivel 9-11 (Liceu)</td>
+            <td class="gold">250</td>
+            <td class="silver">500</td>
+            <td class="bronze">750</td>
+            <td>1,500</td>
+        </tr>
+        <tr>
+            <td>Nivel 12 (Internațional)</td>
+            <td class="gold">50</td>
+            <td class="silver">100</td>
+            <td class="bronze">150</td>
+            <td>300</td>
+        </tr>
+        <tr style="background: #332200;">
+            <td><strong>TOTAL</strong></td>
+            <td class="gold"><strong>1,800</strong></td>
+            <td class="silver"><strong>3,600</strong></td>
+            <td class="bronze"><strong>5,400</strong></td>
+            <td><strong>9,300</strong></td>
+        </tr>
+    </table>
+    
+    <div style="margin-top: 30px;">
+        <p><span class="gold">🥇 PREMII SPECIALE:</span></p>
+        <ul>
+            <li><strong>Marele Premiu Olimnibiada:</strong> $50,000 + Trofeu + Tabletă de aur</li>
+            <li><strong>Cel mai tânăr participant:</strong> $10,000 + Laptop performant</li>
+            <li><strong>Cel mai bun rezultat la Matematică:</strong> $25,000 + Publicare în reviste de specialitate</li>
+            <li><strong>Cel mai bun rezultat la Informatică:</strong> $25,000 + Stagiu la companii tech</li>
+            <li><strong>Premiul special al juriului:</strong> $15,000 + Mentorat personalizat</li>
+        </ul>
+    </div>
+    
+    <hr>
+    
+    <!-- CALENDAR COMPETIȚIONAL -->
+    <h2>📅 CALENDAR OLIMNIBIADA 2026</h2>
+    
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="timeline-date">🗓️ 1-15 Martie 2026</div>
+            <div><strong>ÎNSCRIERI</strong> - Deschise pentru toate nivelurile</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-date">🗓️ 1-10 Aprilie 2026</div>
+            <div><strong>ETAPA 1 - CALIFICAREA ÎN ȘCOLI</strong> - Toți participanții</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-date">🗓️ 1-15 Mai 2026</div>
+            <div><strong>ETAPA 2 - REGIONALĂ</strong> - Primii 50% clasați</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-date">🗓️ 1-10 Iunie 2026</div>
+            <div><strong>ETAPA 3 - NAȚIONALĂ</strong> - Primii 10% clasați</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-date">🗓️ 1-15 Iulie 2026</div>
+            <div><strong>ETAPA 4 - INTERNAȚIONALĂ</strong> - Top 100 per nivel</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-date">🗓️ 20 Iulie 2026</div>
+            <div><strong>GALA PREMIILOR</strong> - Eveniment grandios la București</div>
+        </div>
+    </div>
+    
+    <hr>
+    
+    <!-- STATISTICI PARTICIPARE -->
+    <h2>📊 STATISTICI PARTICIPARE</h2>
+    
+    <table>
+        <tr>
+            <th>Țară</th>
+            <th>Participanți</th>
+            <th>Medalii 2025</th>
+            <th>Calificări internaționale</th>
+        </tr>
+        <tr>
+            <td>🇷🇴 România</td>
+            <td>234,567</td>
+            <td class="gold">1,234</td>
+            <td>45</td>
+        </tr>
+        <tr>
+            <td>🇺🇸 SUA</td>
+            <td>156,789</td>
+            <td class="gold">987</td>
+            <td>67</td>
+        </tr>
+        <tr>
+            <td>🇨🇳 China</td>
+            <td>345,678</td>
+            <td class="gold">2,345</td>
+            <td>89</td>
+        </tr>
+        <tr>
+            <td>🇷🇺 Rusia</td>
+            <td>123,456</td>
+            <td class="gold">876</td>
+            <td>56</td>
+        </tr>
+        <tr>
+            <td>🇮🇳 India</td>
+            <td>234,567</td>
+            <td class="gold">1,567</td>
+            <td>78</td>
+        </tr>
+        <tr>
+            <td>🇯🇵 Japonia</td>
+            <td>98,765</td>
+            <td class="gold">654</td>
+            <td>34</td>
+        </tr>
+        <tr>
+            <td>🇩🇪 Germania</td>
+            <td>87,654</td>
+            <td class="gold">543</td>
+            <td>23</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- ÎNSCRIERE -->
+    <h2>📝 ÎNSCRIERE ÎN OLIMNIBIADA 2026</h2>
+    
+    <div style="background: #000000; border: 3px solid #ffd700; padding: 30px; text-align: center;">
+        <p style="font-size: 24px; color: #ffd700;">🎯 Înscrierile sunt deschise pentru toți elevii din clasele 0-12</p>
+        <p style="font-size: 18px; margin: 20px 0;">Participarea este GRATUITĂ pentru toți elevii din întreaga lume</p>
+        
+        <div style="margin: 30px 0;">
+            <span class="button" onclick="alert('Înregistrare deschisă! Vei fi redirecționat către formular.')">📝 ÎNSCRIE-TE ACUM</span>
+        </div>
+        
+        <p style="margin-top: 20px;">Perioadă înscrieri: 1-15 Martie 2026</p>
+        <p>Ultima ediție: 1.2 milioane de participanți din 87 de țări</p>
+    </div>
+    
+    <hr>
+    
+    <!-- RECORDURI ȘI PERFORMANȚE -->
+    <h2>🏆 RECORDURI OLIMNIBIADA</h2>
+    
+    <table>
+        <tr>
+            <th>Record</th>
+            <th>Valoare</th>
+            <th>Deținător</th>
+            <th>An</th>
+        </tr>
+        <tr>
+            <td>Cel mai tânăr participant</td>
+            <td>5 ani</td>
+            <td>Maria Ionescu, România</td>
+            <td>2025</td>
+        </tr>
+        <tr>
+            <td>Cel mai mare punctaj Matematică</td>
+            <td>300/300</td>
+            <td>Zhang Wei, China</td>
+            <td>2024</td>
+        </tr>
+        <tr>
+            <td>Cel mai mare punctaj Informatică</td>
+            <td>300/300</td>
+            <td>Andrei Popescu, România</td>
+            <td>2025</td>
+        </tr>
+        <tr>
+            <td>Cele mai multe medalii</td>
+            <td>12</td>
+            <td>Elena Dumitrescu, România</td>
+            <td>2023-2025</td>
+        </tr>
+        <tr>
+            <td>Cele mai multe țări participante</td>
+            <td>92</td>
+            <td>Ediția 2025</td>
+            <td>2025</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- PARTENERI ȘI SPONSORI -->
+    <h2>🤝 PARTENERI ȘI SPONSORI</h2>
+    
+    <div style="text-align: center; margin: 30px 0;">
+        <p style="color: #ffd700; font-size: 28px;">Microsoft • Google • Meta • Amazon • OpenAI • DeepMind</p>
+        <p style="color: #ffd700; font-size: 24px; margin-top: 20px;">Universități: MIT • Stanford • Cambridge • ETH Zurich • Politehnica București</p>
+    </div>
+    
+    <hr>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <h2 style="color: #ffd700; border-bottom: none;">🏆 OLIMNIBIADA</h2>
+        <p style="font-size: 18px; margin: 20px 0;">Cea mai mare competiție de Matematică și Informatică din lume</p>
+        <p style="font-size: 14px; color: #886600;">
+            12 Niveluri • 92 Țări • 1.2M Participanți • 45,000 Medalii
+        </p>
+        <p style="margin-top: 20px;">
+            <span style="color: #ffd700;">https://olimnibiada.omnibus.gg</span> • 
+            <span style="color: #ffd700;">contact@olimnibiada.org</span>
+        </p>
+    </div>
+    
+</div>
+
+<script type="text/javascript">
+    function toggleLevel(level) {
+        var content = document.getElementById('level' + level);
+        var header = event.target;
+        
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            header.innerHTML = header.innerHTML.replace('▶', '▼');
+        } else {
+            content.style.display = 'none';
+            header.innerHTML = header.innerHTML.replace('▼', '▶');
+        }
+    }
+</script>
+
+</body>
+</html>

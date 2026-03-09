@@ -1,0 +1,10 @@
+┌─────────────────┐
+│ Hot Contract    │
+│ Cache (L1)      │
+├─────────────────┤
+│ Warm Contract   │
+│ Cache (L2)      │
+├─────────────────┤
+│ Cold Storage    │
+│ (Persistent)    │
+└─────────────────┘

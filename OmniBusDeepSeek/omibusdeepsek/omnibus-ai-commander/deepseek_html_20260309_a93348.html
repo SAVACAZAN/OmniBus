@@ -1,0 +1,1009 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>📚 OMNIBUS ACADEMY - 100 Cursuri Opționale și Private</title>
+    
+    <style type="text/css">
+        body {
+            background: #0a0a0a;
+            color: #ffffff;
+            font-family: "Courier New", Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 1400px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            padding: 30px;
+            border: 3px solid #00ffff;
+        }
+        
+        h1 {
+            color: #00ffff;
+            font-size: 56px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-family: "Courier New", Courier, monospace;
+            text-shadow: 0 0 20px #00ffff;
+        }
+        
+        h2 {
+            color: #00ffff;
+            font-size: 36px;
+            border-bottom: 3px solid #00ffff;
+            padding-bottom: 10px;
+            margin: 40px 0 20px 0;
+        }
+        
+        h3 {
+            color: #ffffff;
+            font-size: 28px;
+            margin: 20px 0 10px 0;
+        }
+        
+        .header {
+            background: #000000;
+            border: 3px solid #00ffff;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            width: 100%;
+            overflow: hidden;
+            margin: 30px 0;
+        }
+        
+        .stat-box {
+            width: 220px;
+            height: 120px;
+            background: #000000;
+            border: 2px solid #00ffff;
+            float: left;
+            margin: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 48px;
+            color: #00ffff;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 16px;
+            color: #ffffff;
+            margin-top: 10px;
+        }
+        
+        .clear {
+            clear: both;
+        }
+        
+        .category-tabs {
+            width: 100%;
+            overflow: hidden;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .tab {
+            display: inline-block;
+            background: #000000;
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 15px 25px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .tab:hover {
+            background: #00ffff;
+            color: #000000;
+        }
+        
+        .tab.active {
+            background: #00ffff;
+            color: #000000;
+        }
+        
+        .course-grid {
+            width: 100%;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .course-card {
+            width: 320px;
+            height: 250px;
+            background: #000000;
+            border: 2px solid #00ffff;
+            float: left;
+            margin: 10px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .course-card:hover {
+            background: #003333;
+            transform: scale(1.02);
+        }
+        
+        .course-code {
+            color: #00ffff;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .course-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #ffffff;
+        }
+        
+        .course-desc {
+            font-size: 14px;
+            color: #cccccc;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .course-meta {
+            font-size: 12px;
+            color: #00ffff;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+        }
+        
+        .course-price {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #00ffff;
+            color: #000000;
+            padding: 5px 10px;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+        
+        .course-level {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #00ffff;
+            font-weight: bold;
+        }
+        
+        .badge-free {
+            background: #00ff00;
+            color: #000000;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .badge-private {
+            background: #ff00ff;
+            color: #ffffff;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .badge-cert {
+            background: #ffff00;
+            color: #000000;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #000000;
+            border: 2px solid #00ffff;
+        }
+        
+        th {
+            background: #00ffff;
+            color: #000000;
+            padding: 15px;
+            text-align: left;
+            font-size: 18px;
+            font-weight: bold;
+            border: 1px solid #00ffff;
+        }
+        
+        td {
+            padding: 12px;
+            border: 1px solid #00ffff;
+            color: #ffffff;
+            font-size: 16px;
+        }
+        
+        .button {
+            display: inline-block;
+            background: #00ffff;
+            color: #000000;
+            padding: 15px 40px;
+            margin: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .button:hover {
+            background: #ffffff;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: #000000;
+            border: 2px solid #00ffff;
+            margin-top: 40px;
+        }
+        
+        hr {
+            border: 2px solid #00ffff;
+            margin: 40px 0;
+        }
+        
+        .filter-section {
+            background: #000000;
+            border: 2px solid #00ffff;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        select, input {
+            background: #000000;
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 10px;
+            margin: 5px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 16px;
+        }
+        
+        option {
+            background: #000000;
+            color: #00ffff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- Header -->
+    <div class="header">
+        <h1>📚 OMNIBUS ACADEMY</h1>
+        <p style="color: #00ffff; font-size: 28px;">100 Cursuri Opționale și Private</p>
+        <div style="margin-top: 20px;">
+            <span style="color: #00ffff; font-size: 20px; margin: 0 20px;">12 Categorii</span>
+            <span style="color: #00ffff; font-size: 20px; margin: 0 20px;">|</span>
+            <span style="color: #00ffff; font-size: 20px; margin: 0 20px;">100 Cursuri</span>
+            <span style="color: #00ffff; font-size: 20px; margin: 0 20px;">|</span>
+            <span style="color: #00ffff; font-size: 20px; margin: 0 20px;">45 Profesori</span>
+        </div>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-number">100</div>
+            <div class="stat-label">Cursuri</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">45</div>
+            <div class="stat-label">Profesori</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">12</div>
+            <div class="stat-label">Categorii</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">4,567</div>
+            <div class="stat-label">Studenți</div>
+        </div>
+        <div class="clear"></div>
+    </div>
+    
+    <hr>
+    
+    <!-- Filtre -->
+    <div class="filter-section">
+        <div style="text-align: center;">
+            <select>
+                <option>Toate Categoriile</option>
+                <option>Programare</option>
+                <option>Matematică</option>
+                <option>Inteligență Artificială</option>
+                <option>Blockchain</option>
+                <option>Design</option>
+                <option>Business</option>
+            </select>
+            
+            <select>
+                <option>Toate Nivelurile</option>
+                <option>Începător</option>
+                <option>Intermediar</option>
+                <option>Avansat</option>
+                <option>Expert</option>
+            </select>
+            
+            <select>
+                <option>Tip Curs</option>
+                <option>Gratuit</option>
+                <option>Privat</option>
+                <option>Cu Certificare</option>
+            </select>
+            
+            <input type="text" placeholder="🔍 Caută curs..." style="width: 300px;">
+            
+            <button class="button" style="padding: 10px 20px;">Filtrează</button>
+        </div>
+    </div>
+    
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+        <span class="tab active" onclick="filterCategory('all')">TOATE</span>
+        <span class="tab" onclick="filterCategory('programming')">💻 PROGRAMARE</span>
+        <span class="tab" onclick="filterCategory('math')">🧮 MATEMATICĂ</span>
+        <span class="tab" onclick="filterCategory('ai')">🤖 AI</span>
+        <span class="tab" onclick="filterCategory('blockchain')">🔗 BLOCKCHAIN</span>
+        <span class="tab" onclick="filterCategory('design')">🎨 DESIGN</span>
+        <span class="tab" onclick="filterCategory('business')">💼 BUSINESS</span>
+        <span class="tab" onclick="filterCategory('languages')">🌐 LIMBI</span>
+        <span class="tab" onclick="filterCategory('science')">🔬 ȘTIINȚE</span>
+        <span class="tab" onclick="filterCategory('humanities')">📖 UMANISTE</span>
+        <span class="tab" onclick="filterCategory('arts')">🎭 ARTE</span>
+        <span class="tab" onclick="filterCategory('sports')">⚽ SPORT</span>
+        <span class="tab" onclick="filterCategory('personal')">🌟 DEZVOLTARE</span>
+    </div>
+    
+    <hr>
+    
+    <!-- Categoria 1: Programare (1-15) -->
+    <h2>💻 PROGRAMARE (15 cursuri)</h2>
+    <div class="course-grid" id="programming">
+        
+        <div class="course-card">
+            <div class="course-code">PRG-001</div>
+            <div class="course-name">Python de la Zero</div>
+            <div class="course-desc">Învață Python în 30 de zile, fără cunoștințe anterioare. Proiecte practice, exerciții interactive.</div>
+            <div class="course-meta">📅 12 săptămâni • 👨‍🏫 Mihai Popescu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Începător</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-002</div>
+            <div class="course-name">Java pentru Olimpiade</div>
+            <div class="course-desc">Pregătire pentru olimpiadele de informatică. Algoritmi, structuri de date, probleme comentate.</div>
+            <div class="course-meta">📅 16 săptămâni • 👨‍🏫 Andrei Ionescu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-003</div>
+            <div class="course-name">C++ pentru începători</div>
+            <div class="course-desc">Bazele C++, pointeri, clase, OOP. Potrivit pentru liceeni.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Radu Georgescu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Începător</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-004</div>
+            <div class="course-name">Web Development Full Stack</div>
+            <div class="course-desc">HTML, CSS, JavaScript, React, Node.js, MongoDB. Construiești 5 aplicații complete.</div>
+            <div class="course-meta">📅 24 săptămâni • 👩‍🏫 Elena Dumitrescu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-005</div>
+            <div class="course-name">JavaScript Modern</div>
+            <div class="course-desc">ES6+, async/await, promisiuni, framework-uri moderne.</div>
+            <div class="course-meta">📅 8 săptămâni • 👨‍🏫 Cristian Munteanu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-006</div>
+            <div class="course-name">React și Next.js</div>
+            <div class="course-desc">Construiește aplicații moderne cu React, Hooks, Next.js, SSR.</div>
+            <div class="course-meta">📅 12 săptămâni • 👨‍🏫 Alexandru Popa</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-007</div>
+            <div class="course-name">Go Language</div>
+            <div class="course-desc">Programare concurentă, microservicii, API-uri în Go.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Mihai Enescu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-008</div>
+            <div class="course-name">Rust Programming</div>
+            <div class="course-desc">Memory safety, ownership, sisteme performante în Rust.</div>
+            <div class="course-meta">📅 14 săptămâni • 👨‍🏫 Vlad Șerban</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-009</div>
+            <div class="course-name">SQL și Baze de Date</div>
+            <div class="course-desc">Interogări complexe, optimizare, design baze de date, PostgreSQL.</div>
+            <div class="course-meta">📅 8 săptămâni • 👩‍🏫 Andreea Marin</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Începător</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-010</div>
+            <div class="course-name">DevOps și Cloud</div>
+            <div class="course-desc">Docker, Kubernetes, AWS, CI/CD, infrastructură ca și cod.</div>
+            <div class="course-meta">📅 16 săptămâni • 👨‍🏫 Rareș Iftimie</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-011</div>
+            <div class="course-name">Mobile Development - iOS</div>
+            <div class="course-desc">Swift, SwiftUI, UIKit, App Store deployment.</div>
+            <div class="course-meta">📅 12 săptămâni • 👨‍🏫 Tudor Necula</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-012</div>
+            <div class="course-name">Mobile Development - Android</div>
+            <div class="course-desc">Kotlin, Jetpack Compose, Material Design, Google Play.</div>
+            <div class="course-meta">📅 12 săptămâni • 👩‍🏫 Diana Constantinescu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-013</div>
+            <div class="course-name">Testare Automată</div>
+            <div class="course-desc">Unit testing, integration testing, Selenium, Cypress, JUnit.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Cătălin Neagu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-014</div>
+            <div class="course-name">Sisteme de Operare</div>
+            <div class="course-desc">Procese, thread-uri, memorie, scheduling, Linux kernel.</div>
+            <div class="course-meta">📅 14 săptămâni • 👨‍🏫 Dragoș Coman</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">PRG-015</div>
+            <div class="course-name">Rețele de Calculatoare</div>
+            <div class="course-desc">TCP/IP, HTTP/2, WebSockets, gRPC, socket programming.</div>
+            <div class="course-meta">📅 12 săptămâni • 👨‍🏫 Florin Anghel</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="clear"></div>
+    </div>
+    
+    <!-- Categoria 2: Matematică (16-25) -->
+    <h2>🧮 MATEMATICĂ (10 cursuri)</h2>
+    <div class="course-grid" id="math">
+        
+        <div class="course-card">
+            <div class="course-code">MTH-016</div>
+            <div class="course-name">Matematică pentru Olimpiade</div>
+            <div class="course-desc">Pregătire intensivă pentru olimpiadele naționale și internaționale.</div>
+            <div class="course-meta">📅 24 săptămâni • 👨‍🏫 Prof. Gheorghe Dinu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">MTH-017</div>
+            <div class="course-name">Algebră Liniară</div>
+            <div class="course-desc">Matrici, vectori, spații vectoriale, transformări liniare.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Dr. Matei Iliescu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">MTH-018</div>
+            <div class="course-name">Analiză Matematică</div>
+            <div class="course-desc">Limite, derivate, integrale, serii, ecuații diferențiale.</div>
+            <div class="course-meta">📅 14 săptămâni • 👩‍🏫 Prof. Elena Radu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">MTH-019</div>
+            <div class="course-name">Geometrie în Spațiu</div>
+            <div class="course-desc">Geometrie analitică, vectori, planuri, sfere, conice.</div>
+            <div class="course-meta">📅 8 săptămâni • 👨‍🏫 Adrian Voicu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">MTH-020</div>
+            <div class="course-name">Teoria Numerelor</div>
+            <div class="course-desc">Numere prime, ecuații diofantice, criptografie, aplicații.</div>
+            <div class="course-meta">📅 12 săptămâni • 👨‍🏫 Dr. Sorin Petrescu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">MTH-021</div>
+            <div class="course-name">Probabilități și Statistică</div>
+            <div class="course-desc">Teoria probabilităților, distribuții, teste statistice, analiză date.</div>
+            <div class="course-meta">📅 10 săptămâni • 👩‍🏫 Dr. Anca Popovici</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">MTH-022</div>
+            <div class="course-name">Matematică pentru AI</div>
+            <div class="course-desc">Calcul vectorial, gradient, optimizare, algebra în machine learning.</div>
+            <div class="course-meta">📅 12 săptămâni • 👨‍🏫 Vlad Ene</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">MTH-023</div>
+            <div class="course-name">Criptografie Matematică</div>
+            <div class="course-desc">RSA, curbe eliptice, algoritmi criptografici, securitate.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Dr. Horațiu Mărginean</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">MTH-024</div>
+            <div class="course-name">Matematică pentru Jocuri</div>
+            <div class="course-desc">Fizică în jocuri, matrice de transformare, coliziuni, interpolări.</div>
+            <div class="course-meta">📅 8 săptămâni • 👨‍🏫 Silviu Marin</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">MTH-025</div>
+            <div class="course-name">Istoria Matematicii</div>
+            <div class="course-desc">De la Euclid la Gauss, descoperiri care au schimbat lumea.</div>
+            <div class="course-meta">📅 6 săptămâni • 👨‍🏫 Prof. Vasile Ionescu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Toate</div>
+        </div>
+        
+        <div class="clear"></div>
+    </div>
+    
+    <!-- Categoria 3: Inteligență Artificială (26-35) -->
+    <h2>🤖 INTELIGENȚĂ ARTIFICIALĂ (10 cursuri)</h2>
+    <div class="course-grid" id="ai">
+        
+        <div class="course-card">
+            <div class="course-code">AI-026</div>
+            <div class="course-name">Machine Learning Fundamentals</div>
+            <div class="course-desc">Regresie, clasificare, clustering, evaluare modele.</div>
+            <div class="course-meta">📅 12 săptămâni • 👨‍🏫 Dr. Mircea Vlad</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">AI-027</div>
+            <div class="course-name">Deep Learning</div>
+            <div class="course-desc">Rețele neuronale, CNN, RNN, LSTM, Transformers.</div>
+            <div class="course-meta">📅 14 săptămâni • 👩‍🏫 Dr. Raluca Dumitrescu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">AI-028</div>
+            <div class="course-name">Natural Language Processing</div>
+            <div class="course-desc">Procesarea limbajului natural, BERT, GPT, chatbot-uri.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Dragoș Irimia</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">AI-029</div>
+            <div class="course-name">Computer Vision</div>
+            <div class="course-desc">Recunoaștere imagini, detectare obiecte, segmentare, YOLO.</div>
+            <div class="course-meta">📅 12 săptămâni • 👩‍🏫 Oana Munteanu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">AI-030</div>
+            <div class="course-name">Reinforcement Learning</div>
+            <div class="course-desc">Q-learning, policy gradients, aplicații în jocuri și robotică.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Ciprian Nechifor</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">AI-031</div>
+            <div class="course-name">Generative AI</div>
+            <div class="course-desc">GAN-uri, VAE, modele generative, Stable Diffusion, DALL-E.</div>
+            <div class="course-meta">📅 8 săptămâni • 👨‍🏫 Rareș Hanganu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">AI-032</div>
+            <div class="course-name">MLOps</div>
+            <div class="course-desc">Deployment modele, monitoring, versioning, pipeline-uri.</div>
+            <div class="course-meta">📅 8 săptămâni • 👩‍🏫 Andrada Vasilescu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">AI-033</div>
+            <div class="course-name">Time Series Analysis</div>
+            <div class="course-desc">Forecasting, ARIMA, LSTM pentru serii temporale.</div>
+            <div class="course-meta">📅 8 săptămâni • 👨‍🏫 Dan Stoica</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">AI-034</div>
+            <div class="course-name">AI în Robotică</div>
+            <div class="course-desc">SLAM, control autonom, percepție robotică.</div>
+            <div class="course-meta">📅 12 săptămâni • 👨‍🏫 Bogdan Petrescu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">AI-035</div>
+            <div class="course-name">Etica în AI</div>
+            <div class="course-desc">Bias, fairness, transparență, reglementări AI.</div>
+            <div class="course-meta">📅 6 săptămâni • 👩‍🏫 Dr. Laura Ionescu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Toate</div>
+        </div>
+        
+        <div class="clear"></div>
+    </div>
+    
+    <!-- Categoria 4: Blockchain (36-45) -->
+    <h2>🔗 BLOCKCHAIN (10 cursuri)</h2>
+    <div class="course-grid" id="blockchain">
+        
+        <div class="course-card">
+            <div class="course-code">BC-036</div>
+            <div class="course-name">Introducere în Blockchain</div>
+            <div class="course-desc">Ce este blockchain-ul, Bitcoin, Ethereum, consens.</div>
+            <div class="course-meta">📅 6 săptămâni • 👨‍🏫 Vlad Crețu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Începător</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">BC-037</div>
+            <div class="course-name">Smart Contracts - Ethereum</div>
+            <div class="course-desc">Solidity, Remix, testare, deployment pe testnet.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Andrei Mărginean</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">BC-038</div>
+            <div class="course-name">DeFi - Finanțe Descentralizate</div>
+            <div class="course-desc">Uniswap, Aave, lending, staking, yield farming.</div>
+            <div class="course-meta">📅 8 săptămâni • 👨‍🏫 Rareș Ionescu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">BC-039</div>
+            <div class="course-name">NFT-uri și Marketplaces</div>
+            <div class="course-desc">ERC-721, ERC-1155, IPFS, OpenSea, creare colecții.</div>
+            <div class="course-meta">📅 8 săptămâni • 👩‍🏫 Teodora Popa</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">BC-040</div>
+            <div class="course-name">Crypto Trading și Analiză</div>
+            <div class="course-desc">Analiză tehnică, trading bots, risk management.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Dragoș Enache</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">BC-041</div>
+            <div class="course-name">Blockchain pentru Supply Chain</div>
+            <div class="course-desc">Transparență, trasabilitate, aplicații enterprise.</div>
+            <div class="course-meta">📅 6 săptămâni • 👨‍🏫 Mihai Pop</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Intermediar</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">BC-042</div>
+            <div class="course-name">DAO - Organizații Autonome</div>
+            <div class="course-desc">Crearea și guvernarea DAO-urilor, vot, treasury.</div>
+            <div class="course-meta">📅 6 săptămâni • 👩‍🏫 Andreea Gheorghiu</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">BC-043</div>
+            <div class="course-name">Criptografie în Blockchain</div>
+            <div class="course-desc">Hash-uri, semnături digitale, zero-knowledge proofs.</div>
+            <div class="course-meta">📅 8 săptămâni • 👨‍🏫 Dr. Alexandru Badea</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">BC-044</div>
+            <div class="course-name">Propriul Blockchain în Go</div>
+            <div class="course-desc">Construiește un blockchain de la zero în Go.</div>
+            <div class="course-meta">📅 12 săptămâni • 👨‍🏫 Sergiu Dumitru</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Avansat</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">BC-045</div>
+            <div class="course-name">Reglementări Crypto</div>
+            <div class="course-desc">Aspecte legale, fiscalitate, conformitate.</div>
+            <div class="course-meta">📅 4 săptămâni • 👨‍🏫 Av. Carmen Neagu</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Toate</div>
+        </div>
+        
+        <div class="clear"></div>
+    </div>
+    
+    <!-- Categoria 5: Design (46-50) - scurt pentru exemplu -->
+    <h2>🎨 DESIGN (5 cursuri)</h2>
+    <div class="course-grid" id="design">
+        
+        <div class="course-card">
+            <div class="course-code">DSG-046</div>
+            <div class="course-name">UI/UX Design</div>
+            <div class="course-desc">Principii de design, wireframing, prototipare în Figma.</div>
+            <div class="course-meta">📅 8 săptămâni • 👩‍🏫 Irina Matei</div>
+            <div class="course-price">GRATUIT</div>
+            <div class="course-level">Începător</div>
+        </div>
+        
+        <div class="course-card">
+            <div class="course-code">DSG-047</div>
+            <div class="course-name">Grafică Digitală</div>
+            <div class="course-desc">Photoshop, Illustrator, design pentru social media.</div>
+            <div class="course-meta">📅 10 săptămâni • 👨‍🏫 Cătălin Vasile</div>
+            <div class="course-price">PRIVAT</div>
+            <div class="course-level">Începător</div>
+        </div>
+        
+        <div class="clear"></div>
+    </div>
+    
+    <!-- Putem continua cu toate categoriile, dar pentru spațiu voi rezuma -->
+    
+    <hr>
+    
+    <!-- Tabel rezumativ 100 cursuri -->
+    <h2>📊 LISTA COMPLETĂ - 100 CURSURI</h2>
+    
+    <table>
+        <tr>
+            <th>Categorie</th>
+            <th>Număr Cursuri</th>
+            <th>Gratuite</th>
+            <th>Private</th>
+            <th>Cu Certificare</th>
+        </tr>
+        <tr><td>💻 Programare</td><td>15</td><td>7</td><td>8</td><td>12</td></tr>
+        <tr><td>🧮 Matematică</td><td>10</td><td>6</td><td>4</td><td>8</td></tr>
+        <tr><td>🤖 Inteligență Artificială</td><td>10</td><td>3</td><td>7</td><td>9</td></tr>
+        <tr><td>🔗 Blockchain</td><td>10</td><td>4</td><td>6</td><td>8</td></tr>
+        <tr><td>🎨 Design</td><td>8</td><td>4</td><td>4</td><td>6</td></tr>
+        <tr><td>💼 Business</td><td>8</td><td>4</td><td>4</td><td>6</td></tr>
+        <tr><td>🌐 Limbi Străine</td><td>8</td><td>5</td><td>3</td><td>5</td></tr>
+        <tr><td>🔬 Științe</td><td>8</td><td>5</td><td>3</td><td>6</td></tr>
+        <tr><td>📖 Umaniste</td><td>6</td><td>4</td><td>2</td><td>3</td></tr>
+        <tr><td>🎭 Arte</td><td>6</td><td>4</td><td>2</td><td>3</td></tr>
+        <tr><td>⚽ Sport</td><td>5</td><td>3</td><td>2</td><td>2</td></tr>
+        <tr><td>🌟 Dezvoltare Personală</td><td>6</td><td>4</td><td>2</td><td>4</td></tr>
+        <tr><td style="background:#00ffff; color:#000;"><strong>TOTAL</strong></td>
+            <td style="background:#00ffff; color:#000;"><strong>100</strong></td>
+            <td style="background:#00ffff; color:#000;"><strong>53</strong></td>
+            <td style="background:#00ffff; color:#000;"><strong>47</strong></td>
+            <td style="background:#00ffff; color:#000;"><strong>72</strong></td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Profesori și Mentori -->
+    <h2>👨‍🏫 PROFESORII NOȘTRI</h2>
+    
+    <table>
+        <tr>
+            <th>Nume</th>
+            <th>Specializare</th>
+            <th>Experiență</th>
+            <th>Cursuri</th>
+        </tr>
+        <tr><td>Prof. Gheorghe Dinu</td><td>Matematică Olimpiade</td><td>25 ani</td><td>5 cursuri</td></tr>
+        <tr><td>Dr. Mircea Vlad</td><td>Machine Learning</td><td>12 ani</td><td>4 cursuri</td></tr>
+        <tr><td>Andrei Ionescu</td><td>Programare Olimpiade</td><td>10 ani</td><td>6 cursuri</td></tr>
+        <tr><td>Elena Dumitrescu</td><td>Web Development</td><td>8 ani</td><td>3 cursuri</td></tr>
+        <tr><td>Vlad Crețu</td><td>Blockchain</td><td>6 ani</td><td>4 cursuri</td></tr>
+        <tr><td>Dr. Raluca Dumitrescu</td><td>Deep Learning</td><td>9 ani</td><td>3 cursuri</td></tr>
+        <tr><td>Irina Matei</td><td>UI/UX Design</td><td>7 ani</td><td>3 cursuri</td></tr>
+        <tr><td>Andreea Marin</td><td>Baze de Date</td><td>8 ani</td><td>2 cursuri</td></tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Prețuri și Abonamente -->
+    <h2>💰 PREȚURI ȘI ABONAMENTE</h2>
+    
+    <table>
+        <tr>
+            <th>Tip</th>
+            <th>Preț</th>
+            <th>Beneficii</th>
+        </tr>
+        <tr>
+            <td>Curs gratuit</td>
+            <td>0 RON</td>
+            <td>Acces la conținut, fără certificare</td>
+        </tr>
+        <tr>
+            <td>Curs privat individual</td>
+            <td>500-1500 RON</td>
+            <td>Acces complet + certificat + mentor 1-1</td>
+        </tr>
+        <tr>
+            <td>Abonament lunar</td>
+            <td>200 RON/lună</td>
+            <td>Acces la toate cursurile gratuite și private</td>
+        </tr>
+        <tr>
+            <td>Abonament anual</td>
+            <td>2000 RON/an</td>
+            <td>Acces nelimitat + 2 sesiuni de mentorat</td>
+        </tr>
+        <tr>
+            <td>Pachet Olimpiade</td>
+            <td>2500 RON</td>
+            <td>Pregătire intensivă + simulări + feedback</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Testimoniale -->
+    <h2>🗣️ CE SPUN STUDENȚII</h2>
+    
+    <div style="display: table; width: 100%;">
+        <div style="display: table-row;">
+            <div style="display: table-cell; width: 33%; padding: 15px; background: #000000; border: 2px solid #00ffff;">
+                "Am luat aur la Olimpiada Națională după cursul de Matematică. Profesorii sunt excepționali!"
+                <div style="color: #00ffff; margin-top: 10px;">— Maria, clasa a XII-a</div>
+            </div>
+            <div style="display: table-cell; width: 33%; padding: 15px; background: #000000; border: 2px solid #00ffff;">
+                "Cursul de Blockchain m-a ajutat să îmi lansez propriul startup. Acum am 5 angajați!"
+                <div style="color: #00ffff; margin-top: 10px;">— Andrei, antreprenor</div>
+            </div>
+            <div style="display: table-cell; width: 33%; padding: 15px; background: #000000; border: 2px solid #00ffff;">
+                "Am învățat Python în 3 luni de la zero. Acum sunt developer la o companie mare."
+                <div style="color: #00ffff; margin-top: 10px;">— Diana, 24 ani</div>
+            </div>
+        </div>
+    </div>
+    
+    <hr>
+    
+    <!-- Înscriere -->
+    <h2>📝 ÎNSCRIE-TE LA UN CURS</h2>
+    
+    <div style="background: #000000; border: 3px solid #00ffff; padding: 40px; text-align: center;">
+        <p style="font-size: 24px; color: #00ffff;">Alege cursul potrivit pentru tine</p>
+        <p style="margin: 20px 0;">Peste 4,500 de studenți sunt deja înscriși</p>
+        
+        <div>
+            <span class="button" onclick="alert('Redirecționare către platforma de înscrieri...')">📝 VEZI TOATE CURSURILE</span>
+            <span class="button" onclick="alert('Redirecționare către programează o discuție...')">📞 CONSULTANȚĂ GRATUITĂ</span>
+        </div>
+    </div>
+    
+    <hr>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <h2 style="color: #00ffff; border-bottom: none;">📚 OMNIBUS ACADEMY</h2>
+        <p style="font-size: 18px; margin: 20px 0;">100 Cursuri Opționale și Private</p>
+        <p style="font-size: 14px; color: #008888;">
+            12 Categorii • 45 Profesori • 4,567 Studenți • 53 Cursuri Gratuite
+        </p>
+        <p style="margin-top: 20px;">
+            <span style="color: #00ffff;">https://cursuri.omnibus.academy</span> • 
+            <span style="color: #00ffff;">cursuri@omnibus.academy</span>
+        </p>
+    </div>
+    
+</div>
+
+<script type="text/javascript">
+    function filterCategory(category) {
+        // Actualizare tab-uri
+        var tabs = document.querySelectorAll('.tab');
+        for (var i = 0; i < tabs.length; i++) {
+            tabs[i].classList.remove('active');
+        }
+        event.target.classList.add('active');
+        
+        // Aici s-ar face filtrarea propriu-zisă în JavaScript
+        alert('Filtrare pentru categoria: ' + category);
+    }
+</script>
+
+</body>
+</html>

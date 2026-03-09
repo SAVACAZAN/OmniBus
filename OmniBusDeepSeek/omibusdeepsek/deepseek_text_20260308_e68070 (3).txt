@@ -1,0 +1,18 @@
+Solidity Module
+├── Parser
+│   ├── Lexer (tokenizează cod Solidity)
+│   ├── Parser (construiește AST)
+│   └── Validator (verifică sintaxa)
+├── Compiler
+│   ├── Bytecode Generator
+│   ├── Optimizer
+│   └── ABI Generator
+├── Runtime
+│   ├── EVM Interpreter
+│   ├── Gas Meter
+│   ├── Storage Manager
+│   └── Stack Machine
+└── Integration
+    ├── OmniBus Message Adapter
+    ├── Trading Hooks
+    └── State Persistence
