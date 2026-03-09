@@ -85,10 +85,15 @@ pmode_entry:
 [BITS 16]
 
 ; ========================================================================
+; Align to next 16-byte boundary to ensure GDT is properly aligned
+; ========================================================================
+
+align 16
+
+; ========================================================================
 ; DATA: GDT - Global Descriptor Table (8 bytes per descriptor, REQUIRED!)
 ; ========================================================================
 
-align 8
 gdt_start:
 
     ; Descriptor 0: NULL (REQUIRED - must be 8 bytes!)
@@ -113,7 +118,7 @@ gdt_start:
 gdt_end:
 
 ; GDT Descriptor (used by LGDT instruction)
-align 8
+; Place immediately after GDT with no alignment issues
 gdt_descriptor:
     dw gdt_end - gdt_start - 1      ; Size (limit) in bytes - 1
     dd gdt_start                    ; Base address (absolute)
@@ -122,7 +127,6 @@ gdt_descriptor:
 ; DATA: IDT - Interrupt Descriptor Table (2048 bytes for 256 entries)
 ; ========================================================================
 
-align 8
 idt_start:
     ; 256 IDT entries × 8 bytes = 2048 bytes
     times 256 * 8 db 0
