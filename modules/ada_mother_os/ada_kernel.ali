@@ -5,23 +5,17 @@ RN
 RV NO_DYNAMIC_SIZED_OBJECTS
 RV NO_IMPLICIT_LOOPS
 
-U ada_kernel%b		ada_kernel.adb		f47f82b3 NE OO PK
+U ada_kernel%b		ada_kernel.adb		1ca1088a NE OO PK
 W interfaces%s		interfac.ads		interfac.ali
-Z system.concat_2%s	s-conca2.adb		s-conca2.ali
-Z system.exp_uns%s	s-expuns.ads		s-expuns.ali
 
 U ada_kernel%s		ada_kernel.ads		9c80a06a EE NE OO PK
 W interfaces%s		interfac.ads		interfac.ali
 W system%s		system.ads		system.ali
 
 D ada_kernel.ads	20260309214740 cb1a9610 ada_kernel%s
-D ada_kernel.adb	20260309214831 2a928d61 ada_kernel%b
+D ada_kernel.adb	20260309220213 c24c0758 ada_kernel%b
 D interfac.ads		20240521074738 15f799c2 interfaces%s
 D system.ads		20240521074738 426dafb8 system%s
-D s-conca2.ads		20240521074738 b5fb73f7 system.concat_2%s
-D s-expuns.ads		20240521074738 4990aab3 system.exp_uns%s
-D s-exponu.ads		20240521074738 5feafca7 system.exponu%s
-D s-unstyp.ads		20240521074738 fa2a7f59 system.unsigned_types%s
 G a e
 G c Z s b [initialize_kernel ada_kernel 100 14 none]
 G c Z s b [run_event_loop ada_kernel 109 14 none]
@@ -40,7 +34,7 @@ G c Z s s [TtaskerrorarrayBIP ada_kernel 82 4 none]
 G c Z s s [schedulerstateIP ada_kernel 84 9 none]
 G c Z b b [uart_out_byte ada_kernel 23 14 none]
 X 1 ada_kernel.ads
-24K9*Ada_Kernel 151l5 151e15 2|10b14 165l5 165t15
+24K9*Ada_Kernel 151l5 151e15 2|10b14 178l5 178t15
 30m4*KERNEL_BASE{3|80M9}
 31m4*KERNEL_SIZE{3|80M9}
 32m4*AUTH_GATE_ADDR{3|80M9}
@@ -49,10 +43,10 @@ X 1 ada_kernel.ads
 35m4*PQC_VAULT_SIZE{3|80M9}
 36m4*TASK_TABLE_ADDR{3|80M9}
 37N4*MAX_TASKS
-43E9*TaskId 47e5 56r22 80r34 81r34 82r34 85r26 2|122r17 128r18
-44n7*Grid_OS{43E9} 2|131r15
-45n7*Analytics_OS{43E9} 2|137r15
-46n7*Execution_OS{43E9} 2|141r15
+43E9*TaskId 47e5 56r22 80r34 81r34 82r34 85r26 2|135r17 141r18
+44n7*Grid_OS{43E9} 2|144r15
+45n7*Analytics_OS{43E9} 2|150r15
+46n7*Execution_OS{43E9} 2|154r15
 53E9*TaskState 53e65 57r22 80r45
 53n23*Ready{53E9}
 53n30*Running{53E9}
@@ -81,39 +75,40 @@ X 1 ada_kernel.ads
 87a7*Task_States{80A9}
 88a7*Task_Cycle_Count{81A9}
 89a7*Task_Errors{82A9}
-100U14*Initialize_Kernel 2|91b14 115l8 115t25
-109U14*Run_Event_Loop 2|152b14 163l8 163t22
-113U14*Run_Cycle 2|121b14 146l8 146t17 156s13
-117V13*Is_Authorized{boolean} 2|73b13 80l8 80t21 108s10 155s13
-120U14*Increment_Cycle 2|82b14 85l8 85t23 125s7
-127U14*UART_Write_Char 127>31 2|36b14 39l8 39t23 44s10 46s7 57s10
+100U14*Initialize_Kernel 2|104b14 128l8 128t25
+109U14*Run_Event_Loop 2|165b14 176l8 176t22
+113U14*Run_Cycle 2|134b14 159l8 159t17 169s13
+117V13*Is_Authorized{boolean} 2|86b13 93l8 93t21 121s10 168s13
+120U14*Increment_Cycle 2|95b14 98l8 98t23 138s7
+127U14*UART_Write_Char 127>31 2|36b14 39l8 39t23 44s10 46s7 56s7 58s7 60s7
+. 62s7 64s7 66s7 68s7 70s7
 127e31 C{character} 2|36b31 38r37
-130U14*UART_Write_String 130>33 2|41b14 47l8 47t25 54s7 63s7 93s7 103s7 104s7
-. 105s7 106s7 109s10 111s10 132s13 138s13 142s13 159s13
+130U14*UART_Write_String 130>33 2|41b14 47l8 47t25 53s7 75s7 76s7 106s7 116s7
+. 117s7 118s7 119s7 122s10 124s10 145s13 151s13 155s13 172s13
 130a33 S{string} 2|41b33 43r16 44r27
-133U14*UART_Write_Hex 133>30 2|49b14 59l8 59t22
-133m30 Value{3|80M9} 2|49b30 52r26
-137U14*Sys_Panic 137>25 2|61b14 67l8 67t17
-137a25 Message{string} 2|61b25 63r39
-144m4*Global_Cycle_Count{3|83M9} 145r21 2|84m7 84r29 114m7 128r31
-148a4*Kernel_State(3|69M9) 149r21 2|96r16 97m10
+133U14*UART_Write_Hex 133>30 2|49b14 71l8 71t22
+133m30 Value{3|80M9} 2|49b30 55r25 57r25 59r25 61r25 63r25 65r25 67r25 69r24
+137U14*Sys_Panic 137>25 2|73b14 80l8 80t17
+137a25 Message{string} 2|73b25 76r26
+144m4*Global_Cycle_Count{3|83M9} 145r21 2|97m7 97r29 127m7 141r31
+148a4*Kernel_State(3|69M9) 149r21 2|109r16 110m10
 X 2 ada_kernel.adb
 16m4 UART_PORT{3|72M9}
 23U14 UART_Out_Byte 23b14 23>29 24r22 30l8 30t21 38s7
 23m29 Byte{3|69M9}
 43i11 I{integer} 44r30
-50a7 Hex_Chars{string} 57r27
-51m7 B{3|69M9} 56m10 57r47
-52m7 V{3|80M9} 56r28
-55i11 I{integer} 56r44
-96i11 I{integer} 97r24
-122e7 Current{1|43E9} 128m7 130r12
+50a7 Hex_Chars{string} 56r24 58r24 60r24 62r24 64r24 66r24 68r24 70r24
+51m7 B{3|69M9} 55m7 56r44 57m7 58r44 59m7 60r44 61m7 62r44 63m7 64r44 65m7
+. 66r44 67m7 68r44 69m7 70r44
+109i11 I{integer} 110r24
+135e7 Current{1|43E9} 141m7 143r12
 X 3 interfac.ads
 38K9*Interfaces 1|20w6 22r5 2|7w6 8r5 16r25 3|232e15
-69M9*Unsigned_8 1|33r32 73r15 148r38 2|23r36 51r11 56r15
+69M9*Unsigned_8 1|33r32 73r15 148r38 2|23r36 51r11 55r12 57r12 59r12 61r12
+. 63r12 65r12 67r12 69r12
 72M9*Unsigned_16 2|16r36
 80M9*Unsigned_32 1|30r32 31r32 32r32 34r32 35r32 36r32 58r22 59r22 60r22
-. 62r22 71r15 72r15 82r45 133r38 2|49r38 52r11
+. 62r22 71r15 72r15 82r45 133r38 2|49r38
 83M9*Unsigned_64 1|61r22 63r22 81r45 86r26 144r25
 X 4 system.ads
 37K9*System 1|19w6 21r5 4|153e11

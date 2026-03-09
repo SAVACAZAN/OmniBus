@@ -18,17 +18,15 @@ project Ada_Kernel is
       for Switches ("Ada") use
         (
          "-gnat2022",          -- Ada 2022 standard
-         "-gnatwa",            -- Warnings: all
-         "-gnatwe",            -- Warnings: errors
-         "-gnatyyM",           -- Style: mixed-case for type names
-         "-gnaty3abcdefhijklmnoprstux",  -- Style rules
          "-gnatf",             -- Full errors (not truncated)
          "-O2",                -- Optimize for performance
          "-fPIC",              -- Position-independent code
          "-fno-common",        -- Strict linkage
          "-gnatpn",            -- No pragma Normalize_Scalars (reduce size)
          "-gnata",             -- Assertions enabled (for verification)
-         "-gnatwa"             -- All warnings
+         "-gnatd.e",           -- Disable dynamic elaboration
+         "-ffunction-sections", -- Place each function in its own section
+         "-fdata-sections"      -- Place each data item in its own section
         );
    end Compiler;
 

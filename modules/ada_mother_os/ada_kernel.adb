@@ -49,18 +49,31 @@ package body Ada_Kernel is
    procedure UART_Write_Hex (Value : Unsigned_32) is
       Hex_Chars : constant String := "0123456789ABCDEF";
       B : Unsigned_8;
-      V : Unsigned_32 := Value;
    begin
       UART_Write_String ("0x");
-      for I in 1 .. 8 loop
-         B := Unsigned_8 ((V / (16 ** (8 - I))) mod 16);
-         UART_Write_Char (Hex_Chars (Natural (B) + 1));
-      end loop;
+      --  Write 8 hex digits (32-bit value = 8 hex chars)
+      B := Unsigned_8 ((Value / 16#10000000#) mod 16);
+      UART_Write_Char (Hex_Chars (Natural (B) + 1));
+      B := Unsigned_8 ((Value / 16#01000000#) mod 16);
+      UART_Write_Char (Hex_Chars (Natural (B) + 1));
+      B := Unsigned_8 ((Value / 16#00100000#) mod 16);
+      UART_Write_Char (Hex_Chars (Natural (B) + 1));
+      B := Unsigned_8 ((Value / 16#00010000#) mod 16);
+      UART_Write_Char (Hex_Chars (Natural (B) + 1));
+      B := Unsigned_8 ((Value / 16#00001000#) mod 16);
+      UART_Write_Char (Hex_Chars (Natural (B) + 1));
+      B := Unsigned_8 ((Value / 16#00000100#) mod 16);
+      UART_Write_Char (Hex_Chars (Natural (B) + 1));
+      B := Unsigned_8 ((Value / 16#00000010#) mod 16);
+      UART_Write_Char (Hex_Chars (Natural (B) + 1));
+      B := Unsigned_8 (Value mod 16);
+      UART_Write_Char (Hex_Chars (Natural (B) + 1));
    end UART_Write_Hex;
 
    procedure Sys_Panic (Message : String) is
    begin
-      UART_Write_String ("[PANIC] " & Message);
+      UART_Write_String ("[PANIC] ");
+      UART_Write_String (Message);
       loop
          null;  -- Infinite loop - kernel halted
       end loop;
