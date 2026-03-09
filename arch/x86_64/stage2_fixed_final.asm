@@ -104,7 +104,7 @@ gdt_start:
     dw 0x0000                       ; Base (bits 0-15)
     db 0x00                         ; Base (bits 16-23)
     db 0x9A                         ; Access: present | ring 0 | code | readable
-    db 0x8F                         ; Flags: granular | 16-bit | limit(19:16)
+    db 0xCF                         ; Flags: granular | 32-bit | limit(19:16)
     db 0x00                         ; Base (bits 24-31)
 
     ; Descriptor 2: Data Segment (selector 0x10)
@@ -112,7 +112,7 @@ gdt_start:
     dw 0x0000
     db 0x00
     db 0x92                         ; Access: present | ring 0 | data | writable
-    db 0x8F                         ; Flags: granular | 16-bit | limit(19:16)
+    db 0xCF                         ; Flags: granular | 32-bit | limit(19:16)
     db 0x00
 
 gdt_end:
