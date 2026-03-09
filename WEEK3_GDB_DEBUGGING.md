@@ -144,6 +144,69 @@ Once you identify the exact instruction causing the triple fault:
 3. Check for off-by-one errors in address calculations
 4. Verify NASM is generating the correct bytecode for the GDT
 
+## Pro-Tips: The "Triple Fault Smoking Gun" Checklist
+
+When debugging with GDB, watch these three values obsessively:
+
+### 1. The Hidden Base Address (CRITICAL)
+```
+(gdb) monitor info registers
+```
+Look at **GDTR.base**:
+- ❌ **WRONG**: Shows `0x7E50` (16-bit offset, truncated)
+- ✅ **CORRECT**: Shows `0x00007E50` (full 24-bit linear address)
+
+If the high word is garbage or zero, the CPU is looking for your GDT in the wrong memory location.
+
+### 2. The Access Byte (Descriptor Validity)
+Dump the raw GDT bytes:
+```
+(gdb) x/24xb 0x7e50
+```
+You should see:
+```
+0x7e50: 00 00 00 00 00 00 00 00  ← NULL descriptor
+0x7e58: ff ff 00 00 00 9a cf 00  ← CODE (byte 6 = 0x9a ← Present, Ring 0, Exec, Read)
+0x7e60: ff ff 00 00 00 92 cf 00  ← DATA (byte 6 = 0x92 ← Present, Ring 0, Write)
+```
+
+A single flipped bit in the Access Byte (e.g., `0x89` instead of `0x9a`) triggers a **#GP fault** → **triple fault**.
+
+### 3. Instruction Pointer (EIP) Truncation
+After the far jump executes:
+```
+(gdb) info registers
+```
+Check if **EIP** shows:
+- ❌ **WRONG**: `eip 0x0000xxxx` (truncated, shows only lower 16 bits)
+- ✅ **CORRECT**: `eip 0xxxxxxxxx` (full 32-bit address like 0x00100030)
+
+If truncated, the CPU is executing empty memory (0xFF or 0x00 bytes), causing an **invalid opcode exception**.
+
+## NASM Keyword Gotcha
+
+In your assembly, ensure the far jump uses the `dword` keyword:
+
+```nasm
+; CORRECT: Explicitly encode as 32-bit jump
+jmp 0x08:dword 0x100030
+
+; WRONG: May encode as 16-bit, truncating the address
+jmp 0x08:0x100030
+```
+
+## Quick Reference: Valid Flat-Model GDT
+
+When you dump your GDT with `x/24xb`, compare against this reference:
+
+| Descriptor | Offset | Bytes | Meaning |
+|-----------|--------|-------|---------|
+| NULL | 0x00 | `00 00 00 00 00 00 00 00` | Reserved, must be zero |
+| CODE | 0x08 | `ff ff 00 00 00 9a cf 00` | Limit=0xFFFF, Base=0, Present, Ring0, Execute, Read, 32-bit |
+| DATA | 0x10 | `ff ff 00 00 00 92 cf 00` | Limit=0xFFFF, Base=0, Present, Ring0, Write, 32-bit |
+
+If your bytes don't match (or are shifted), the GDT format is wrong.
+
 ## Emergency Backup Plan
 
 If GDB debugging proves too difficult:
@@ -154,6 +217,7 @@ If GDB debugging proves too difficult:
 
 ---
 
-**Status**: Ready for next session debugging
+**Status**: Ready for next session debugging with pro-tips
 **Created**: 2026-03-10
-**Owner**: Week 3 Development Team
+**Updated**: 2026-03-10 (Added pro-tips from expert analysis)
+**Owner**: Week 3 Development Team + Expert Advisors
