@@ -12,12 +12,6 @@ stage2_start:
     cli
     cld
 
-    ; DEBUG: Print "S2" to VGA text buffer using segment:offset addressing
-    mov ax, 0xB800                 ; VGA text segment
-    mov es, ax                     ; Load into extra segment
-    mov word [es:0x0000], 0x4F53   ; "S" in white at 0xB8000
-    mov word [es:0x0002], 0x4F32   ; "2" in white at 0xB8002
-
     ; ========================================================================
     ; Setup GDT (Global Descriptor Table) - must be before LGDT
     ; ========================================================================
