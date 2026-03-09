@@ -8,7 +8,7 @@ RV NO_DYNAMIC_SIZED_OBJECTS
 RV NO_IMPLEMENTATION_ATTRIBUTES
 RV NO_IMPLICIT_LOOPS
 
-U ada_kernel%b		ada_kernel.adb		24408347 NE OO PK
+U ada_kernel%b		ada_kernel.adb		873fd937 NE OO PK
 W interfaces%s		interfac.ads		interfac.ali
 W system%s		system.ads		system.ali
 W system.machine_code%s	s-maccod.ads		s-maccod.ali
@@ -18,7 +18,7 @@ W interfaces%s		interfac.ads		interfac.ali
 W system%s		system.ads		system.ali
 
 D ada_kernel.ads	20260309214740 cb1a9610 ada_kernel%s
-D ada_kernel.adb	20260309221936 750a2b33 ada_kernel%b
+D ada_kernel.adb	20260309223156 d6757143 ada_kernel%b
 D interfac.ads		20240521074738 15f799c2 interfaces%s
 D system.ads		20240521074738 426dafb8 system%s
 D s-maccod.ads		20240521074738 cdca081e system.machine_code%s
@@ -38,9 +38,8 @@ G c Z s s [TtaskstatearrayBIP ada_kernel 80 4 none]
 G c Z s s [TtaskcyclearrayBIP ada_kernel 81 4 none]
 G c Z s s [TtaskerrorarrayBIP ada_kernel 82 4 none]
 G c Z s s [schedulerstateIP ada_kernel 84 9 none]
-G c Z b b [uart_out_byte ada_kernel 28 14 none]
 X 1 ada_kernel.ads
-24K9*Ada_Kernel 151l5 151e15 2|14b14 185l5 185t15
+24K9*Ada_Kernel 151l5 151e15 2|14b14 184l5 184t15
 30m4*KERNEL_BASE{3|80M9}
 31m4*KERNEL_SIZE{3|80M9}
 32m4*AUTH_GATE_ADDR{3|80M9}
@@ -49,10 +48,10 @@ X 1 ada_kernel.ads
 35m4*PQC_VAULT_SIZE{3|80M9}
 36m4*TASK_TABLE_ADDR{3|80M9}
 37N4*MAX_TASKS
-43E9*TaskId 47e5 56r22 80r34 81r34 82r34 85r26 2|142r17 148r18
-44n7*Grid_OS{43E9} 2|151r15
-45n7*Analytics_OS{43E9} 2|157r15
-46n7*Execution_OS{43E9} 2|161r15
+43E9*TaskId 47e5 56r22 80r34 81r34 82r34 85r26 2|141r17 147r18
+44n7*Grid_OS{43E9} 2|150r15
+45n7*Analytics_OS{43E9} 2|156r15
+46n7*Execution_OS{43E9} 2|160r15
 53E9*TaskState 53e65 57r22 80r45
 53n23*Ready{53E9}
 53n30*Running{53E9}
@@ -81,46 +80,47 @@ X 1 ada_kernel.ads
 87a7*Task_States{80A9}
 88a7*Task_Cycle_Count{81A9}
 89a7*Task_Errors{82A9}
-100U14*Initialize_Kernel 2|111b14 135l8 135t25
-109U14*Run_Event_Loop 2|172b14 183l8 183t22
-113U14*Run_Cycle 2|141b14 166l8 166t17 176s13
-117V13*Is_Authorized{boolean} 2|95b13 100l8 100t21 128s10 175s13
-120U14*Increment_Cycle 2|102b14 105l8 105t23 145s7
-127U14*UART_Write_Char 127>31 2|40b14 43l8 43t23 48s10 50s7 60s7 62s7 64s7
-. 66s7 68s7 70s7 72s7 74s7
-127e31 C{character} 2|40b31 42r37
-130U14*UART_Write_String 130>33 2|45b14 51l8 51t25 57s7 79s7 80s7 113s7 123s7
-. 124s7 125s7 126s7 129s10 131s10 152s13 158s13 162s13 179s13
-130a33 S{string} 2|45b33 47r16 48r27
-133U14*UART_Write_Hex 133>30 2|53b14 75l8 75t22
-133m30 Value{3|80M9} 2|53b30 59r25 61r25 63r25 65r25 67r25 69r25 71r25 73r24
-137U14*Sys_Panic 137>25 2|77b14 84l8 84t17
-137a25 Message{string} 2|77b25 80r26
-144m4*Global_Cycle_Count{3|83M9} 145r21 2|104m7 104r29 134m7 148r31
-148a4*Kernel_State(3|69M9) 149r21 2|116r16 117m10
+100U14*Initialize_Kernel 2|110b14 134l8 134t25
+109U14*Run_Event_Loop 2|171b14 182l8 182t22
+113U14*Run_Cycle 2|140b14 165l8 165t17 175s13
+117V13*Is_Authorized{boolean} 2|94b13 99l8 99t21 127s10 174s13
+120U14*Increment_Cycle 2|101b14 104l8 104t23 144s7
+127U14*UART_Write_Char 127>31 2|39b14 42l8 42t23 47s10 49s7 59s7 61s7 63s7
+. 65s7 67s7 69s7 71s7 73s7
+127e31 C{character} 2|39b31 41r37
+130U14*UART_Write_String 130>33 2|44b14 50l8 50t25 56s7 78s7 79s7 112s7 122s7
+. 123s7 124s7 125s7 128s10 130s10 151s13 157s13 161s13 178s13
+130a33 S{string} 2|44b33 46r16 47r27
+133U14*UART_Write_Hex 133>30 2|52b14 74l8 74t22
+133m30 Value{3|80M9} 2|52b30 58r25 60r25 62r25 64r25 66r25 68r25 70r25 72r24
+137U14*Sys_Panic 137>25 2|76b14 83l8 83t17
+137a25 Message{string} 2|76b25 79r26
+144m4*Global_Cycle_Count{3|83M9} 145r21 2|103m7 103r29 133m7 147r31
+148a4*Kernel_State(3|69M9) 149r21 2|115r16 116m10
 X 2 ada_kernel.adb
 20m4 UART_PORT{3|72M9}
-28U14 UART_Out_Byte 28b14 29r22 34l8 34t21 42s7
-30U17*Write_Byte 30>29 33s7
-30m29 B{3|69M9}
-47i11 I{integer} 48r30
-54a7 Hex_Chars{string} 60r24 62r24 64r24 66r24 68r24 70r24 72r24 74r24
-55m7 B{3|69M9} 59m7 60r44 61m7 62r44 63m7 64r44 65m7 66r44 67m7 68r44 69m7
-. 70r44 71m7 72r44 73m7 74r44
-91m4 Auth_Gate{3|69M9} 99r14
-116i11 I{integer} 117r24
-142e7 Current{1|43E9} 148m7 150r12
+28U14 UART_Out_Byte 28b14 28>29 33l8 33t21 41s7
+28m29 Byte{3|69M9} 32r19
+29U17*Write_Byte 29>29 32s7
+29m29 B{3|69M9}
+46i11 I{integer} 47r30
+53a7 Hex_Chars{string} 59r24 61r24 63r24 65r24 67r24 69r24 71r24 73r24
+54m7 B{3|69M9} 58m7 59r44 60m7 61r44 62m7 63r44 64m7 65r44 66m7 67r44 68m7
+. 69r44 70m7 71r44 72m7 73r44
+90m4 Auth_Gate{3|69M9} 98r14
+115i11 I{integer} 116r24
+141e7 Current{1|43E9} 147m7 149r12
 X 3 interfac.ads
 38K9*Interfaces 1|20w6 22r5 2|7w6 10r5 20r25 3|232e15
-69M9*Unsigned_8 1|33r32 73r15 148r38 2|28r36 30r33 55r11 59r12 61r12 63r12
-. 65r12 67r12 69r12 71r12 73r12 91r16
+69M9*Unsigned_8 1|33r32 73r15 148r38 2|28r36 29r33 54r11 58r12 60r12 62r12
+. 64r12 66r12 68r12 70r12 72r12 90r16
 72M9*Unsigned_16 2|20r36
 80M9*Unsigned_32 1|30r32 31r32 32r32 34r32 35r32 36r32 58r22 59r22 60r22
-. 62r22 71r15 72r15 82r45 133r38 2|53r38
+. 62r22 71r15 72r15 82r45 133r38 2|52r38
 83M9*Unsigned_64 1|61r22 63r22 81r45 86r26 144r25
 X 4 system.ads
-37K9*System 1|19w6 21r5 2|8w6 9r6 11r5 12r5 92r23 4|153e11
-67M9*Address 2|92r23
+37K9*System 1|19w6 21r5 2|8w6 9r6 11r5 12r5 91r23 4|153e11
+67M9*Address 2|91r23
 X 5 s-maccod.ads
 36K16*Machine_Code 2|9w13 12r12 5|133e24
 

@@ -24,9 +24,8 @@ package body Ada_Kernel is
    -- =============================================
 
    --  Low-level UART output - write byte to port 0x3F8
-   --  Implemented in startup assembly (uart_write_byte in startup.asm)
+   --  Implemented in C with GCC inline assembly (uart_io.c)
    procedure UART_Out_Byte (Byte : Unsigned_8) is
-      pragma Inline (UART_Out_Byte);
       procedure Write_Byte (B : Unsigned_8)
         with Import, Convention => C, External_Name => "uart_write_byte";
    begin

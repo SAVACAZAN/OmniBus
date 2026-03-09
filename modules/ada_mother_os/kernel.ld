@@ -19,6 +19,7 @@ SECTIONS
     .text : ALIGN(16)
     {
         *(.text)
+        KEEP(uart_io.o(.text))
         *(.text.*)
     }
 
