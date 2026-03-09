@@ -54,11 +54,11 @@ $(BUILD_DIR)/stage2.bin: $(ARCH_DIR)/stage2_fixed_final.asm
 	$(NASM) -f bin -o $@ $<
 	@echo "  Stage 2: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
 
-# Compile kernel stub
-$(BUILD_DIR)/kernel_stub.bin: $(ARCH_DIR)/kernel_stub.asm
-	@echo "[AS] Compiling kernel stub..."
-	$(NASM) -f bin -o $@ $<
-	@echo "  Kernel stub: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
+# Copy Ada kernel binary
+$(BUILD_DIR)/kernel_stub.bin: ./modules/ada_mother_os/kernel.bin
+	@echo "[CP] Copying Ada kernel binary..."
+	cp $< $@
+	@echo "  Kernel binary: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
 
 # Create bootable disk image
 $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stub.bin
