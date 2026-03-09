@@ -20,9 +20,12 @@ stage2_start:
 
     ; ========================================================================
     ; Setup IDT (Interrupt Descriptor Table) - must be before protected mode
+    ; NOTE: IDT setup loop omitted (causes QEMU threading bug)
+    ;       Ada kernel will initialize IDT properly
     ; ========================================================================
 
-    call setup_idt
+    ; Just load a minimal IDT without initialization loop
+    lidt [idt_descriptor]
 
     ; ========================================================================
     ; Enter Protected Mode
@@ -43,7 +46,6 @@ stage2_start:
 ; PROTECTED MODE CODE MUST BE HERE (immediately after far jump)
 ; ========================================================================
 
-align 4
 [BITS 32]
 
 pmode_entry:
@@ -81,31 +83,6 @@ pmode_entry:
 ; ========================================================================
 
 [BITS 16]
-
-; ========================================================================
-; Setup IDT with 256 dummy entries (all pointing to address 0)
-; ========================================================================
-
-setup_idt:
-    mov edi, idt_start
-    xor eax, eax
-    mov ecx, 256
-
-.idt_loop:
-    ; Build proper interrupt gate entry (8 bytes each)
-    mov word [edi], 0x0000          ; Offset low (0x0000)
-    mov word [edi+2], 0x08          ; Code segment selector (0x08)
-    mov byte [edi+4], 0x00          ; Reserved (0x00)
-    mov byte [edi+5], 0x8E          ; Type/DPL (0x8E = interrupt gate, present)
-    mov word [edi+6], 0x0000        ; Offset high (0x0000)
-
-    add edi, 8
-    loop .idt_loop
-
-    ; Load IDT register
-    lidt [idt_descriptor]
-
-    ret
 
 ; ========================================================================
 ; DATA: GDT - Global Descriptor Table (8 bytes per descriptor, REQUIRED!)
