@@ -627,29 +627,57 @@ scheduler_loop:
 
 .skip_perf_sample:
 
-    ; BlockchainOS: trigger every 256 cycles (cycle_count & 0xFF == 0)
+    ; === PHASE 17: IPC-BASED MODULE EXECUTION ===
+    ; Call module dispatch functions to handle IPC requests
+    ; These functions read the IPC control block and execute module code
+
+    ; BlockchainOS: trigger every 256 cycles
     mov rax, r11
     test al, 0xFF
-    jnz .skip_blockchain_call
+    jnz .skip_blockchain_dispatch
 
     ; Set IPC request for BlockchainOS
-    mov byte [r8 + 0], REQUEST_BLOCKCHAIN_CYCLE  ; IPC request code
-    mov word [r8 + 2], MODULE_BLOCKCHAIN         ; Module ID
-    mov byte [r8 + 1], STATUS_BUSY               ; Status = busy
+    mov byte [r8 + 0], REQUEST_BLOCKCHAIN_CYCLE
+    mov byte [r8 + 1], STATUS_BUSY
+    mov word [r8 + 2], MODULE_BLOCKCHAIN
 
-.skip_blockchain_call:
+    ; Call BlockchainOS ipc_dispatch (address 0x250a20)
+    ; NOTE: This may trigger Phase 16 restart bug, so wrapped in comment for now
+    ; call 0x250a20
 
-    ; NeuroOS: trigger every 512 cycles (cycle_count & 0x1FF == 0)
+.skip_blockchain_dispatch:
+
+    ; NeuroOS: trigger every 512 cycles
     mov rax, r11
     test al, 0x1FF
-    jnz .skip_neuro_call
+    jnz .skip_neuro_dispatch
 
     ; Set IPC request for NeuroOS
-    mov byte [r8 + 0], REQUEST_NEURO_CYCLE      ; IPC request code
-    mov word [r8 + 2], MODULE_NEURO             ; Module ID
-    mov byte [r8 + 1], STATUS_BUSY              ; Status = busy
+    mov byte [r8 + 0], REQUEST_NEURO_CYCLE
+    mov byte [r8 + 1], STATUS_BUSY
+    mov word [r8 + 2], MODULE_NEURO
 
-.skip_neuro_call:
+    ; Call NeuroOS ipc_dispatch (address 0x2d0720)
+    ; NOTE: This may trigger Phase 16 restart bug, so wrapped in comment for now
+    ; call 0x2d0720
+
+.skip_neuro_dispatch:
+
+    ; Grid OS: trigger every 128 cycles for metrics export
+    mov rax, r11
+    test al, 0x7F
+    jnz .skip_grid_dispatch
+
+    ; Set IPC request for Grid OS metrics
+    mov byte [r8 + 0], REQUEST_GRID_METRICS
+    mov byte [r8 + 1], STATUS_BUSY
+    mov word [r8 + 2], 0x03  ; Grid OS module ID
+
+    ; Call Grid OS ipc_dispatch (address 0x111190)
+    ; NOTE: This may trigger Phase 16 restart bug, so wrapped in comment for now
+    ; call 0x111190
+
+.skip_grid_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000

@@ -274,16 +274,41 @@ export fn export_metrics() void {
 
 /// IPC request dispatcher
 /// Modules call this periodically to check for kernel requests
+/// IPC Dispatch: Handle requests from kernel scheduler
+/// Called periodically by kernel through entry point wrapper
 export fn ipc_dispatch() void {
     // Ensure module is initialized on first call
     if (!initialized) {
         init_plugin();
     }
 
-    // TODO: Handle IPC request codes when defined
-    // IPC control block @ 0x100110:
-    // - request @ 0x100110
-    // - status @ 0x100111
-    // - module_id @ 0x100112-0x100113
-    // - return_value @ 0x100120-0x100127
+    // Read IPC request from control block @ 0x100110
+    const ipc_request_ptr = @as(*volatile u8, @ptrFromInt(0x100110));
+    const ipc_status_ptr = @as(*volatile u8, @ptrFromInt(0x100111));
+    const ipc_return_ptr = @as(*volatile i64, @ptrFromInt(0x100120));
+
+    const request = ipc_request_ptr.*;
+
+    switch (request) {
+        0x00 => {
+            // REQUEST_NONE: idle, do nothing
+        },
+        0x01 => {
+            // REQUEST_BLOCKCHAIN_CYCLE: BlockchainOS requested (shouldn't reach here)
+        },
+        0x02 => {
+            // REQUEST_NEURO_CYCLE: NeuroOS requested (shouldn't reach here)
+        },
+        0x03 => {
+            // REQUEST_GRID_METRICS: Grid OS should export metrics
+            export_metrics();
+            ipc_return_ptr.* = 0; // Success
+            ipc_status_ptr.* = 0x02; // STATUS_DONE
+        },
+        else => {
+            // Unknown request
+            ipc_return_ptr.* = -1; // Error
+            ipc_status_ptr.* = 0x03; // STATUS_ERROR
+        },
+    }
 }
