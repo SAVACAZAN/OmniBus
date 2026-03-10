@@ -30,6 +30,11 @@ fn getGridStatePtr() *volatile types.GridState {
     return @as(*volatile types.GridState, @ptrFromInt(types.GRID_BASE + types.GRIDSTATE_OFFSET));
 }
 
+/// Neuro feedback state (for metrics tracking)
+var last_population_size: u64 = 0;
+var last_generation: u64 = 0;
+var feedback_updates: u64 = 0;
+
 /// Read NeuroOS evolved parameters from export buffer (0x120040+)
 /// Returns adjusted step_cents based on population size feedback
 fn readNeuroOSParameters() u64 {
@@ -42,6 +47,13 @@ fn readNeuroOSParameters() u64 {
     // Higher population = more aggressive spacing (smaller step)
     // Lower population = wider spacing (larger step)
     if (valid_flag == 0x01) {
+        // Track feedback metrics
+        if (population_size != last_population_size or generation != last_generation) {
+            last_population_size = population_size;
+            last_generation = generation;
+            feedback_updates += 1;
+        }
+
         // Population ranges 1-256, we map to step adjustment
         // Base step = 100 cents, scale by population
         const adjusted_step = (100 * (256 - population_size)) / 256;
@@ -49,6 +61,12 @@ fn readNeuroOSParameters() u64 {
     }
 
     return 100; // Default step if no valid neuro parameters
+}
+
+/// Export feedback metrics to shared buffer for monitoring
+/// Called by kernel to report how many times NeuroOS parameters changed Grid behavior
+pub fn getNeuroFeedbackStats() u64 {
+    return feedback_updates;
 }
 
 // ============================================================================

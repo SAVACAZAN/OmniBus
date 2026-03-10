@@ -63,7 +63,9 @@
       "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_call8.log -display none)",
       "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_modules.log -display none)",
       "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_mem.log -display none)",
-      "Bash(timeout 60 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase20_test.log -display none)"
+      "Bash(timeout 60 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase20_test.log -display none)",
+      "Bash(timeout 60 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase20_metrics.log -display none)",
+      "Bash(timeout 120 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase20_final.log -display none)"
     ]
   }
 }
