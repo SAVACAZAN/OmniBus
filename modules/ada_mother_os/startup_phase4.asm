@@ -670,6 +670,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; Audit Log OS .bss @ 0x340080, size 0x100 (256 bytes)
+    mov rdi, 0x340080
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -709,6 +715,9 @@ ada64_stub_event_loop:
 
     ; Zorin OS init_plugin @ 0x330000
     call 0x330000
+
+    ; Audit Log OS init_plugin @ 0x340000
+    call 0x340000
 
     ; === SUCCESS ===
     mov al, '!'
@@ -876,6 +885,13 @@ scheduler_loop:
     jnz .skip_zorin_dispatch
     call 0x330080                       ; Zorin: run_zorin_cycle (ACL enforcement + audit)
 .skip_zorin_dispatch:
+
+    ; Audit Log OS: trigger every 8192 cycles (event logging & forensics)
+    mov rax, r11
+    test al, 0x1FFF
+    jnz .skip_audit_log_dispatch
+    call 0x340080                       ; Audit Log: run_audit_cycle (log management + escalation check)
+.skip_audit_log_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000

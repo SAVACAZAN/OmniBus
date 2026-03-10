@@ -36,13 +36,14 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
+	@echo "  Phase 27: Audit Log OS (Event logging & forensics) ✅"
 	@echo "  Phase 28: Zorin OS (Access Control & Compliance) ✅"
 	@echo "  Run with: make qemu"
 
@@ -342,6 +343,25 @@ $(BUILD_DIR)/zorin_os.bin: $(BUILD_DIR)/zorin_os.elf
 	@echo "[OC] Converting Zorin OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Zorin OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Audit Log OS (L11) - Event logging & forensics
+$(BUILD_DIR)/audit_log_os.o: ./modules/audit_log_os/audit_log_os.zig ./modules/audit_log_os/audit_log_os_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Audit Log OS to object file..."
+	cd ./modules/audit_log_os && zig build-obj audit_log_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/audit_log_os/audit_log_os.o ]; then mv ./modules/audit_log_os/audit_log_os.o $@; fi
+
+$(BUILD_DIR)/audit_log_os_stubs.o: ./modules/audit_log_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Audit Log OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/audit_log_os.elf: $(BUILD_DIR)/audit_log_os.o $(BUILD_DIR)/audit_log_os_stubs.o ./modules/audit_log_os/audit_log_os.ld
+	@echo "[LD] Linking Audit Log OS ELF..."
+	ld -T ./modules/audit_log_os/audit_log_os.ld -o $@ $(BUILD_DIR)/audit_log_os.o $(BUILD_DIR)/audit_log_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/audit_log_os.bin: $(BUILD_DIR)/audit_log_os.elf
+	@echo "[OC] Converting Audit Log OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Audit Log OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)
