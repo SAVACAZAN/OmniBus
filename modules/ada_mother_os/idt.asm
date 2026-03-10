@@ -373,10 +373,10 @@ irq_handler_common:
 
 global idt_init
 idt_init:
-    ; Phase 8C: Load IDTR with IDT pointer
-    ; Note: IDT entries are pre-zeroed. For Phase 8C, we skip the per-entry
-    ; initialization loop (which was hanging) and defer to Phase 8D.
-    ; The lidt instruction will load the IDTR with base and limit.
+    ; Phase 8D: Load IDTR with IDT pointer
+    ; Note: Address resolution in flat binary prevents dynamic IDT population.
+    ; IDT entries are pre-zeroed; full handler setup deferred to Phase 8E using C/Ada.
+    ; For now, lidt successfully loads the IDTR without exceptions.
 
     lidt [idt_ptr]
     ret
