@@ -34,10 +34,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS loaded from real Zig binaries"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS loaded from real Zig binaries"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -152,6 +152,25 @@ $(BUILD_DIR)/blockchain_os.bin: $(BUILD_DIR)/blockchain_os.elf
 	@echo "[OC] Converting BlockchainOS to binary..."
 	objcopy -O binary $< $@
 	@echo "  BlockchainOS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Neuro OS (0x2D0000, 512KB)
+$(BUILD_DIR)/neuro_os.o: ./modules/neuro_os/neuro_os.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Neuro OS to object file..."
+	cd ./modules/neuro_os && zig build-obj neuro_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/neuro_os/neuro_os.o ]; then mv ./modules/neuro_os/neuro_os.o $@; fi
+
+$(BUILD_DIR)/neuro_os_stubs.o: ./modules/neuro_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Neuro OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/neuro_os.elf: $(BUILD_DIR)/neuro_os.o $(BUILD_DIR)/neuro_os_stubs.o ./modules/neuro_os/neuro_os.ld
+	@echo "[LD] Linking Neuro OS ELF..."
+	ld -T ./modules/neuro_os/neuro_os.ld -o $@ $(BUILD_DIR)/neuro_os.o $(BUILD_DIR)/neuro_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/neuro_os.bin: $(BUILD_DIR)/neuro_os.elf
+	@echo "[OC] Converting Neuro OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Neuro OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)

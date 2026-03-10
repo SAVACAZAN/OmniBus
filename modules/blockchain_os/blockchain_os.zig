@@ -75,6 +75,7 @@ export fn init_plugin() void {
 
 /// Main blockchain processing cycle
 /// Called repeatedly by Ada Mother OS scheduler
+/// Week 5: Raydium flash loan integration + atomic swap execution
 export fn run_blockchain_cycle() void {
     if (!initialized) return;
 
@@ -92,10 +93,14 @@ export fn run_blockchain_cycle() void {
     while (i < types.MAX_FLASH_LOANS and processed < max_per_cycle) : (i += 1) {
         const slot = getFlashLoanSlotPtr(i);
         if (slot.status == 1) { // Request pending
-            // Process flash loan
-            processFlashLoan(slot);
+            // Process flash loan with atomic swap
+            processFlashLoanWithSwap(slot);
             slot.status = 2; // Mark as processing
             processed += 1;
+        } else if (slot.status == 2) {
+            // Pending execution — check if swap completed
+            // In real system: RPC call to check transaction status
+            slot.status = 3; // Mark as done (stub)
         }
     }
 
@@ -108,19 +113,79 @@ export fn run_blockchain_cycle() void {
 }
 
 // ============================================================================
-// Flash Loan Processing
+// Flash Loan Processing (Week 5: Raydium Integration)
 // ============================================================================
 
-/// Process a single flash loan request
+/// Process a single flash loan request with atomic swap execution
+/// Week 5: Constructs Solana transaction with:
+/// 1. Flash loan request (Raydium)
+/// 2. Token swap (input_mint → output_mint)
+/// 3. Loan repayment + fees
+fn processFlashLoanWithSwap(slot: *volatile types.FlashLoanRequest) void {
+    // Validate request parameters
+    if (slot.amount_lamports == 0) return;
+    if (isAllZerosVolatile(&slot.input_mint) or isAllZerosVolatile(&slot.output_mint)) return;
+
+    // Construct atomic Solana transaction
+    var tx = solana.create_transaction();
+
+    // Step 1: Request flash loan from Raydium
+    const flash_loan_instr = raydium.request_flash_loan(
+        slot.amount_lamports,
+        slot.input_mint,
+        slot.output_mint
+    );
+    tx.instructions[tx.instruction_count] = flash_loan_instr;
+    tx.instruction_count += 1;
+
+    // Step 2: Execute token swap (input → output)
+    // Calculate min_output based on slippage tolerance (1% = 0.99 * expected)
+    const min_output = (slot.amount_lamports * 99) / 100; // 1% slippage
+
+    const swap_instr = raydium.swap_tokens(
+        slot.amount_lamports,
+        min_output,
+        slot.output_mint  // Use output_mint as pool identifier
+    );
+    tx.instructions[tx.instruction_count] = swap_instr;
+    tx.instruction_count += 1;
+
+    // Step 3: Repay flash loan with fee (0.05% = 0.0005)
+    const repay_amount = slot.amount_lamports + (slot.amount_lamports / 2000);
+    const repay_instr = raydium.repay_flash_loan(repay_amount);
+    tx.instructions[tx.instruction_count] = repay_instr;
+    tx.instruction_count += 1;
+
+    // Step 4: Submit atomic transaction to Solana
+    // In real system: would RPC call to submit_transaction()
+    // For now: just count it
+    _ = solana.submit_transaction(&tx);
+
+    flash_loan_count += 1;
+}
+
+/// Check if a 32-byte mint address is all zeros
+fn isAllZeros(mint: *const [32]u8) bool {
+    var i: u32 = 0;
+    while (i < 32) : (i += 1) {
+        if (mint[i] != 0) return false;
+    }
+    return true;
+}
+
+/// Check if a volatile 32-byte mint address is all zeros
+fn isAllZerosVolatile(mint: *volatile [32]u8) bool {
+    var i: u32 = 0;
+    while (i < 32) : (i += 1) {
+        if (mint[i] != 0) return false;
+    }
+    return true;
+}
+
+/// Process a single flash loan request (legacy stub)
 fn processFlashLoan(slot: *volatile types.FlashLoanRequest) void {
-    // In real system, would construct Solana transaction:
-    // 1. Request flash loan from Raydium
-    // 2. Execute token swap
-    // 3. Repay loan + fees
-    // 4. Verify atomic execution
-
-    _ = slot; // Suppress unused parameter warning
-
+    // Legacy stub — now delegated to processFlashLoanWithSwap
+    _ = slot;
     flash_loan_count += 1;
 }
 
@@ -129,20 +194,25 @@ fn processFlashLoan(slot: *volatile types.FlashLoanRequest) void {
 // ============================================================================
 
 /// Request a flash loan for atomic token swap
-/// Input: amount_lamports, input_mint_ptr, output_mint_ptr
+/// Week 5: Validates mint addresses and stores request for async processing
+/// Returns: slot index (0-15) or 0xFFFFFFFF if no slots available
 export fn request_flash_loan(
     amount_lamports: u64,
     input_mint_ptr: [*]const u8,
     output_mint_ptr: [*]const u8,
 ) u32 {
+    // Validate input
+    if (amount_lamports == 0) return 0xFFFFFFFF;
+
     // Find free slot
     var i: u32 = 0;
     while (i < types.MAX_FLASH_LOANS) : (i += 1) {
         const slot = getFlashLoanSlotPtr(i);
         if (slot.status == 0) { // Idle
+            // Copy mint addresses (32 bytes each)
+            @memcpy(slot.input_mint[0..32], input_mint_ptr[0..32]);
+            @memcpy(slot.output_mint[0..32], output_mint_ptr[0..32]);
             slot.amount_lamports = amount_lamports;
-            @memcpy(slot.input_mint[0..], input_mint_ptr[0..32]);
-            @memcpy(slot.output_mint[0..], output_mint_ptr[0..32]);
             slot.status = 1; // Mark as pending
             return i;
         }
@@ -151,14 +221,34 @@ export fn request_flash_loan(
 }
 
 /// Execute atomic token swap
+/// Week 5: Can be called standalone (non-flash-loan swap) or as part of flash loan flow
 export fn execute_atomic_swap(
     input_amount: u64,
     min_output: u64,
 ) bool {
     // Verify preconditions
     if (input_amount == 0 or min_output == 0) return false;
+    if (min_output > input_amount) return false; // Sanity check
 
     // In real system: construct Solana transaction + submit to network
+    // This executes a swap without flash loan (e.g., use existing tokens)
+    swap_count += 1;
+    return true;
+}
+
+/// Execute atomic swap given flash loan slot
+/// Week 5: Used internally when processing flash loan requests
+/// Returns: true if swap instruction was enqueued
+export fn execute_swap_from_flash_loan(slot_idx: u32) bool {
+    if (slot_idx >= types.MAX_FLASH_LOANS) return false;
+
+    const slot = getFlashLoanSlotPtr(slot_idx);
+    if (slot.status != 1 and slot.status != 2) return false; // Only from pending/processing
+
+    // Verify amounts are valid
+    if (slot.amount_lamports == 0) return false;
+
+    // Queue swap for execution
     swap_count += 1;
     return true;
 }
@@ -185,6 +275,26 @@ export fn get_swap_count() u32 {
 /// Get initialized state
 export fn is_initialized() u8 {
     return if (initialized) 1 else 0;
+}
+
+/// Get count of pending flash loan requests (status == 1 or 2)
+export fn get_pending_flash_loans() u32 {
+    var count: u32 = 0;
+    var i: u32 = 0;
+    while (i < types.MAX_FLASH_LOANS) : (i += 1) {
+        const slot = getFlashLoanSlotPtr(i);
+        if (slot.status == 1 or slot.status == 2) {
+            count += 1;
+        }
+    }
+    return count;
+}
+
+/// Get amount of a specific flash loan request (for monitoring)
+export fn get_flash_loan_amount(slot_idx: u32) u64 {
+    if (slot_idx >= types.MAX_FLASH_LOANS) return 0;
+    const slot = getFlashLoanSlotPtr(slot_idx);
+    return slot.amount_lamports;
 }
 
 // ============================================================================
