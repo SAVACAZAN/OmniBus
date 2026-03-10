@@ -682,6 +682,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; Federation OS .bss @ 0x3A0100, size 0x100 (256 bytes)
+    mov rdi, 0x3A0100
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -736,6 +742,9 @@ ada64_stub_event_loop:
 
     ; Consensus Engine OS init_plugin @ 0x390000
     call 0x390000
+
+    ; Federation OS init_plugin @ 0x3A0000
+    call 0x3A0000
 
     ; === SUCCESS ===
     mov al, '!'
@@ -940,6 +949,14 @@ scheduler_loop:
     jnz .skip_consensus_dispatch
     call 0x390100                       ; Consensus Engine: run_consensus_cycle (finalize votes + detect consensus)
 .skip_consensus_dispatch:
+
+    ; Federation OS: trigger every 262144 cycles (IPC message hub processing)
+    mov rax, r11
+    mov rbx, 0x3FFFF
+    and rax, rbx
+    jnz .skip_federation_dispatch
+    call 0x3A0100                       ; Federation: run_federation_cycle (deliver messages + detect expirations)
+.skip_federation_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000

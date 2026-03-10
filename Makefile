@@ -36,10 +36,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
@@ -48,6 +48,7 @@ build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_
 	@echo "  Phase 30: Parameter Tuning OS (Dynamic trading parameters) ✅"
 	@echo "  Phase 31: Historical Analytics OS (Time-series data collection) ✅"
 	@echo "  Phase 32: Alert System OS (Real-time notifications) ✅"
+	@echo "  Phase 33: Multi-Kernel Federation OS (IPC message routing) ✅"
 	@echo "  Phase 34: Consensus Engine OS (Byzantine fault tolerance) ✅"
 	@echo "  Run with: make qemu"
 
@@ -454,6 +455,28 @@ $(BUILD_DIR)/consensus_engine_os.bin: $(BUILD_DIR)/consensus_engine_os.elf
 	@echo "[OC] Converting Consensus Engine OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Consensus Engine OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# ============================================================================
+# Federation OS (L18) - IPC message hub and routing
+# ============================================================================
+
+$(BUILD_DIR)/federation_os.o: ./modules/federation_os/federation_os.zig ./modules/federation_os/federation_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Federation OS to object file..."
+	cd ./modules/federation_os && zig build-obj federation_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/federation_os/federation_os.o ]; then mv ./modules/federation_os/federation_os.o $@; fi
+
+$(BUILD_DIR)/federation_os_stubs.o: ./modules/federation_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Federation OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/federation_os.elf: $(BUILD_DIR)/federation_os.o $(BUILD_DIR)/federation_os_stubs.o ./modules/federation_os/federation_os.ld
+	@echo "[LD] Linking Federation OS ELF..."
+	ld -T ./modules/federation_os/federation_os.ld -o $@ $(BUILD_DIR)/federation_os.o $(BUILD_DIR)/federation_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/federation_os.bin: $(BUILD_DIR)/federation_os.elf
+	@echo "[OC] Converting Federation OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Federation OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)
