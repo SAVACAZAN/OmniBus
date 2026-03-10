@@ -307,6 +307,26 @@ long_mode_entry:
     mov rcx, 256
     call load_sectors_pio
 
+    ; UART 'B' = BlockchainOS load starting
+    mov al, 'B'
+    out dx, al
+
+    ; Load BlockchainOS from sectors 5632+ (384 sectors = 192KB) → 0x250000
+    mov rax, 5632
+    mov rdi, 0x250000
+    mov rcx, 384
+    call load_sectors_pio
+
+    ; UART 'N' = NeuroOS load starting
+    mov al, 'N'
+    out dx, al
+
+    ; Load NeuroOS from sectors 6016+ (1024 sectors = 512KB) → 0x2D0000
+    mov rax, 6016
+    mov rdi, 0x2D0000
+    mov rcx, 1024
+    call load_sectors_pio
+
     ; UART 'S' = All sectors loaded successfully
     mov al, 'S'
     out dx, al
@@ -318,6 +338,25 @@ long_mode_entry:
     ; Just print 'V' to verify we reached here
     mov al, 'V'
     out dx, al
+
+    ; ========================================================================
+    ; PHASE 6-7: INITIALIZE OS MODULES
+    ; Call init_plugin() for BlockchainOS and NeuroOS
+    ; ========================================================================
+
+    ; Initialize BlockchainOS (init_plugin @ 0x250000)
+    mov al, '1'
+    out dx, al
+    call 0x250000  ; Call BlockchainOS.init_plugin()
+
+    ; Initialize NeuroOS (init_plugin @ 0x2D0000)
+    mov al, '2'
+    out dx, al
+    call 0x2D0000  ; Call NeuroOS.init_plugin()
+
+    mov al, '+'
+    out dx, al
+
     ; === ADA EVENT LOOP STUB (Phase 4A) ===
     call ada64_stub_event_loop
 

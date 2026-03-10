@@ -242,7 +242,7 @@ test-paging: $(BUILD_DIR)/.keep $(BUILD_DIR)/paging_test.iso
 # Create bootable disk image (Phase 5B: includes real OS module binaries)
 # Note: Attempts to build Zig modules; falls back to NASM stubs if build fails
 $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stub.bin
-	@echo "[IMG] Creating bootable disk image (Phase 5B)..."
+	@echo "[IMG] Creating bootable disk image (Phase 5B + 6 + 7)..."
 	@# Try to build real Zig modules; fall back to stubs
 	@if [ ! -f $(BUILD_DIR)/grid_os.bin ]; then \
 		echo "  [WARN] Grid OS binary not found, attempting Zig build..."; \
@@ -256,26 +256,40 @@ $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stu
 		echo "  [WARN] Execution OS binary not found, attempting Zig build..."; \
 		$(MAKE) $(BUILD_DIR)/execution_os.bin 2>/dev/null || $(MAKE) $(BUILD_DIR)/execution_stub.bin; \
 	fi
+	@if [ ! -f $(BUILD_DIR)/blockchain_os.bin ]; then \
+		echo "  [WARN] BlockchainOS binary not found, attempting Zig build..."; \
+		$(MAKE) $(BUILD_DIR)/blockchain_os.bin 2>/dev/null; \
+	fi
+	@if [ ! -f $(BUILD_DIR)/neuro_os.bin ]; then \
+		echo "  [WARN] NeuroOS binary not found, attempting Zig build..."; \
+		$(MAKE) $(BUILD_DIR)/neuro_os.bin 2>/dev/null; \
+	fi
 	@# Determine which binaries to use
 	@GRID_BIN=$$([ -f $(BUILD_DIR)/grid_os.bin ] && echo $(BUILD_DIR)/grid_os.bin || echo $(BUILD_DIR)/grid_stub.bin); \
 	ANALYTICS_BIN=$$([ -f $(BUILD_DIR)/analytics_os.bin ] && echo $(BUILD_DIR)/analytics_os.bin || echo $(BUILD_DIR)/analytics_stub.bin); \
 	EXEC_BIN=$$([ -f $(BUILD_DIR)/execution_os.bin ] && echo $(BUILD_DIR)/execution_os.bin || echo $(BUILD_DIR)/execution_stub.bin); \
-	echo "[IMG] Using: Grid=$$(basename $$GRID_BIN) Analytics=$$(basename $$ANALYTICS_BIN) Exec=$$(basename $$EXEC_BIN)"; \
+	BLOCKCHAIN_BIN=$$([ -f $(BUILD_DIR)/blockchain_os.bin ] && echo $(BUILD_DIR)/blockchain_os.bin || echo /dev/zero); \
+	NEURO_BIN=$$([ -f $(BUILD_DIR)/neuro_os.bin ] && echo $(BUILD_DIR)/neuro_os.bin || echo /dev/zero); \
+	echo "[IMG] Using: Grid=$$(basename $$GRID_BIN) Analytics=$$(basename $$ANALYTICS_BIN) Exec=$$(basename $$EXEC_BIN) Blockchain=$$(basename $$BLOCKCHAIN_BIN) Neuro=$$(basename $$NEURO_BIN)"; \
 	dd if=/dev/zero of=$(OUTPUT) bs=512 count=20480 2>/dev/null; \
 	dd if=$(BUILD_DIR)/boot.bin of=$(OUTPUT) bs=512 count=1 conv=notrunc 2>/dev/null; \
 	dd if=$(BUILD_DIR)/stage2.bin of=$(OUTPUT) bs=512 seek=1 conv=notrunc 2>/dev/null; \
 	dd if=$(BUILD_DIR)/kernel_stub.bin of=$(OUTPUT) bs=512 seek=2048 conv=notrunc 2>/dev/null; \
 	dd if=$$GRID_BIN of=$(OUTPUT) bs=512 seek=4096 conv=notrunc 2>/dev/null; \
 	dd if=$$ANALYTICS_BIN of=$(OUTPUT) bs=512 seek=4352 conv=notrunc 2>/dev/null; \
-	dd if=$$EXEC_BIN of=$(OUTPUT) bs=512 seek=5376 conv=notrunc 2>/dev/null
+	dd if=$$EXEC_BIN of=$(OUTPUT) bs=512 seek=5376 conv=notrunc 2>/dev/null; \
+	dd if=$$BLOCKCHAIN_BIN of=$(OUTPUT) bs=512 seek=5632 conv=notrunc 2>/dev/null; \
+	dd if=$$NEURO_BIN of=$(OUTPUT) bs=512 seek=6016 conv=notrunc 2>/dev/null
 	@echo "  Disk image: $(OUTPUT) ($$(stat -c%s $(OUTPUT)) bytes)"
 	@echo "  Sector layout:"
-	@echo "    Boot:      sector 0-0"
-	@echo "    Stage2:    sector 1-1"
-	@echo "    Kernel:    sector 2048-2176 (128KB kernel)"
-	@echo "    Grid OS:   sector 4096-4351 (256 sectors, 128KB)"
-	@echo "    Analytics: sector 4352-5375 (1024 sectors, 512KB)"
-	@echo "    Exec OS:   sector 5376-5631 (256 sectors, 128KB)"
+	@echo "    Boot:       sector 0-0       (512B)"
+	@echo "    Stage2:     sector 1-1       (512B)"
+	@echo "    Kernel:     sector 2048-2176 (128KB kernel)"
+	@echo "    Grid OS:    sector 4096-4351 (256 sectors, 128KB @ 0x110000)"
+	@echo "    Analytics:  sector 4352-5375 (1024 sectors, 512KB @ 0x150000)"
+	@echo "    Exec OS:    sector 5376-5631 (256 sectors, 128KB @ 0x130000)"
+	@echo "    BlockchainOS: sector 5632-6015 (384 sectors, 192KB @ 0x250000)"
+	@echo "    NeuroOS:    sector 6016-7039 (1024 sectors, 512KB @ 0x2D0000)"
 
 # ============================================================================
 # RUN: Execute in QEMU
