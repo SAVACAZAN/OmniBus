@@ -30,6 +30,8 @@ Architecture:
     metrics_dashboard.py reads 144-byte buffer, displays real-time UI
 """
 
+import mmap
+import os
 import requests
 import struct
 import time
@@ -169,12 +171,18 @@ class MultiSourceBuffer:
 class MultiExchangeFeeder:
     """Fetches prices from Kraken, LCX, and Coinbase - writes to both OmniBus + dashboard buffers"""
 
+    # Kernel buffer address in physical memory (read by exchange_reader.zig)
+    KERNEL_BUFFER_ADDR = 0x140000
+
     def __init__(self, use_file: bool = False, buffer_file: str = "/tmp/omnibus_kraken_buffer.bin",
-                 include_lcx: bool = True, write_dashboard_buffer: bool = True):
+                 include_lcx: bool = True, write_dashboard_buffer: bool = True,
+                 shm_file: str = ""):
         self.use_file = use_file
         self.buffer_file = buffer_file
         self.include_lcx = include_lcx
         self.write_dashboard_buffer = write_dashboard_buffer
+        self.shm_file = shm_file    # Path to QEMU memory-backend-file (e.g. /tmp/omnibus_mem)
+        self._shm_mm: mmap.mmap | None = None  # mmap handle (opened lazily)
         self.session = requests.Session()
         self.cycle = 0
         self.last_error_time = 0
@@ -337,6 +345,29 @@ class MultiExchangeFeeder:
             log.error(f"Failed to write buffer file: {e}")
             return False
 
+    def write_buffer_shm(self, buf: ExchangeBuffer) -> bool:
+        """Write buffer to QEMU shared memory via mmap.
+        Uses -object memory-backend-file so Python can write directly to kernel RAM.
+        """
+        try:
+            if not self.shm_file or not os.path.exists(self.shm_file):
+                return False
+            # Open/reuse mmap handle
+            if self._shm_mm is None:
+                fd = open(self.shm_file, 'r+b')
+                self._shm_mm = mmap.mmap(fd.fileno(), 0)  # map whole file
+            data = buf.to_bytes()
+            self._shm_mm.seek(self.KERNEL_BUFFER_ADDR)
+            self._shm_mm.write(data)
+            self._shm_mm.flush()
+            # Also write file for dashboard compatibility
+            self.write_buffer_file(buf)
+            return True
+        except Exception as e:
+            log.error(f"SHM write failed: {e}")
+            self._shm_mm = None   # Force reopen next cycle
+            return False
+
     def write_buffer_gdb(self, buf: ExchangeBuffer) -> bool:
         """Write buffer via GDB memory write (requires GDB to be attached)"""
         try:
@@ -349,13 +380,16 @@ class MultiExchangeFeeder:
             return False
 
     def write_buffer(self, buf: ExchangeBuffer) -> bool:
-        """Write exchange buffer to system"""
+        """Write exchange buffer to system.
+        Priority: SHM (live kernel) > file (dashboard-only) > GDB (legacy)
+        """
+        if self.shm_file:
+            return self.write_buffer_shm(buf)
         if self.use_file:
             return self.write_buffer_file(buf)
-        else:
-            if not self.write_buffer_gdb(buf):
-                return self.write_buffer_file(buf)
-            return True
+        if not self.write_buffer_gdb(buf):
+            return self.write_buffer_file(buf)
+        return True
 
     def write_multi_source_buffer(self, kraken_btc: int, kraken_eth: int, kraken_lcx: int, kraken_lcx_vol: int,
                                   coinbase_lcx: int, coinbase_lcx_vol: int,
@@ -482,7 +516,12 @@ class MultiExchangeFeeder:
             log.info(f"Assets: BTC (Kraken), ETH (Kraken), LCX (Kraken→Coinbase→LCX Exchange)")
         else:
             log.info(f"Assets: BTC (Kraken), ETH (Kraken)")
-        log.info(f"Using {'file' if self.use_file else 'GDB'} backend")
+        if self.shm_file:
+            log.info(f"Using SHM backend → {self.shm_file} (0x{self.KERNEL_BUFFER_ADDR:X})")
+        elif self.use_file:
+            log.info("Using file backend")
+        else:
+            log.info("Using GDB backend")
 
         try:
             while True:
@@ -538,6 +577,13 @@ def main():
         action='store_true',
         help='Enable verbose logging'
     )
+    parser.add_argument(
+        '--shm',
+        default='',
+        metavar='SHM_FILE',
+        help='Path to QEMU memory-backend-file for live kernel injection '
+             '(e.g. /tmp/omnibus_mem). Writes prices directly at 0x140000 in kernel RAM.'
+    )
 
     args = parser.parse_args()
 
@@ -547,7 +593,8 @@ def main():
     feeder = MultiExchangeFeeder(
         use_file=args.file,
         buffer_file=args.buffer_file,
-        include_lcx=not args.no_lcx
+        include_lcx=not args.no_lcx,
+        shm_file=args.shm
     )
 
     success = feeder.run(args.interval)
