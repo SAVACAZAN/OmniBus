@@ -725,6 +725,9 @@ ada64_stub_event_loop:
     ; Historical Analytics OS init_plugin @ 0x370000
     call 0x370000
 
+    ; Alert System OS init_plugin @ 0x380000
+    call 0x380000
+
     ; === SUCCESS ===
     mov al, '!'
     out dx, al
@@ -912,6 +915,14 @@ scheduler_loop:
     jnz .skip_hist_analytics_dispatch
     call 0x370100                       ; Historical Analytics: run_historical_analytics_cycle (collect + aggregate metrics)
 .skip_hist_analytics_dispatch:
+
+    ; Alert System OS: trigger every 65536 cycles (alert rule evaluation)
+    mov rax, r11
+    mov rbx, 0xFFFF
+    and rax, rbx
+    jnz .skip_alert_system_dispatch
+    call 0x380080                       ; Alert System: run_alert_cycle (evaluate rules + queue notifications)
+.skip_alert_system_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
