@@ -36,10 +36,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
@@ -51,6 +51,7 @@ build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_
 	@echo "  Phase 33: Multi-Kernel Federation OS (IPC message routing) ✅"
 	@echo "  Phase 34: Consensus Engine OS (Byzantine fault tolerance) ✅"
 	@echo "  Phase 35: MEV Guard OS (Sandwich/frontrun protection) ✅"
+	@echo "  Phase 36: Cross-Chain Bridge OS (Multi-blockchain swaps) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -500,6 +501,25 @@ $(BUILD_DIR)/mev_guard_os.bin: $(BUILD_DIR)/mev_guard_os.elf
 	@echo "[OC] Converting MEV Guard OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  MEV Guard OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Cross-Chain Bridge OS (0x3C0000, 64KB) — L21: Multi-blockchain atomic swaps
+$(BUILD_DIR)/cross_chain_bridge_os.o: ./modules/cross_chain_bridge_os/cross_chain_bridge_os.zig ./modules/cross_chain_bridge_os/cross_chain_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Cross-Chain Bridge OS to object file..."
+	cd ./modules/cross_chain_bridge_os && zig build-obj cross_chain_bridge_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/cross_chain_bridge_os/cross_chain_bridge_os.o ]; then mv ./modules/cross_chain_bridge_os/cross_chain_bridge_os.o $@; fi
+
+$(BUILD_DIR)/cross_chain_bridge_os_stubs.o: ./modules/cross_chain_bridge_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Cross-Chain Bridge OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/cross_chain_bridge_os.elf: $(BUILD_DIR)/cross_chain_bridge_os.o $(BUILD_DIR)/cross_chain_bridge_os_stubs.o ./modules/cross_chain_bridge_os/cross_chain_bridge_os.ld
+	@echo "[LD] Linking Cross-Chain Bridge OS ELF..."
+	ld -T ./modules/cross_chain_bridge_os/cross_chain_bridge_os.ld -o $@ $(BUILD_DIR)/cross_chain_bridge_os.o $(BUILD_DIR)/cross_chain_bridge_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/cross_chain_bridge_os.bin: $(BUILD_DIR)/cross_chain_bridge_os.elf
+	@echo "[OC] Converting Cross-Chain Bridge OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Cross-Chain Bridge OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)

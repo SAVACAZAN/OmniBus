@@ -755,6 +755,9 @@ ada64_stub_event_loop:
     ; MEV Guard OS init_plugin @ 0x3B0000
     call 0x3B0000
 
+    ; Cross-Chain Bridge OS init_plugin @ 0x3C0000
+    call 0x3C0000
+
     ; === SUCCESS ===
     mov al, '!'
     out dx, al
@@ -974,6 +977,14 @@ scheduler_loop:
     jnz .skip_mev_guard_dispatch
     call 0x3B0100                       ; MEV Guard: run_mev_guard_cycle (sandwich detection + jitter update)
 .skip_mev_guard_dispatch:
+
+    ; Cross-Chain Bridge OS dispatch: every 1048576 cycles (0x100000)
+    mov rax, r11
+    mov rbx, 0xFFFFF
+    and rax, rbx
+    jnz .skip_cross_chain_dispatch
+    call 0x3C0100                       ; Cross-Chain: run_cross_chain_cycle (swap timeout check)
+.skip_cross_chain_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
