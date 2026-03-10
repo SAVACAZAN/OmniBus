@@ -432,15 +432,43 @@ ada64_stub_initialize:
 ; PHASE 9: KERNEL SCHEDULER (Cycle-based module management)
 ; ============================================================================
 
-; Kernel state (placed at 0x100100 to avoid collision with IDT at 0x101000)
+; ============================================================================
+; KERNEL STATE & IPC CONTROL BLOCK (0x100100-0x10017F)
+; ============================================================================
+
+; Kernel state
 align 64
-kernel_cycle_count:  dq 0     ; Total cycles executed
-kernel_module_flags: dq 0     ; Module state bitmap
-kernel_scheduler_enabled: db 1
+kernel_cycle_count:     dq 0    ; 0x100100: Total cycles executed
+
+; IPC Control Block (0x100110, 16-byte aligned for atomic access)
+align 16
+ipc_control_block:
+    ipc_request:        db 0    ; 0x100110: REQUEST code (0=none, 1=blockchain, 2=neuro, etc)
+    ipc_status:         db 0    ; 0x100111: STATUS (0=idle, 1=busy, 2=done, 3=error)
+    ipc_module_id:      dw 0    ; 0x100112: Module ID (1-5)
+    _pad1:              dd 0    ; Padding
+    ipc_cycle_count:    dq 0    ; 0x100118: Kernel cycle when request made
+    ipc_return_value:   dq 0    ; 0x100120: Return value from module
 
 ; Scheduler constants
-SCHEDULER_CYCLES_PER_BLOCKCHAIN: equ 100   ; Call BlockchainOS every 100 cycles
-SCHEDULER_CYCLES_PER_NEURO: equ 200        ; Call NeuroOS every 200 cycles
+SCHEDULER_CYCLES_PER_BLOCKCHAIN: equ 100
+SCHEDULER_CYCLES_PER_NEURO: equ 200
+
+; IPC Request Codes
+REQUEST_NONE:           equ 0x00
+REQUEST_BLOCKCHAIN_CYCLE: equ 0x01
+REQUEST_NEURO_CYCLE:    equ 0x02
+REQUEST_GRID_METRICS:   equ 0x03
+
+; IPC Status Codes
+STATUS_IDLE:            equ 0x00
+STATUS_BUSY:            equ 0x01
+STATUS_DONE:            equ 0x02
+STATUS_ERROR:           equ 0x03
+
+; Module IDs
+MODULE_BLOCKCHAIN:      equ 0x04
+MODULE_NEURO:           equ 0x05
 
 ; ============================================================================
 ; 64-bit Kernel Scheduler Loop (Phase 9)
@@ -488,21 +516,43 @@ ada64_stub_event_loop:
     mov al, 0x0A
     out dx, al
 
-    ; === SCHEDULER LOOP ===
-    ; For now: count cycles, verify modules exist, prepare for IPC
-    lea rax, [rel kernel_cycle_count]
+    ; === SCHEDULER LOOP WITH IPC MODULE CALLS ===
+    lea r10, [rel kernel_cycle_count]
+    lea r8, [rel ipc_control_block]    ; R8 = IPC control block base
 
 scheduler_loop:
-    ; Increment cycle counter
-    mov rbx, [rax]
-    inc rbx
-    mov [rax], rbx
+    ; Increment cycle counter (keep in R11)
+    mov r11, [r10]
+    inc r11
+    mov [r10], r11
 
-    ; Module call-out would happen here (future: BlockchainOS, NeuroOS, Grid OS)
-    ; For now, just cycle and loop
+    ; Simple modulo check using AND for power-of-2 divisors
+    ; BlockchainOS: call every 256 cycles (every cycle where cycle_count & 0xFF == 0)
+    mov rax, r11
+    test al, 0xFF
+    jnz .skip_blockchain_call
 
-    ; Busy loop with periodic status (prevent infinite loop detection)
-    mov rcx, 1000000
+    ; Issue BlockchainOS cycle request via IPC
+    mov byte [r8 + 0], REQUEST_BLOCKCHAIN_CYCLE  ; Set request code
+    mov word [r8 + 2], MODULE_BLOCKCHAIN         ; Set module ID
+    mov byte [r8 + 1], STATUS_BUSY               ; Set status to busy
+
+.skip_blockchain_call:
+
+    ; NeuroOS: call every 512 cycles (every cycle where cycle_count & 0x1FF == 0)
+    mov rax, r11
+    test al, 0x1FF
+    jnz .skip_neuro_call
+
+    ; Issue NeuroOS evolution request via IPC
+    mov byte [r8 + 0], REQUEST_NEURO_CYCLE  ; Set request code
+    mov word [r8 + 2], MODULE_NEURO         ; Set module ID
+    mov byte [r8 + 1], STATUS_BUSY          ; Set status to busy
+
+.skip_neuro_call:
+
+    ; Busy loop (prevent QEMU timeout)
+    mov rcx, 50000
 busy_wait:
     dec rcx
     jnz busy_wait
@@ -516,6 +566,27 @@ busy_wait:
 .halt:
     hlt
     jmp .halt
+
+; ============================================================================
+; PHASE 9: MODULE WRAPPER STUBS (IPC-based invocation)
+; Each module periodically checks IPC_REQUEST and executes its cycle function
+; ============================================================================
+
+; BlockchainOS wrapper: polls IPC_REQUEST for REQUEST_BLOCKCHAIN_CYCLE
+blockchain_wrapper:
+    ; Future: This would be called from a separate execution context
+    ; For now, return success immediately (0x250000 base address has module)
+    mov qword [0x100120], 0         ; Set IPC_RETURN_VALUE = 0 (success)
+    mov byte [0x100111], 0x02       ; Set status = STATUS_DONE
+    ret
+
+; NeuroOS wrapper: polls IPC_REQUEST for REQUEST_NEURO_CYCLE
+neuro_wrapper:
+    ; Future: This would be called from a separate execution context
+    ; For now, return success immediately (0x2D0000 base address has module)
+    mov qword [0x100120], 0         ; Set IPC_RETURN_VALUE = 0 (success)
+    mov byte [0x100111], 0x02       ; Set status = STATUS_DONE
+    ret
 
 ; ============================================================================
 ; PHASE 8: EXCEPTION HANDLER STUBS
