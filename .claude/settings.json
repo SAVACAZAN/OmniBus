@@ -111,7 +111,14 @@
       "Bash(grep -E \"\\(^|[A-Z]$|[A-Z].*$\\)\")",
       "Bash(/tmp/test_boot.sh:*)",
       "Bash(chmod +x /tmp/test_boot.sh)",
-      "Bash(/tmp/test_boot.sh)"
+      "Bash(/tmp/test_boot.sh)",
+      "Bash(readelf -S /home/kiss/OmniBus/build/grid_os.elf)",
+      "Bash(nm /home/kiss/OmniBus/build/grid_os.elf)",
+      "Bash(git add:*)",
+      "Bash(find /home/kiss/OmniBus -name *.ld -o -name *linker*)",
+      "Bash(/tmp/test_relocated.sh:*)",
+      "Bash(chmod +x /tmp/test_relocated.sh)",
+      "Bash(/tmp/test_relocated.sh)"
     ],
     "additionalDirectories": [
       "/home/kiss/.claude/projects/-home-kiss-OmniBus/memory"

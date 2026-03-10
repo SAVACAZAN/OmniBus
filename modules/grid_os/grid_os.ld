@@ -12,7 +12,16 @@ SECTIONS
 {
   . = 0x110000;
 
-  .text : {
+  /* Reserve 256 bytes for GridState struct (0x110000-0x1100FF) */
+  /* These bytes will be zero-initialized at load time */
+  /* Using a dummy section filled with zeros */
+  .reserved : {
+    BYTE(0);  /* Insert at least one zero byte */
+    . = 0x100;  /* Advance to offset 0x100 */
+  }
+
+  /* .text section now starts at 0x110100 */
+  .text ALIGN(16) : {
     *(.text.init_plugin)
     *(.text*)
     *(.gnu.linkonce.t*)

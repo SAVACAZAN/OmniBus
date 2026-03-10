@@ -585,45 +585,33 @@ ada64_stub_event_loop:
     mov qword [0x100200], rax           ; Store TSC @ 0x100200
     mov qword [0x100208], 0             ; Clear sample counter
 
-    ; === PHASE 21 DEBUG: TEST MODULE CALL (AFTER DISK LOAD) ===
-    ; Now that Grid OS is loaded at 0x110000, test if calling it works
+    ; === PHASE 21: FIX BSS INITIALIZATION ===
+    ; Module .bss sections are NOT in flat binary
+    ; Need to zero-initialize module memory before calling code
 
     mov dx, 0x3F8
-    mov al, 'T'
+    mov al, 'Z'
     out dx, al
 
-    ; Debug: Check what's at 0x110000 (Grid OS state magic)
-    mov rax, [0x110000]
-    cmp eax, 0x47524944  ; "GRID" magic
-    jne .grid_not_loaded
-    mov al, 'G'
-    out dx, al
-    jmp .grid_loaded
+    ; Zero-initialize Grid OS .bss region
+    ; From readelf: .bss @ 0x111778, size 0x2C (44 bytes)
+    mov rdi, 0x111778
+    mov rcx, 0x2C / 8  ; 44 / 8 = 5 qwords (+ remainder)
+    xor rax, rax
+    rep stosq
+    ; Clear remaining 4 bytes
+    mov dword [rdi], eax
 
-.grid_not_loaded:
-    mov al, '?'
+    mov al, 'B'
     out dx, al
 
-.grid_loaded:
-    ; Test: Try to call Grid OS entry point
-    ; Entry should be @ 0x110000 + offset (needs symbol info from ELF)
+    ; Now call init_plugin with .bss properly initialized
     mov al, 'C'
     out dx, al
+    call 0x110100
 
-    ; Store RIP for debugging
-    lea rax, [rel .test_return]
-    mov r15, rax
-
-    ; ATTEMPT 1: Call directly to module base
-    ; call 0x110000
-    ; (commented out to prevent restart for now - will uncomment after diagnosis)
-
-    mov al, 'S'
-    out dx, al
-
-.test_return:
-    ; If we get here, call worked or was skipped
-    mov al, '='
+    ; === SUCCESS ===
+    mov al, '!'
     out dx, al
 
     ; === SCHEDULER LOOP WITH IPC MODULE CALLS ===
