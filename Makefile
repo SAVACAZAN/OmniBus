@@ -36,12 +36,12 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report loaded"
-	@echo "  Phase 22: Real module execution (Phase 22 ✅)"
-	@echo "  Phase 23: Report OS (Daily PnL/Sharpe/Drawdown)"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum loaded"
+	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
+	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -274,6 +274,28 @@ $(BUILD_DIR)/report_os.bin: $(BUILD_DIR)/report_os.elf
 	@echo "[OC] Converting Report OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Report OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# ============================================================================
+# Checksum OS (L9) - System Validation Layer
+# ============================================================================
+
+$(BUILD_DIR)/checksum_os.o: ./modules/checksum_os/checksum_os.zig ./modules/checksum_os/checksum_os_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Checksum OS to object file..."
+	cd ./modules/checksum_os && zig build-obj checksum_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/checksum_os/checksum_os.o ]; then mv ./modules/checksum_os/checksum_os.o $@; fi
+
+$(BUILD_DIR)/checksum_os_stubs.o: ./modules/checksum_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Checksum OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/checksum_os.elf: $(BUILD_DIR)/checksum_os.o $(BUILD_DIR)/checksum_os_stubs.o ./modules/checksum_os/checksum_os.ld
+	@echo "[LD] Linking Checksum OS ELF..."
+	ld -T ./modules/checksum_os/checksum_os.ld -o $@ $(BUILD_DIR)/checksum_os.o $(BUILD_DIR)/checksum_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/checksum_os.bin: $(BUILD_DIR)/checksum_os.elf
+	@echo "[OC] Converting Checksum OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Checksum OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)

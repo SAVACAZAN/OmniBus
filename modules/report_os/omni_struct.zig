@@ -36,13 +36,17 @@ pub const OmniStruct = extern struct {
     // === TIER 2 COORDINATION ===
     // L9: Checksum OS status
     checksum_valid: u8,             // 60 — 0x01 = all Tier 1 checksums pass
-    checksum_failures: u32,         // 61 — Count of integrity failures
-    checksum_last_scan: u64,        // 65 — TSC of last Checksum scan
+    _pad_cs1: [3]u8 = [_]u8{0} ** 3,  // 61-63 — alignment
+    checksum_failures: u32,         // 64 — Count of integrity failures
+    _pad_cs2: [4]u8 = [_]u8{0} ** 4,  // 68-71 — alignment to 72
+    checksum_last_scan: u64,        // 72 — TSC of last Checksum scan (8-byte aligned)
 
     // L10: AutoRepair OS status
-    autorepair_triggered: u8,       // 73 — 0x01 = repair in progress
-    autorepair_count: u32,          // 74 — Total repairs executed
-    autorepair_last_action: u64,    // 78 — TSC of last repair
+    autorepair_triggered: u8,       // 80 — 0x01 = repair in progress
+    _pad_ar1: [3]u8 = [_]u8{0} ** 3,  // 81-83 — alignment
+    autorepair_count: u32,          // 84 — Total repairs executed
+    _pad_ar2: [4]u8 = [_]u8{0} ** 4,  // 88-91 — alignment to 92
+    autorepair_last_action: u64,    // 92 — TSC of last repair (8-byte aligned)
 
     // === PERFORMANCE AGGREGATES ===
     total_pnl: i64,                 // 86 — Cumulative PnL

@@ -652,6 +652,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; Checksum OS .bss @ 0x310080, size 0x100 (256 bytes)
+    mov rdi, 0x310080
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -682,6 +688,9 @@ ada64_stub_event_loop:
 
     ; Report OS init_plugin @ 0x300000
     call 0x300000
+
+    ; Checksum OS init_plugin @ 0x310000
+    call 0x310000
 
     ; === SUCCESS ===
     mov al, '!'
@@ -828,6 +837,13 @@ scheduler_loop:
     jnz .skip_report_dispatch
     call 0x300080                       ; Report: run_report_cycle (aggregates all Tier 1 states → OmniStruct)
 .skip_report_dispatch:
+
+    ; Checksum OS: trigger every 512 cycles (validates all Tier 1 modules)
+    mov rax, r11
+    test al, 0x1FF
+    jnz .skip_checksum_dispatch
+    call 0x310080                       ; Checksum: run_checksum_cycle (validates + updates OmniStruct)
+.skip_checksum_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
