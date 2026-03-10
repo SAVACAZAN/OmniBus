@@ -557,6 +557,12 @@ ada64_stub_event_loop:
     mov al, 'C'
     out dx, al
 
+    ; === PHASE 15: PERFORMANCE INSTRUMENTATION ===
+    ; Record TSC at kernel start for cycle frequency measurement
+    rdtsc                               ; RAX = TSC low, RDX = TSC high
+    mov qword [0x100200], rax           ; Store TSC @ 0x100200
+    mov qword [0x100208], 0             ; Clear sample counter
+
     ; === SCHEDULER LOOP WITH IPC MODULE CALLS ===
     lea r10, [rel kernel_cycle_count]
     lea r8, [rel ipc_control_block]    ; R8 = IPC control block base
@@ -573,6 +579,24 @@ scheduler_loop:
     ; Scheduler would normally call Grid OS export_metrics() here:
     ; call 0x110000 + offset_of_export_metrics
     ; For now: Grid OS exports on-demand in run_grid_cycle()
+
+    ; === PHASE 15: PERFORMANCE SAMPLING (every 10000 cycles) ===
+    mov rax, r11
+    mov rbx, 10000
+    xor edx, edx
+    div rbx                            ; Check if (cycle_count % 10000) == 0
+    test edx, edx
+    jnz .skip_perf_sample
+
+    ; Sample TSC
+    rdtsc
+    mov qword [0x100208], rax           ; Store current TSC @ 0x100208
+
+    ; Print 'P' = Performance sample taken
+    mov al, 'P'
+    out dx, al
+
+.skip_perf_sample:
 
     ; BlockchainOS: trigger every 256 cycles (cycle_count & 0xFF == 0)
     mov rax, r11
