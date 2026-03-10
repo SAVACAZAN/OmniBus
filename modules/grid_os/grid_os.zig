@@ -30,6 +30,27 @@ fn getGridStatePtr() *volatile types.GridState {
     return @as(*volatile types.GridState, @ptrFromInt(types.GRID_BASE + types.GRIDSTATE_OFFSET));
 }
 
+/// Read NeuroOS evolved parameters from export buffer (0x120040+)
+/// Returns adjusted step_cents based on population size feedback
+fn readNeuroOSParameters() u64 {
+    const neuro_export_base: usize = 0x120040;
+    const population_size = @as(*volatile u64, @ptrFromInt(neuro_export_base)).*;
+    const generation = @as(*volatile u64, @ptrFromInt(neuro_export_base + 8)).*;
+    const valid_flag = @as(*volatile u8, @ptrFromInt(neuro_export_base + 16)).*;
+
+    // Use population size to adjust grid spacing
+    // Higher population = more aggressive spacing (smaller step)
+    // Lower population = wider spacing (larger step)
+    if (valid_flag == 0x01) {
+        // Population ranges 1-256, we map to step adjustment
+        // Base step = 100 cents, scale by population
+        const adjusted_step = (100 * (256 - population_size)) / 256;
+        return if (adjusted_step > 10) adjusted_step else 10; // Min 10 cents
+    }
+
+    return 100; // Default step if no valid neuro parameters
+}
+
 // ============================================================================
 // Module Lifecycle
 // ============================================================================
@@ -69,6 +90,10 @@ export fn run_grid_cycle() void {
     const auth = @as(*volatile u8, @ptrFromInt(types.KERNEL_AUTH)).*;
     if (auth != 0x70) return;
 
+    // === PHASE 20: READ NEURO PARAMETERS ===
+    // Get evolved parameters from NeuroOS (feedback loop)
+    const evolved_step = readNeuroOSParameters();
+
     // Bounded loop: process max 64 operations per cycle for determinism
     var processed: u32 = 0;
     const max_per_cycle: u32 = 64;
@@ -81,15 +106,18 @@ export fn run_grid_cycle() void {
         const grid_state = getGridStatePtr();
         grid_state.tsc_last_update = rdtsc();
 
+        // Update grid spacing from NeuroOS feedback
+        grid_state.step_cents = evolved_step;
+
         // Check rebalance trigger
         const bid_ask = feed_reader.readBidAsk(0) orelse break;
         if (rebalance.shouldRebalance(price, grid_state.lower_bound, grid_state.upper_bound)) {
-            // Shift grid and regenerate levels
+            // Shift grid and regenerate levels with evolved parameters
             const new_count = rebalance.rebalanceGrid(
                 price,
                 grid_state.lower_bound,
                 grid_state.upper_bound,
-                grid_state.step_cents,
+                evolved_step,  // Use evolved step instead of fixed
                 100_000_000, // 1 BTC per level
             );
 
