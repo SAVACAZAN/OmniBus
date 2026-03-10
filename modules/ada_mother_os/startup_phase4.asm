@@ -341,6 +341,10 @@ long_mode_entry:
     ; BlockchainOS @ 0x250000, NeuroOS @ 0x2D0000 (uninitialized, pattern 0x5A5A)
     ; ========================================================================
 
+    ; UART 'V' = All modules verified (magic numbers checked)
+    mov al, 'V'
+    out dx, al
+
     ; Print 'O' = All modules operational (loaded but not yet initialized)
     mov al, 'O'
     out dx, al

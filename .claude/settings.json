@@ -34,7 +34,18 @@
       "Bash(/tmp/final_merge.sh:*)",
       "Bash(__NEW_LINE_5517b082acc0f4fa__ chmod +x /tmp/final_merge.sh)",
       "Bash(/tmp/final_merge.sh)",
-      "Bash(git add /home/kiss/.claude/projects/-home-kiss-OmniBus/memory/MEMORY.md)"
+      "Bash(git add /home/kiss/.claude/projects/-home-kiss-OmniBus/memory/MEMORY.md)",
+      "Bash(timeout 6 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -display none -serial file:/tmp/phase8_test.log -monitor none)",
+      "Bash(objdump -t build/kernel.elf)",
+      "Bash(nm -n build/kernel.elf)",
+      "Bash(readelf -S build/kernel.elf)",
+      "Bash(readelf -x .text build/kernel.elf)",
+      "Bash(git add Makefile modules/ada_mother_os/startup_phase4.asm modules/ada_mother_os/kernel.ld modules/ada_mother_os/idt_init.ads modules/ada_mother_os/idt_init.adb)",
+      "Bash(/tmp/commit_msg.txt:*)",
+      "Bash(timeout 6 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -display none -serial file:/tmp/final_test.log -monitor none)",
+      "Bash(timeout 6 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -display none -serial file:/tmp/phase5_test.log -monitor none)",
+      "Bash(git add modules/ada_mother_os/startup_phase4.asm)",
+      "Bash(timeout 8 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -display none -serial file:/tmp/phase5b_test.log -monitor none)"
     ]
   }
 }

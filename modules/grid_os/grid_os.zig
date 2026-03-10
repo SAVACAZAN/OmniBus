@@ -256,12 +256,12 @@ export fn export_metrics() void {
     metrics.total_profit = @as(u64, @intCast(@max(0, total_profit)));
     metrics.winning_trades = 0;      // TODO: Track from order history
     metrics.losing_trades = 0;       // TODO: Track from order history
-    metrics.total_trades = @as(u64, @intCast(order.getOrderCount() orelse 0));
+    metrics.total_trades = @as(u64, @intCast(order.countActiveOrders()));
     metrics.max_drawdown = 0;        // TODO: Calculate from historical profit
     metrics.win_rate = if (metrics.total_trades > 0)
         @as(u64, @bitCast(@as(f64, @floatFromInt(metrics.winning_trades)) / @as(f64, @floatFromInt(metrics.total_trades))))
     else
-        @as(u64, @bitCast(0.0));
+        @as(u64, @bitCast(@as(f64, 0.0)));
 
     // Mark as valid and update timestamp
     metrics.timestamp = rdtsc();
