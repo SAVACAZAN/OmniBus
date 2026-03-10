@@ -29,15 +29,18 @@ help:
 	@echo "make qemu-debug     - Run in QEMU with GDB debugging enabled"
 	@echo "make clean          - Remove build artifacts"
 	@echo "make inspect        - Inspect compiled binary with objdump"
+	@echo ""
+	@echo "Phase 12: Bank settlement with SWIFT/ACH integration enabled"
 
 # ============================================================================
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS loaded from real Zig binaries"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS loaded from real Zig binaries"
+	@echo "  Phase 12: Bank settlement (SWIFT/ACH) enabled"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -210,6 +213,27 @@ $(BUILD_DIR)/neuro_os.bin: $(BUILD_DIR)/neuro_os.elf
 	objcopy -O binary $< $@
 	@echo "  Neuro OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
+# BankOS (0x280000, 192KB)
+# Phase 12: SWIFT/ACH settlement integration
+# Note: -fPIC enables Position-Independent Code (no relocation processing needed)
+$(BUILD_DIR)/bank_os.o: ./modules/bank_os/bank_os.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Bank OS to object file (PIE)..."
+	cd ./modules/bank_os && zig build-obj bank_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf -fPIC 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bank_os/bank_os.o ]; then mv ./modules/bank_os/bank_os.o $@; fi
+
+$(BUILD_DIR)/bank_os_stubs.o: ./modules/bank_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Bank OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/bank_os.elf: $(BUILD_DIR)/bank_os.o $(BUILD_DIR)/bank_os_stubs.o ./modules/bank_os/bank_os.ld
+	@echo "[LD] Linking Bank OS ELF..."
+	ld -T ./modules/bank_os/bank_os.ld -o $@ $(BUILD_DIR)/bank_os.o $(BUILD_DIR)/bank_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/bank_os.bin: $(BUILD_DIR)/bank_os.elf
+	@echo "[OC] Converting Bank OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Bank OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)
 # ============================================================================
@@ -283,14 +307,19 @@ $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stu
 		echo "  [WARN] NeuroOS binary not found, attempting Zig build..."; \
 		$(MAKE) $(BUILD_DIR)/neuro_os.bin 2>/dev/null; \
 	fi
+	@if [ ! -f $(BUILD_DIR)/bank_os.bin ]; then \
+		echo "  [WARN] BankOS binary not found, attempting Zig build..."; \
+		$(MAKE) $(BUILD_DIR)/bank_os.bin 2>/dev/null; \
+	fi
 	@# Determine which binaries to use
 	@GRID_BIN=$$([ -f $(BUILD_DIR)/grid_os.bin ] && echo $(BUILD_DIR)/grid_os.bin || echo $(BUILD_DIR)/grid_stub.bin); \
 	ANALYTICS_BIN=$$([ -f $(BUILD_DIR)/analytics_os.bin ] && echo $(BUILD_DIR)/analytics_os.bin || echo $(BUILD_DIR)/analytics_stub.bin); \
 	EXEC_BIN=$$([ -f $(BUILD_DIR)/execution_os.bin ] && echo $(BUILD_DIR)/execution_os.bin || echo $(BUILD_DIR)/execution_stub.bin); \
 	BLOCKCHAIN_BIN=$$([ -f $(BUILD_DIR)/blockchain_os.bin ] && echo $(BUILD_DIR)/blockchain_os.bin || echo /dev/zero); \
 	NEURO_BIN=$$([ -f $(BUILD_DIR)/neuro_os.bin ] && echo $(BUILD_DIR)/neuro_os.bin || echo /dev/zero); \
-	echo "[IMG] Using: Grid=$$(basename $$GRID_BIN) Analytics=$$(basename $$ANALYTICS_BIN) Exec=$$(basename $$EXEC_BIN) Blockchain=$$(basename $$BLOCKCHAIN_BIN) Neuro=$$(basename $$NEURO_BIN)"; \
-	dd if=/dev/zero of=$(OUTPUT) bs=512 count=20480 2>/dev/null; \
+	BANK_BIN=$$([ -f $(BUILD_DIR)/bank_os.bin ] && echo $(BUILD_DIR)/bank_os.bin || echo /dev/zero); \
+	echo "[IMG] Using: Grid=$$(basename $$GRID_BIN) Analytics=$$(basename $$ANALYTICS_BIN) Exec=$$(basename $$EXEC_BIN) Blockchain=$$(basename $$BLOCKCHAIN_BIN) Neuro=$$(basename $$NEURO_BIN) Bank=$$(basename $$BANK_BIN)"; \
+	dd if=/dev/zero of=$(OUTPUT) bs=512 count=22528 2>/dev/null; \
 	dd if=$(BUILD_DIR)/boot.bin of=$(OUTPUT) bs=512 count=1 conv=notrunc 2>/dev/null; \
 	dd if=$(BUILD_DIR)/stage2.bin of=$(OUTPUT) bs=512 seek=1 conv=notrunc 2>/dev/null; \
 	dd if=$(BUILD_DIR)/kernel_stub.bin of=$(OUTPUT) bs=512 seek=2048 conv=notrunc 2>/dev/null; \
@@ -298,7 +327,8 @@ $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stu
 	dd if=$$ANALYTICS_BIN of=$(OUTPUT) bs=512 seek=4352 conv=notrunc 2>/dev/null; \
 	dd if=$$EXEC_BIN of=$(OUTPUT) bs=512 seek=5376 conv=notrunc 2>/dev/null; \
 	dd if=$$BLOCKCHAIN_BIN of=$(OUTPUT) bs=512 seek=5632 conv=notrunc 2>/dev/null; \
-	dd if=$$NEURO_BIN of=$(OUTPUT) bs=512 seek=6016 conv=notrunc 2>/dev/null
+	dd if=$$NEURO_BIN of=$(OUTPUT) bs=512 seek=6016 conv=notrunc 2>/dev/null; \
+	dd if=$$BANK_BIN of=$(OUTPUT) bs=512 seek=7040 conv=notrunc 2>/dev/null
 	@echo "  Disk image: $(OUTPUT) ($$(stat -c%s $(OUTPUT)) bytes)"
 	@echo "  Sector layout:"
 	@echo "    Boot:       sector 0-0       (512B)"
@@ -309,6 +339,7 @@ $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stu
 	@echo "    Exec OS:    sector 5376-5631 (256 sectors, 128KB @ 0x130000)"
 	@echo "    BlockchainOS: sector 5632-6015 (384 sectors, 192KB @ 0x250000)"
 	@echo "    NeuroOS:    sector 6016-7039 (1024 sectors, 512KB @ 0x2D0000)"
+	@echo "    BankOS:     sector 7040-7423 (384 sectors, 192KB @ 0x280000)"
 
 # ============================================================================
 # RUN: Execute in QEMU

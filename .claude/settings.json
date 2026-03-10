@@ -70,7 +70,40 @@
       "Bash(timeout 180 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase21_optimized.log -display none)",
       "Bash(timeout 180 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase21_test.log -display none)",
       "Bash(/home/kiss/OmniBus/PHASE_22_EXCHANGE_INTEGRATION.md:*)",
-      "Bash(timeout 60 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase22_test.log -display none)"
+      "Bash(timeout 60 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase22_test.log -display none)",
+      "Bash(xargs rm -rf)",
+      "Bash(ls /home/kiss/OmniBus/*.py)",
+      "Bash(ls -la /home/kiss/OmniBus/*feeder.py)",
+      "Bash(__NEW_LINE_b792603877a5f0ff__ echo \"=== Kraken log ===\")",
+      "Bash(__NEW_LINE_b792603877a5f0ff__ echo -e \"\\\\n=== Coinbase log ===\")",
+      "Bash(__NEW_LINE_b792603877a5f0ff__ echo -e \"\\\\n=== LCX log ===\")",
+      "Bash(__NEW_LINE_4bd63a346609282f__ tail -3 /tmp/lcx.log)",
+      "Bash(pkill -f \"_feeder.py\")",
+      "Bash(rm -f /tmp/omnibus*.bin)",
+      "Bash(__NEW_LINE_34a4cc7e393bd2e7__ python3:*)",
+      "Bash(pip install requests -q)",
+      "Bash(chmod +x /home/kiss/OmniBus/test_phase_5d2.sh)",
+      "Bash(bash test_phase_5d2.sh --no-qemu)",
+      "Bash(chmod +x /home/kiss/OmniBus/run_phase_5d2_full.sh)",
+      "Bash(bash run_phase_5d2_full.sh --duration 15)",
+      "Bash(bash /home/kiss/OmniBus/run_phase_5d2_full.sh --duration 20)",
+      "Bash(git add modules/analytics_os/exchange_reader.zig test_phase_5d2.sh run_phase_5d2_full.sh)",
+      "Bash(chmod +x /home/kiss/OmniBus/debug_phase16.sh)",
+      "Bash(timeout 60 bash /home/kiss/OmniBus/debug_phase16.sh)",
+      "Bash(chmod +x /home/kiss/OmniBus/run_phase_9.sh)",
+      "Bash(bash run_phase_9.sh --duration 20)",
+      "Bash(git add run_phase_9.sh debug_phase16.sh gdb_quick_debug.txt)",
+      "Bash(bash run_phase_9.sh --duration 25)",
+      "Bash(git add modules/grid_os/multi_exchange.zig modules/grid_os/grid_os.zig)",
+      "Bash(bash run_phase_9.sh --duration 30)",
+      "Bash(git add modules/blockchain_os/flash_loan_executor.zig modules/blockchain_os/blockchain_os.zig)",
+      "Bash(zig build-obj bank_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf -fPIC)",
+      "Bash(ls -lh /home/kiss/OmniBus/modules/bank_os/*.o /home/kiss/OmniBus/build/bank_os*)",
+      "Bash(ld -T /home/kiss/OmniBus/modules/bank_os/bank_os.ld -o /tmp/bank_os.elf /home/kiss/OmniBus/build/bank_os.o /home/kiss/OmniBus/build/bank_os_stubs.o /home/kiss/OmniBus/build/bank_os_entry.o)",
+      "Bash(nasm -f elf64 -o /home/kiss/OmniBus/build/bank_os_entry.o /home/kiss/OmniBus/modules/bank_os/entry.asm)"
+    ],
+    "additionalDirectories": [
+      "/home/kiss/.claude/projects/-home-kiss-OmniBus/memory"
     ]
   }
 }
