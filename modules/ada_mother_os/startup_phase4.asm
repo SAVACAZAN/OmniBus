@@ -471,6 +471,37 @@ MODULE_BLOCKCHAIN:      equ 0x04
 MODULE_NEURO:           equ 0x05
 
 ; ============================================================================
+; PHASE 11: CROSS-MODULE SHARED MEMORY (Grid OS ↔ NeuroOS)
+; ============================================================================
+
+; Grid OS Metrics Export (0x120000, 128 bytes)
+; Updated by Grid OS, read by NeuroOS for fitness calculation
+align 128
+grid_metrics_export:
+    grid_total_profit:  dq 0    ; 0x120000: Total realized profit (USD)
+    grid_winning_trades: dq 0   ; 0x120008: Number of profitable trades
+    grid_losing_trades: dq 0    ; 0x120010: Number of losing trades
+    grid_total_trades:  dq 0    ; 0x120018: Total trades executed
+    grid_max_drawdown:  dq 0    ; 0x120020: Maximum drawdown (packed f64)
+    grid_win_rate:      dq 0    ; 0x120028: Win rate (packed f64, 0.0-1.0)
+    grid_metrics_valid: db 0    ; 0x120030: Validity flag (1=current, 0=stale)
+    _grid_pad:          db 0    ; Padding
+    grid_timestamp:     dq 0    ; 0x120032: Last update (TSC)
+
+; NeuroOS Parameters Export (0x120040, 128 bytes)
+; Updated by NeuroOS, read by Grid OS for parameter optimization
+align 128
+neuro_parameters_export:
+    neuro_grid_spacing: dq 0    ; 0x120040: Optimal grid spacing (packed f64)
+    neuro_rebalance_trigger: dq 0 ; 0x120048: Rebalance threshold (packed f64)
+    neuro_order_size: dq 0      ; 0x120050: Optimal order size USD (packed f64)
+    neuro_position_max: dq 0    ; 0x120058: Maximum position size (packed f64)
+    neuro_generation:   dq 0    ; 0x120060: Generation count
+    neuro_params_valid: db 0    ; 0x120068: Validity flag (1=evolved, 0=pending)
+    _neuro_pad:         db 0    ; Padding
+    neuro_timestamp:    dq 0    ; 0x12006A: Last update (TSC)
+
+; ============================================================================
 ; 64-bit Kernel Scheduler Loop (Phase 9)
 ; ============================================================================
 
