@@ -7,6 +7,7 @@ const std = @import("std");
 const types = @import("types.zig");
 const solana = @import("solana.zig");
 const raydium = @import("raydium.zig");
+const flash_loan_executor = @import("flash_loan_executor.zig");
 
 // ============================================================================
 // Module State
@@ -85,6 +86,14 @@ export fn run_blockchain_cycle() void {
 
     const state = getBlockchainStatePtr();
 
+    // === PHASE 11: AUTO-EXECUTE FLASH LOANS ON GRID PROFIT ===
+    // Monitor Grid OS for profitable multi-exchange opportunities
+    // Automatically request and execute flash loans with atomic swaps
+    const monitor_result = flash_loan_executor.monitorAndExecute();
+    if (monitor_result.executed) {
+        flash_loan_count += monitor_result.loan_count;
+    }
+
     // Process pending flash loans (max 8 per cycle for determinism)
     var processed: u32 = 0;
     const max_per_cycle: u32 = 8;
@@ -97,6 +106,7 @@ export fn run_blockchain_cycle() void {
             processFlashLoanWithSwap(slot);
             slot.status = 2; // Mark as processing
             processed += 1;
+            swap_count += 1;
         } else if (slot.status == 2) {
             // Pending execution — check if swap completed
             // In real system: RPC call to check transaction status
