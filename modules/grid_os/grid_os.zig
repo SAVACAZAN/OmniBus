@@ -109,9 +109,20 @@ export fn run_grid_cycle() void {
     const auth = @as(*volatile u8, @ptrFromInt(types.KERNEL_AUTH)).*;
     if (auth != 0x70) return;
 
-    // === PHASE 20: READ NEURO PARAMETERS ===
+    // === PHASE 20: READ NEURO PARAMETERS (Throttled) ===
     // Get evolved parameters from NeuroOS (feedback loop)
+    // OPTIMIZATION: Only re-read every 64 cycles (parameter changes rarely)
+    if (cycle_count % 64 == 0) {
+        // Poll NeuroOS parameters at most once per 64 cycles
+        _ = readNeuroOSParameters();
+    }
     const evolved_step = readNeuroOSParameters();
+
+    // === PHASE 10: MULTI-EXCHANGE ARBITRAGE (Hoisted) ===
+    // OPTIMIZATION: Detect opportunities once per cycle BEFORE main loop
+    // This replaces 64 × 9 volatile reads with just 9 reads per cycle
+    const min_spread_bps = 50; // 0.5% minimum spread to execute
+    const opportunities = multi_exchange.scanAllPairs(min_spread_bps);
 
     // Bounded loop: process max 64 operations per cycle for determinism
     var processed: u32 = 0;
@@ -151,11 +162,8 @@ export fn run_grid_cycle() void {
             _ = pending_idx;
         }
 
-        // === PHASE 10: MULTI-EXCHANGE ARBITRAGE ===
-        // Detect opportunities across Kraken ↔ Coinbase ↔ LCX simultaneously
-        const min_spread_bps = 50; // 0.5% minimum spread to execute
-        const opportunities = multi_exchange.scanAllPairs(min_spread_bps);
-
+        // === PROCESS CACHED OPPORTUNITIES ===
+        // Use opportunities detected before loop (hoisted from inner loop)
         // Check BTC opportunities
         if (opportunities.btc_opportunity) |btc_opp| {
             const profit = multi_exchange.calculateProfit(&btc_opp, btc_opp.volume_available, 30); // 0.3% fees

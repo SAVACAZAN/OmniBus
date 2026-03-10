@@ -108,10 +108,26 @@ class Dashboard3Pane:
 
         self.lcx_lcx = PriceTracker()
 
+    def safe_addstr(self, row, col, text, attr=0):
+        """Safely add string to curses window"""
+        try:
+            h, w = self.stdscr.getmaxyx()
+            if row >= 0 and row < h and col >= 0 and col < w:
+                self.stdscr.addstr(row, col, text[:max(1, w-col-1)], attr)
+        except:
+            pass
+
     def render(self):
         """Render 3-pane dashboard"""
-        self.stdscr.clear()
-        h, w = self.stdscr.getmaxyx()
+        try:
+            self.stdscr.clear()
+        except:
+            return
+
+        try:
+            h, w = self.stdscr.getmaxyx()
+        except:
+            return
 
         # Quit on 'q'
         try:
@@ -146,79 +162,86 @@ class Dashboard3Pane:
         # === HEADER ===
         now_str = time.strftime('%H:%M:%S')
         header = f"OmniBus 3-Exchange Dashboard [{now_str}]"
-        self.stdscr.addstr(0, 0, header[:w].ljust(w), curses.color_pair(4) | curses.A_BOLD)
+        self.safe_addstr(0, 0, header[:w].ljust(w), curses.color_pair(4) | curses.A_BOLD)
 
         # === KRAKEN PANE (Yellow) ===
         row = 2
-        self.stdscr.addstr(row, 1, "╔ KRAKEN ╗", curses.color_pair(1) | curses.A_BOLD)
+        self.safe_addstr(row, 1, "╔ KRAKEN ╗", curses.color_pair(1) | curses.A_BOLD)
         row += 1
         if kraken.valid:
             btc_change = self.kraken_btc.pct_change()
             btc_arrow = "▲" if btc_change > 0 else "▼" if btc_change < 0 else "─"
-            self.stdscr.addstr(row, 2, f"BTC ${kraken.btc/100:>10,.0f}"[:pane_w-2], curses.color_pair(1))
+            self.safe_addstr(row, 2, f"BTC ${kraken.btc/100:>10,.0f}", curses.color_pair(1))
             row += 1
-            self.stdscr.addstr(row, 2, f"  {btc_arrow}{abs(btc_change):+.1f}%"[:pane_w-2], curses.color_pair(1))
+            self.safe_addstr(row, 2, f"  {btc_arrow}{abs(btc_change):+.1f}%", curses.color_pair(1))
             row += 1
             eth_change = self.kraken_eth.pct_change()
             eth_arrow = "▲" if eth_change > 0 else "▼" if eth_change < 0 else "─"
-            self.stdscr.addstr(row, 2, f"ETH ${kraken.eth/100:>10,.0f}"[:pane_w-2], curses.color_pair(1))
+            self.safe_addstr(row, 2, f"ETH ${kraken.eth/100:>10,.0f}", curses.color_pair(1))
             row += 1
-            self.stdscr.addstr(row, 2, f"  {eth_arrow}{abs(eth_change):+.1f}%"[:pane_w-2], curses.color_pair(1))
+            self.safe_addstr(row, 2, f"  {eth_arrow}{abs(eth_change):+.1f}%", curses.color_pair(1))
             row += 1
             lcx_change = self.kraken_lcx.pct_change()
             lcx_arrow = "▲" if lcx_change > 0 else "▼" if lcx_change < 0 else "─"
-            self.stdscr.addstr(row, 2, f"LCX ${kraken.lcx/1_000_000:>10.5f}"[:pane_w-2], curses.color_pair(1))
+            self.safe_addstr(row, 2, f"LCX ${kraken.lcx/1_000_000:.4f}", curses.color_pair(1))
             row += 1
-            self.stdscr.addstr(row, 2, f"  {lcx_arrow}{abs(lcx_change):+.1f}%"[:pane_w-2], curses.color_pair(1))
+            self.safe_addstr(row, 2, f"  {lcx_arrow}{abs(lcx_change):+.1f}%", curses.color_pair(1))
         else:
-            self.stdscr.addstr(row+2, 2, "NO DATA", curses.color_pair(5))
+            self.safe_addstr(row+2, 2, "NO DATA", curses.color_pair(5))
 
         # === COINBASE PANE (Green) ===
         row = 2
         col = pane_w + 2
-        self.stdscr.addstr(row, col, "╔ COINBASE ╗", curses.color_pair(2) | curses.A_BOLD)
+        self.safe_addstr(row, col, "╔ COINBASE ╗", curses.color_pair(2) | curses.A_BOLD)
         row += 1
         if coinbase.valid:
             btc_change = self.coinbase_btc.pct_change()
             btc_arrow = "▲" if btc_change > 0 else "▼" if btc_change < 0 else "─"
-            self.stdscr.addstr(row, col+1, f"BTC ${coinbase.btc/100:>10,.0f}"[:pane_w-2], curses.color_pair(2))
+            self.safe_addstr(row, col+1, f"BTC ${coinbase.btc/100:>10,.0f}", curses.color_pair(2))
             row += 1
-            self.stdscr.addstr(row, col+1, f"  {btc_arrow}{abs(btc_change):+.1f}%"[:pane_w-2], curses.color_pair(2))
+            self.safe_addstr(row, col+1, f"  {btc_arrow}{abs(btc_change):+.1f}%", curses.color_pair(2))
             row += 1
             eth_change = self.coinbase_eth.pct_change()
             eth_arrow = "▲" if eth_change > 0 else "▼" if eth_change < 0 else "─"
-            self.stdscr.addstr(row, col+1, f"ETH ${coinbase.eth/100:>10,.0f}"[:pane_w-2], curses.color_pair(2))
+            self.safe_addstr(row, col+1, f"ETH ${coinbase.eth/100:>10,.0f}", curses.color_pair(2))
             row += 1
-            self.stdscr.addstr(row, col+1, f"  {eth_arrow}{abs(eth_change):+.1f}%"[:pane_w-2], curses.color_pair(2))
+            self.safe_addstr(row, col+1, f"  {eth_arrow}{abs(eth_change):+.1f}%", curses.color_pair(2))
             row += 1
             lcx_change = self.coinbase_lcx.pct_change()
             lcx_arrow = "▲" if lcx_change > 0 else "▼" if lcx_change < 0 else "─"
-            self.stdscr.addstr(row, col+1, f"LCX ${coinbase.lcx/1_000_000:>10.5f}"[:pane_w-2], curses.color_pair(2))
+            self.safe_addstr(row, col+1, f"LCX ${coinbase.lcx/1_000_000:.4f}", curses.color_pair(2))
             row += 1
-            self.stdscr.addstr(row, col+1, f"  {lcx_arrow}{abs(lcx_change):+.1f}%"[:pane_w-2], curses.color_pair(2))
+            self.safe_addstr(row, col+1, f"  {lcx_arrow}{abs(lcx_change):+.1f}%", curses.color_pair(2))
         else:
-            self.stdscr.addstr(row+2, col+1, "NO DATA", curses.color_pair(5))
+            self.safe_addstr(row+2, col+1, "NO DATA", curses.color_pair(5))
 
         # === LCX EXCHANGE PANE (Cyan) ===
         row = 2
         col = 2 * pane_w + 3
-        self.stdscr.addstr(row, col, "╔ LCX EXCH ╗", curses.color_pair(3) | curses.A_BOLD)
+        self.safe_addstr(row, col, "╔ LCX EXCH ╗", curses.color_pair(3) | curses.A_BOLD)
         row += 1
         if lcx_exch.valid:
             lcx_change = self.lcx_lcx.pct_change()
             lcx_arrow = "▲" if lcx_change > 0 else "▼" if lcx_change < 0 else "─"
-            self.stdscr.addstr(row, col+1, f"LCX ${lcx_exch.lcx/1_000_000:>10.5f}"[:pane_w-2], curses.color_pair(3))
+            self.safe_addstr(row, col+1, f"BTC ${lcx_exch.btc/100:>10,.0f}", curses.color_pair(3))
             row += 1
-            self.stdscr.addstr(row, col+1, f"  {lcx_arrow}{abs(lcx_change):+.1f}%"[:pane_w-2], curses.color_pair(3))
+            self.safe_addstr(row, col+1, f"  ETH ${lcx_exch.eth/100:>10,.0f}", curses.color_pair(3))
+            row += 1
+            self.safe_addstr(row, col+1, f"LCX ${lcx_exch.lcx/1_000_000:.4f}", curses.color_pair(3))
+            row += 1
+            self.safe_addstr(row, col+1, f"  {lcx_arrow}{abs(lcx_change):+.1f}%", curses.color_pair(3))
         else:
-            self.stdscr.addstr(row+2, col+1, "NO DATA", curses.color_pair(5))
+            self.safe_addstr(row+2, col+1, "NO DATA", curses.color_pair(5))
 
         # === FOOTER ===
         row = h - 2
         footer = "Press 'q' to quit | Updates every 500ms"
-        self.stdscr.addstr(row, 1, footer[:w-2], curses.color_pair(4))
+        self.safe_addstr(row, 1, footer, curses.color_pair(4))
 
-        self.stdscr.refresh()
+        try:
+            self.stdscr.refresh()
+        except:
+            pass
 
     def run(self):
         """Main loop"""

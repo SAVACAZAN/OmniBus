@@ -79,10 +79,11 @@ class ExchangeBuffer:
         )
 
     def __repr__(self):
-        lcx_str = f", LCX=${self.lcx_price_cents/100:.4f}" if self.lcx_price_cents > 0 else ""
+        btc = f"BTC=${self.btc_price_cents/100:.2f}" if self.btc_price_cents > 0 else "BTC=N/A"
+        eth = f"ETH=${self.eth_price_cents/100:.2f}" if self.eth_price_cents > 0 else "ETH=N/A"
+        lcx = f"LCX=${self.lcx_price_cents/1_000_000:.5f}" if self.lcx_price_cents > 0 else "LCX=N/A"
         return (
-            f"ExchangeBuffer(BTC=${self.btc_price_cents/100:.2f}, "
-            f"ETH=${self.eth_price_cents/100:.2f}{lcx_str}, "
+            f"ExchangeBuffer({btc}, {eth}, {lcx}, "
             f"flags=0x{self.exchange_flags:02x})"
         )
 
