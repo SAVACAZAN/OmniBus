@@ -593,22 +593,80 @@ ada64_stub_event_loop:
     mov al, 'Z'
     out dx, al
 
-    ; Zero-initialize Grid OS .bss region
-    ; From readelf: .bss @ 0x111878, size 0x2C (44 bytes)
+    ; Zero-initialize all module .bss regions
+
+    ; Grid OS .bss @ 0x111878, size 0x2C (44 bytes)
     mov rdi, 0x111878
-    mov rcx, 0x2C / 8  ; 44 / 8 = 5 qwords (+ remainder)
+    mov rcx, 0x2C / 8
     xor rax, rax
     rep stosq
-    ; Clear remaining 4 bytes
     mov dword [rdi], eax
+
+    ; Analytics OS .bss @ 0x152100, size 0x1DC24 (121892 bytes)
+    mov rdi, 0x152100
+    mov rcx, 0x1DC24 / 8
+    xor rax, rax
+    rep stosq
+    mov dword [rdi], eax
+
+    ; Execution OS .bss @ 0x138500, size 0x18 (24 bytes)
+    mov rdi, 0x138500
+    mov rcx, 0x18 / 8
+    xor rax, rax
+    rep stosq
+
+    ; BlockchainOS .bss @ 0x250F68, size 0x18 (24 bytes)
+    mov rdi, 0x250F68
+    mov rcx, 0x18 / 8
+    xor rax, rax
+    rep stosq
+
+    ; NeuroOS .bss @ 0x2D0B88, size 0x1C38 (7224 bytes)
+    mov rdi, 0x2D0B88
+    mov rcx, 0x1C38 / 8
+    xor rax, rax
+    rep stosq
+    mov dword [rdi], eax
+
+    ; BankOS .bss @ 0x281D00, size 0x28 (40 bytes)
+    mov rdi, 0x281D00
+    mov rcx, 0x28 / 8
+    xor rax, rax
+    rep stosq
+
+    ; StealthOS .bss @ 0x2C0C60, size 0x20 (32 bytes)
+    mov rdi, 0x2C0C60
+    mov rcx, 0x20 / 8
+    xor rax, rax
+    rep stosq
 
     mov al, 'B'
     out dx, al
 
-    ; Now call init_plugin with .bss properly initialized
+    ; Now call all module init_plugin functions
     mov al, 'C'
     out dx, al
+
+    ; Grid OS init_plugin @ 0x110100
     call 0x110100
+
+    ; Analytics OS init_plugin @ 0x150000
+    call 0x150000
+
+    ; Execution OS init_plugin @ 0x1373c0
+    call 0x1373c0
+
+    ; BlockchainOS init_plugin @ 0x250000
+    call 0x250000
+
+    ; NeuroOS init_plugin @ 0x2D0000
+    call 0x2D0000
+
+    ; BankOS init_plugin @ 0x280000
+    call 0x280000
+
+    ; StealthOS init_plugin @ 0x2C0000
+    call 0x2C0000
 
     ; === SUCCESS ===
     mov al, '!'
