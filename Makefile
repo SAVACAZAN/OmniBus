@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker loaded"
@@ -840,3 +840,15 @@ $(BUILD_DIR)/quantum_resistant_crypto_os.elf: $(BUILD_DIR)/quantum_resistant_cry
 $(BUILD_DIR)/quantum_resistant_crypto_os.bin: $(BUILD_DIR)/quantum_resistant_crypto_os.elf
 	objcopy -O binary $< $@
 	@echo "  Quantum-Resistant Crypto OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# PQC-GATE OS (0x490000, 64KB) — L33: NIST Post-Quantum Cryptography (ML-DSA, SLH-DSA, FN-DSA)
+$(BUILD_DIR)/pqc_gate_os.o: ./modules/pqc_gate_os/pqc_gate_os.zig ./modules/pqc_gate_os/pqc_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/pqc_gate_os && zig build-obj pqc_gate_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/pqc_gate_os/pqc_gate_os.o ]; then mv ./modules/pqc_gate_os/pqc_gate_os.o $@; fi
+$(BUILD_DIR)/pqc_gate_os_stubs.o: ./modules/pqc_gate_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/pqc_gate_os.elf: $(BUILD_DIR)/pqc_gate_os.o $(BUILD_DIR)/pqc_gate_os_stubs.o ./modules/pqc_gate_os/pqc_gate_os.ld
+	ld -T ./modules/pqc_gate_os/pqc_gate_os.ld -o $@ $(BUILD_DIR)/pqc_gate_os.o $(BUILD_DIR)/pqc_gate_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/pqc_gate_os.bin: $(BUILD_DIR)/pqc_gate_os.elf
+	objcopy -O binary $< $@
+	@echo "  PQC-GATE OS binary: $@ (size: $$(stat -c%s $@) bytes)"

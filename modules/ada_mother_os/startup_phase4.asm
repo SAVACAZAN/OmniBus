@@ -791,6 +791,9 @@ ada64_stub_event_loop:
     ; Quantum-Resistant Crypto OS init_plugin @ 0x480000
     call 0x480000
 
+    ; PQC-GATE OS init_plugin @ 0x490000 (NIST ML-DSA, SLH-DSA, FN-DSA)
+    call 0x490000
+
     ; === SUCCESS ===
     mov al, '!'
     out dx, al
@@ -1106,6 +1109,14 @@ scheduler_loop:
     jnz .skip_quantum_dispatch
     call 0x480100                       ; Quantum: run_quantum_cycle (post-quantum ops)
 .skip_quantum_dispatch:
+
+    ; PQC-GATE OS dispatch: every 65536 cycles (0x10000) — NIST ML/SLH/FN-DSA verification
+    mov rax, r11
+    mov rbx, 0xFFFF
+    and rax, rbx
+    jnz .skip_pqc_dispatch
+    call 0x490100                       ; PQC: run_pqc_cycle (signature verification)
+.skip_pqc_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
