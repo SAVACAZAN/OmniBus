@@ -100,7 +100,18 @@
       "Bash(zig build-obj bank_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf -fPIC)",
       "Bash(ls -lh /home/kiss/OmniBus/modules/bank_os/*.o /home/kiss/OmniBus/build/bank_os*)",
       "Bash(ld -T /home/kiss/OmniBus/modules/bank_os/bank_os.ld -o /tmp/bank_os.elf /home/kiss/OmniBus/build/bank_os.o /home/kiss/OmniBus/build/bank_os_stubs.o /home/kiss/OmniBus/build/bank_os_entry.o)",
-      "Bash(nasm -f elf64 -o /home/kiss/OmniBus/build/bank_os_entry.o /home/kiss/OmniBus/modules/bank_os/entry.asm)"
+      "Bash(nasm -f elf64 -o /home/kiss/OmniBus/build/bank_os_entry.o /home/kiss/OmniBus/modules/bank_os/entry.asm)",
+      "Bash(chmod +x /home/kiss/OmniBus/run_omnibus_dashboard.py)",
+      "Bash(chmod +x /home/kiss/OmniBus/run_omnibus_qemu_with_feeders.sh)",
+      "Bash(timeout 30 ./run_omnibus_qemu_with_feeders.sh)",
+      "Bash(grep -E \"\\\\.\\(ld|asm|zig\\)$\")",
+      "Bash(timeout 4 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial mon:stdio)",
+      "Bash(pkill -9 qemu-system-x86_64)",
+      "Bash(pkill -f qemu)",
+      "Bash(grep -E \"\\(^|[A-Z]$|[A-Z].*$\\)\")",
+      "Bash(/tmp/test_boot.sh:*)",
+      "Bash(chmod +x /tmp/test_boot.sh)",
+      "Bash(/tmp/test_boot.sh)"
     ],
     "additionalDirectories": [
       "/home/kiss/.claude/projects/-home-kiss-OmniBus/memory"

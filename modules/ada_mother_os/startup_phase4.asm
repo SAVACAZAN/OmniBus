@@ -585,6 +585,47 @@ ada64_stub_event_loop:
     mov qword [0x100200], rax           ; Store TSC @ 0x100200
     mov qword [0x100208], 0             ; Clear sample counter
 
+    ; === PHASE 21 DEBUG: TEST MODULE CALL (AFTER DISK LOAD) ===
+    ; Now that Grid OS is loaded at 0x110000, test if calling it works
+
+    mov dx, 0x3F8
+    mov al, 'T'
+    out dx, al
+
+    ; Debug: Check what's at 0x110000 (Grid OS state magic)
+    mov rax, [0x110000]
+    cmp eax, 0x47524944  ; "GRID" magic
+    jne .grid_not_loaded
+    mov al, 'G'
+    out dx, al
+    jmp .grid_loaded
+
+.grid_not_loaded:
+    mov al, '?'
+    out dx, al
+
+.grid_loaded:
+    ; Test: Try to call Grid OS entry point
+    ; Entry should be @ 0x110000 + offset (needs symbol info from ELF)
+    mov al, 'C'
+    out dx, al
+
+    ; Store RIP for debugging
+    lea rax, [rel .test_return]
+    mov r15, rax
+
+    ; ATTEMPT 1: Call directly to module base
+    ; call 0x110000
+    ; (commented out to prevent restart for now - will uncomment after diagnosis)
+
+    mov al, 'S'
+    out dx, al
+
+.test_return:
+    ; If we get here, call worked or was skipped
+    mov al, '='
+    out dx, al
+
     ; === SCHEDULER LOOP WITH IPC MODULE CALLS ===
     lea r10, [rel kernel_cycle_count]
     lea r8, [rel ipc_control_block]    ; R8 = IPC control block base
@@ -777,6 +818,7 @@ scheduler_loop:
     mov byte [0x120040], 0x01  ; Metrics valid flag
 
 .skip_grid_metrics:
+
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
