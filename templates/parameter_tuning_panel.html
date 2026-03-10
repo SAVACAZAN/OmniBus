@@ -1,0 +1,330 @@
+<div id="param-tuning-panel" class="panel">
+  <div class="panel-header">
+    <span class="panel-title">⚙️ Parameter Tuning</span>
+    <span class="panel-status" id="param-status">Ready</span>
+  </div>
+
+  <div class="panel-content">
+    <div class="param-section">
+      <div class="param-label">Grid Configuration</div>
+
+      <div class="param-group">
+        <label>Grid Step (bps)</label>
+        <div class="param-input-group">
+          <input type="range" id="grid-step-slider" min="5" max="500" value="50" class="param-slider">
+          <input type="number" id="grid-step-input" min="5" max="500" value="50" class="param-input">
+          <button class="btn-sm" onclick="updateParam('grid_step')">Set</button>
+        </div>
+        <div class="param-info">Min: 5 bps (0.05%) | Max: 500 bps (5.0%)</div>
+      </div>
+
+      <div class="param-group">
+        <label>Grid Levels</label>
+        <div class="param-input-group">
+          <input type="range" id="grid-levels-slider" min="1" max="10" value="5" class="param-slider">
+          <input type="number" id="grid-levels-input" min="1" max="10" value="5" class="param-input">
+          <button class="btn-sm" onclick="updateParam('grid_levels')">Set</button>
+        </div>
+        <div class="param-info">Levels above/below midpoint | Range: 1-10</div>
+      </div>
+    </div>
+
+    <div class="param-section">
+      <div class="param-label">Trading Parameters</div>
+
+      <div class="param-group">
+        <label>Min Spread (bps)</label>
+        <div class="param-input-group">
+          <input type="range" id="min-spread-slider" min="5" max="500" value="20" class="param-slider">
+          <input type="number" id="min-spread-input" min="5" max="500" value="20" class="param-input">
+          <button class="btn-sm" onclick="updateParam('min_spread')">Set</button>
+        </div>
+        <div class="param-info">Only trade if spread exceeds this | Default: 20 bps (0.2%)</div>
+      </div>
+
+      <div class="param-group">
+        <label>Risk Per Trade (%)</label>
+        <div class="param-input-group">
+          <input type="range" id="risk-percent-slider" min="1" max="5" value="1" class="param-slider">
+          <input type="number" id="risk-percent-input" min="1" max="5" value="1" class="param-input">
+          <button class="btn-sm" onclick="updateParam('risk_percent')">Set</button>
+        </div>
+        <div class="param-info">Maximum risk per trade as % of account | Range: 1-5%</div>
+      </div>
+
+      <div class="param-group">
+        <label>Trading Status</label>
+        <div class="toggle-group">
+          <button id="trading-toggle" class="btn-toggle active" onclick="toggleTrading()">
+            <span id="trading-label">ENABLED</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="param-section">
+      <div class="param-label">Statistics</div>
+
+      <div class="param-stat">
+        <div class="stat-label">Updates Applied</div>
+        <div class="stat-value" id="updates-applied">0</div>
+      </div>
+
+      <div class="param-stat">
+        <div class="stat-label">Updates Rejected</div>
+        <div class="stat-value warning" id="updates-rejected">0</div>
+      </div>
+
+      <div class="param-stat">
+        <div class="stat-label">Last Change</div>
+        <div class="stat-value" id="last-change">—</div>
+      </div>
+
+      <div class="param-stat">
+        <div class="stat-label">Validation Status</div>
+        <div class="stat-value" id="validation-status">Valid</div>
+      </div>
+    </div>
+
+    <div class="param-section alert-section" id="param-alerts" style="display:none;">
+      <div class="param-label">⚠️ Alerts</div>
+      <div id="alert-message" class="alert-message"></div>
+    </div>
+  </div>
+
+  <style>
+    .param-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #333;
+    }
+
+    .param-label {
+      font-weight: bold;
+      color: #0ea5e9;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .param-group {
+      margin-bottom: 1rem;
+    }
+
+    .param-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 0.4rem;
+    }
+
+    .param-input-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .param-slider {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #222;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .param-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #0ea5e9;
+      cursor: pointer;
+    }
+
+    .param-slider::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #0ea5e9;
+      cursor: pointer;
+      border: none;
+    }
+
+    .param-input {
+      width: 70px;
+      padding: 0.4rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #0ea5e9;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .param-input:focus {
+      outline: none;
+      border-color: #0ea5e9;
+    }
+
+    .btn-sm {
+      padding: 0.4rem 0.8rem;
+      background: #0ea5e9;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .btn-sm:hover {
+      background: #00d9ff;
+    }
+
+    .btn-sm:active {
+      transform: scale(0.95);
+    }
+
+    .param-info {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 0.3rem;
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-toggle {
+      flex: 1;
+      padding: 0.6rem;
+      background: #1a1a1a;
+      color: #888;
+      border: 1px solid #333;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    .btn-toggle.active {
+      background: #10b981;
+      color: #000;
+      border-color: #10b981;
+    }
+
+    .btn-toggle.disabled {
+      background: #7f1d1d;
+      color: #f87171;
+      border-color: #991b1b;
+    }
+
+    .param-stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.6rem 0;
+      font-size: 0.9rem;
+    }
+
+    .stat-label {
+      color: #999;
+    }
+
+    .stat-value {
+      color: #0ea5e9;
+      font-weight: bold;
+    }
+
+    .stat-value.warning {
+      color: #f59e0b;
+    }
+
+    .alert-section {
+      background: #2a1a1a;
+      border: 1px solid #7f1d1d;
+      border-radius: 4px;
+      padding: 1rem;
+    }
+
+    .alert-message {
+      color: #f87171;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+  </style>
+
+  <script>
+    // Sync sliders and inputs
+    document.getElementById('grid-step-slider').addEventListener('input', function() {
+      document.getElementById('grid-step-input').value = this.value;
+    });
+    document.getElementById('grid-step-input').addEventListener('input', function() {
+      document.getElementById('grid-step-slider').value = this.value;
+    });
+
+    document.getElementById('grid-levels-slider').addEventListener('input', function() {
+      document.getElementById('grid-levels-input').value = this.value;
+    });
+    document.getElementById('grid-levels-input').addEventListener('input', function() {
+      document.getElementById('grid-levels-slider').value = this.value;
+    });
+
+    document.getElementById('min-spread-slider').addEventListener('input', function() {
+      document.getElementById('min-spread-input').value = this.value;
+    });
+    document.getElementById('min-spread-input').addEventListener('input', function() {
+      document.getElementById('min-spread-slider').value = this.value;
+    });
+
+    document.getElementById('risk-percent-slider').addEventListener('input', function() {
+      document.getElementById('risk-percent-input').value = this.value;
+    });
+    document.getElementById('risk-percent-input').addEventListener('input', function() {
+      document.getElementById('risk-percent-slider').value = this.value;
+    });
+
+    // Update parameter function
+    function updateParam(param) {
+      const gridStep = parseInt(document.getElementById('grid-step-input').value);
+      const gridLevels = parseInt(document.getElementById('grid-levels-input').value);
+      const minSpread = parseInt(document.getElementById('min-spread-input').value);
+      const riskPercent = parseInt(document.getElementById('risk-percent-input').value);
+
+      fetch('/api/update-parameters', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          grid_step: gridStep,
+          grid_levels: gridLevels,
+          min_spread_bps: minSpread,
+          risk_percent: riskPercent
+        })
+      }).then(r => r.json()).then(data => {
+        document.getElementById('param-status').textContent = data.status;
+        if (data.validation === 'Ok') {
+          document.getElementById('param-status').style.color = '#10b981';
+        } else {
+          document.getElementById('param-status').style.color = '#f87171';
+          document.getElementById('alert-message').textContent = 'Validation failed: ' + data.validation;
+          document.getElementById('param-alerts').style.display = 'block';
+        }
+      });
+    }
+
+    function toggleTrading() {
+      const btn = document.getElementById('trading-toggle');
+      const enabled = btn.classList.contains('active');
+      fetch('/api/set-trading-enabled', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled: !enabled})
+      }).then(() => {
+        btn.classList.toggle('active');
+        btn.classList.toggle('disabled');
+        document.getElementById('trading-label').textContent = enabled ? 'DISABLED' : 'ENABLED';
+      });
+    }
+  </script>
+</div>

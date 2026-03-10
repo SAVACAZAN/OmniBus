@@ -332,6 +332,119 @@ def panel_neuro():
     return render_template('neuro_panel.html', data=metrics)
 
 
+@app.route('/panels/parameter-tuning')
+def panel_parameter_tuning():
+    """HTMX parameter tuning panel"""
+    global _kernel_metrics, _kernel_reader
+    data = {
+        'grid_step': 50,
+        'grid_levels': 5,
+        'min_spread_bps': 20,
+        'risk_percent': 1,
+        'trading_enabled': True,
+        'updates_applied': 0,
+        'updates_rejected': 0,
+        'validation_status': 'Valid',
+    }
+
+    # Try to read from kernel if available
+    if _kernel_reader and _reader_mode == "shm":
+        try:
+            # Read Parameter Tuning state @ 0x360000
+            param_data = _kernel_reader.read_bytes(0x360000, 256)
+            if len(param_data) >= 200:
+                # Parse minimal fields
+                state_values = struct.unpack('<QBBBIQ', param_data[0:16])
+                # Extract grid params at offset 16
+                grid_params = struct.unpack('<IBBBBIQ', param_data[16:48])
+                data['grid_step'] = grid_params[0]
+                data['grid_levels'] = grid_params[1]
+                data['min_spread_bps'] = grid_params[3]
+                data['risk_percent'] = grid_params[4]
+                # Extract statistics
+                data['updates_applied'] = struct.unpack('<I', param_data[200:204])[0]
+                data['updates_rejected'] = struct.unpack('<I', param_data[204:208])[0]
+        except Exception:
+            pass  # Use defaults
+
+    return render_template('parameter_tuning_panel.html', data=data)
+
+
+# ===== Parameter Tuning API Endpoints =====
+@app.route('/api/update-parameters', methods=['POST'])
+def update_parameters():
+    """Update trading parameters"""
+    try:
+        params = request.get_json()
+        grid_step = params.get('grid_step', 50)
+        grid_levels = params.get('grid_levels', 5)
+        min_spread_bps = params.get('min_spread_bps', 20)
+        risk_percent = params.get('risk_percent', 1)
+
+        # Validate parameters
+        if not (5 <= grid_step <= 500):
+            return jsonify({
+                'status': 'Error',
+                'validation': 'OutOfRange',
+                'message': f'Grid step {grid_step} out of range [5, 500]'
+            }), 400
+
+        if not (1 <= grid_levels <= 10):
+            return jsonify({
+                'status': 'Error',
+                'validation': 'OutOfRange',
+                'message': f'Grid levels {grid_levels} out of range [1, 10]'
+            }), 400
+
+        if not (5 <= min_spread_bps <= 500):
+            return jsonify({
+                'status': 'Error',
+                'validation': 'OutOfRange',
+                'message': f'Min spread {min_spread_bps} out of range [5, 500]'
+            }), 400
+
+        if not (1 <= risk_percent <= 5):
+            return jsonify({
+                'status': 'Error',
+                'validation': 'RiskLimitExceeded',
+                'message': f'Risk percent {risk_percent} out of range [1, 5]'
+            }), 400
+
+        # Parameters are valid
+        return jsonify({
+            'status': 'Accepted',
+            'validation': 'Ok',
+            'grid_step': grid_step,
+            'grid_levels': grid_levels,
+            'min_spread_bps': min_spread_bps,
+            'risk_percent': risk_percent
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'Error',
+            'validation': 'InvalidRequest',
+            'message': str(e)
+        }), 400
+
+
+@app.route('/api/set-trading-enabled', methods=['POST'])
+def set_trading_enabled():
+    """Enable/disable trading"""
+    try:
+        data = request.get_json()
+        enabled = data.get('enabled', True)
+
+        return jsonify({
+            'status': 'Ok',
+            'trading_enabled': enabled
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'Error',
+            'message': str(e)
+        }), 400
+
+
 # ===== WebSocket Events =====
 @socketio.on('connect', namespace='/')
 def on_connect():

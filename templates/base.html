@@ -45,9 +45,9 @@
         </div>
     </header>
 
-    <!-- Main Grid Layout (5 panels) -->
+    <!-- Main Grid Layout (6 panels) -->
     <main class="max-w-full mx-auto p-4">
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4" id="dashboard-grid">
+        <div class="grid grid-cols-1 lg:grid-cols-6 gap-4" id="dashboard-grid">
             <!-- 1. TRADING PANEL -->
             <div id="trading-panel" class="lg:col-span-2 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
                                           hx-get='/panels/trading'
@@ -69,7 +69,7 @@
             </div>
 
             <!-- 3. HEALTH PANEL -->
-            <div id="health-panel" class="lg:col-span-1 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
+            <div id="health-panel" class="lg:col-span-2 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
                                          hx-get='/panels/health'
                                          hx-trigger='every 500ms'
                                          hx-swap='innerHTML'">
@@ -78,8 +78,18 @@
                 </div>
             </div>
 
-            <!-- 4. AUDIT PANEL (spans 3 cols) -->
-            <div id="audit-panel" class="lg:col-span-3 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
+            <!-- 4. PARAMETER TUNING PANEL -->
+            <div id="param-tuning-panel" class="lg:col-span-2 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
+                                               hx-get='/panels/parameter-tuning'
+                                               hx-trigger='every 1000ms'
+                                               hx-swap='innerHTML'">
+                <div class="text-center text-gray-400">
+                    <p>Loading Parameter Tuning Panel...</p>
+                </div>
+            </div>
+
+            <!-- 5. AUDIT PANEL (spans 2 cols) -->
+            <div id="audit-panel" class="lg:col-span-2 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
                                         hx-get='/panels/audit'
                                         hx-trigger='every 1s'
                                         hx-swap='innerHTML'">
@@ -88,8 +98,8 @@
                 </div>
             </div>
 
-            <!-- 5. NEURO PANEL (spans 2 cols) -->
-            <div id="neuro-panel" class="lg:col-span-2 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
+            <!-- 6. NEURO PANEL (spans 4 cols) -->
+            <div id="neuro-panel" class="lg:col-span-4 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
                                         hx-get='/panels/neuro'
                                         hx-trigger='every 500ms'
                                         hx-swap='innerHTML'">

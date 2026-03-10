@@ -36,15 +36,16 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
 	@echo "  Phase 27: Audit Log OS (Event logging & forensics) ✅"
 	@echo "  Phase 28: Zorin OS (Access Control & Compliance) ✅"
+	@echo "  Phase 30: Parameter Tuning OS (Dynamic trading parameters) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -362,6 +363,28 @@ $(BUILD_DIR)/audit_log_os.bin: $(BUILD_DIR)/audit_log_os.elf
 	@echo "[OC] Converting Audit Log OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Audit Log OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# ============================================================================
+# Parameter Tuning OS (L15) - Dynamic trading parameter management
+# ============================================================================
+
+$(BUILD_DIR)/parameter_tuning_os.o: ./modules/parameter_tuning_os/parameter_tuning_os.zig ./modules/parameter_tuning_os/parameter_tuning_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Parameter Tuning OS to object file..."
+	cd ./modules/parameter_tuning_os && zig build-obj parameter_tuning_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/parameter_tuning_os/parameter_tuning_os.o ]; then mv ./modules/parameter_tuning_os/parameter_tuning_os.o $@; fi
+
+$(BUILD_DIR)/parameter_tuning_os_stubs.o: ./modules/parameter_tuning_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Parameter Tuning OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/parameter_tuning_os.elf: $(BUILD_DIR)/parameter_tuning_os.o $(BUILD_DIR)/parameter_tuning_os_stubs.o ./modules/parameter_tuning_os/parameter_tuning_os.ld
+	@echo "[LD] Linking Parameter Tuning OS ELF..."
+	ld -T ./modules/parameter_tuning_os/parameter_tuning_os.ld -o $@ $(BUILD_DIR)/parameter_tuning_os.o $(BUILD_DIR)/parameter_tuning_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/parameter_tuning_os.bin: $(BUILD_DIR)/parameter_tuning_os.elf
+	@echo "[OC] Converting Parameter Tuning OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Parameter Tuning OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)

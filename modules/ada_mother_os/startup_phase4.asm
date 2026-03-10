@@ -719,6 +719,9 @@ ada64_stub_event_loop:
     ; Audit Log OS init_plugin @ 0x340000
     call 0x340000
 
+    ; Parameter Tuning OS init_plugin @ 0x360000
+    call 0x360000
+
     ; === SUCCESS ===
     mov al, '!'
     out dx, al
@@ -892,6 +895,13 @@ scheduler_loop:
     jnz .skip_audit_log_dispatch
     call 0x340080                       ; Audit Log: run_audit_cycle (log management + escalation check)
 .skip_audit_log_dispatch:
+
+    ; Parameter Tuning OS: trigger every 16384 cycles (parameter validation & application)
+    mov rax, r11
+    test al, 0x3FFF
+    jnz .skip_param_tuning_dispatch
+    call 0x360100                       ; Parameter Tuning: run_param_tuning_cycle (apply + validate parameters)
+.skip_param_tuning_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
