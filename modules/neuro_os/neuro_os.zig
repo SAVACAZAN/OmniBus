@@ -276,18 +276,30 @@ fn applyBestWeightsToGrid() void {
 /// Read Grid OS performance metrics for fitness evaluation
 /// Week 2: Called every evolution cycle to update performance data
 fn readGridMetrics() types.GridMetrics {
-    // Read from Grid OS shared state @ 0x110000
-    // In real system: RPC or shared memory read
-    // For now: return zeros (would be filled by Grid OS)
-    return .{
-        .total_profit = 0.0,
-        .winning_trades = 0,
-        .losing_trades = 0,
-        .total_trades = 1, // Avoid division by zero
-        .max_drawdown = 0.0,
-        .win_rate = 0.0,
-        ._reserved = [_]u8{0} ** 40,
-    };
+    // Read from Grid OS metrics export @ 0x120000
+    // Grid OS publishes real trading performance here every cycle
+    const metrics_ptr = @as(*volatile types.GridMetrics, @ptrFromInt(0x120000));
+
+    // Copy metrics from shared memory
+    const metrics = metrics_ptr.*;
+
+    // Validate metrics (if valid flag not set, return defaults)
+    const valid_flag = @as(*volatile u8, @ptrFromInt(0x120000 + 64));
+    if (valid_flag.* != 1) {
+        // Grid metrics not yet ready, return neutral defaults
+        return .{
+            .total_profit = 0.0,
+            .winning_trades = 0,
+            .losing_trades = 0,
+            .total_trades = 1, // Avoid division by zero
+            .max_drawdown = 0.0,
+            .win_rate = 0.0,
+            ._reserved = [_]u8{0} ** 40,
+        };
+    }
+
+    // Return actual metrics from Grid OS
+    return metrics;
 }
 
 // ============================================================================
