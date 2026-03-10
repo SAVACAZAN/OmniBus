@@ -630,18 +630,50 @@ scheduler_loop:
     test al, 0xFF
     jnz .skip_blockchain_dispatch
 
-    ; Set IPC request for BlockchainOS
+    ; === PHASE 19B-c: BLOCKCHAIN SIMULATOR ===
+    ; Simulate blockchain cycle without direct module call
+    ; 1. Read Grid metrics (real data)
+    ; 2. Process flash loan requests (simulate)
+    ; 3. Update blockchain state
+    ; 4. Complete IPC request
+
+    ; Set IPC request
     mov byte [r8 + 0], REQUEST_BLOCKCHAIN_CYCLE
     mov byte [r8 + 1], STATUS_BUSY
     mov word [r8 + 2], MODULE_BLOCKCHAIN
 
-    ; Debug: Test direct call with a simpler approach
-    ; Try using register indirect call to see if absolute address is the issue
-    mov rax, 0x250a20
+    ; Read Grid last_trade_profit from 0x110000 + offset
+    ; GridState struct: magic(4B), pair_id(4B), flags(4B), lower_bound(8B), upper_bound(8B), step_cents(8B), last_trade_profit(8B)
+    mov rax, [0x110018]  ; last_trade_profit offset: 4+4+4+8+8 = 28 = 0x1c
+    mov rbx, [0x110028]  ; order_count offset: 0x28
 
-    ; BlockchainOS IPC dispatch would be called here
-    ; Status: Blocked by Phase 16 direct-call bug (jumping to module code causes restart)
-    ; Workaround: Skip module execution in scheduler for now
+    ; Increment blockchain cycle counter at 0x250008
+    mov rcx, [0x250008]  ; Read cycle_count
+    inc rcx
+    mov [0x250008], rcx  ; Write back
+
+    ; Simulate flash loan processing (read count, increment if profit > 0)
+    mov rdx, [0x250010]  ; flash_loan_count offset: 0x10
+    cmp rax, 0           ; Check if profit > 0
+    jle .skip_flash_sim
+    add rdx, 1           ; Increment flash loan count
+    mov [0x250010], rdx
+
+.skip_flash_sim:
+    ; Simulate swap count (increment every 2 cycles if orders active)
+    test rbx, rbx        ; Check order count
+    jz .skip_swap_sim
+    mov rsi, [0x250018]  ; swap_count offset: 0x18
+    add rsi, 1
+    mov [0x250018], rsi
+
+.skip_swap_sim:
+    ; Update TSC timestamp
+    rdtsc
+    mov [0x250020], rax  ; tsc_last_update offset: 0x20
+
+    ; Complete IPC request
+    mov byte [r8 + 1], STATUS_DONE  ; Mark as completed
 
 .skip_blockchain_dispatch:
 
@@ -650,14 +682,58 @@ scheduler_loop:
     test al, 0x1FF
     jnz .skip_neuro_dispatch
 
-    ; Set IPC request for NeuroOS
+    ; === PHASE 19B-d: NEURO SIMULATOR ===
+    ; Simulate genetic algorithm evolution
+    ; 1. Read fitness inputs from Grid metrics
+    ; 2. Evolve population (simulate generation)
+    ; 3. Update optimization parameters
+    ; 4. Complete IPC request
+
+    ; Set IPC request
     mov byte [r8 + 0], REQUEST_NEURO_CYCLE
     mov byte [r8 + 1], STATUS_BUSY
     mov word [r8 + 2], MODULE_NEURO
 
-    ; Call NeuroOS ipc_dispatch (address 0x2d0720)
-    ; NOTE: This may trigger Phase 16 restart bug, so wrapped in comment for now
-    ; call 0x2d0720
+    ; Read fitness inputs from Grid OS export buffer (0x120000)
+    ; Grid writes: profit @ 0x120000, order_count @ 0x120020
+    mov rax, [0x120000]  ; Last profit (fitness metric)
+    mov rbx, [0x120020]  ; Order count (secondary fitness)
+
+    ; NeuroOS state at 0x2D0000
+    ; Simulate generation counter increment
+    mov rcx, [0x2D0008]  ; generation_count
+    inc rcx
+    mov [0x2D0008], rcx
+
+    ; Simulate population size tracking
+    mov rdx, [0x2D0010]  ; population_size
+    cmp rax, 0           ; Check if fitness > 0
+    jle .skip_pop_grow
+    add rdx, 1           ; Grow population if fitness improves
+    cmp rdx, 256
+    jle .skip_pop_cap
+    mov rdx, 256         ; Cap at 256
+.skip_pop_cap:
+    mov [0x2D0010], rdx
+
+.skip_pop_grow:
+    ; Write optimization parameters to export buffer (0x120040)
+    ; These are the evolved parameters that Grid OS will use next cycle
+    mov rax, rdx         ; population_size
+    mov [0x120040], rax  ; Export as optimization parameter
+
+    ; Write generation number
+    mov [0x120048], rcx
+
+    ; Mark NeuroOS parameters as valid
+    mov byte [0x120050], 0x01
+
+    ; Update TSC
+    rdtsc
+    mov [0x2D0018], rax  ; tsc_last_update
+
+    ; Complete IPC request
+    mov byte [r8 + 1], STATUS_DONE
 
 .skip_neuro_dispatch:
 
