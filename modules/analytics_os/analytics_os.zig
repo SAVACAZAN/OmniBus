@@ -8,6 +8,7 @@ const packet_parser = @import("packet_parser.zig");
 const market_matrix = @import("market_matrix.zig");
 const consensus = @import("consensus.zig");
 const price_feed = @import("price_feed.zig");
+const exchange_reader = @import("exchange_reader.zig");
 
 // Module state
 var initialized: bool = false;
@@ -38,6 +39,12 @@ export fn run_analytics_cycle() void {
     // Auth gate: check if Ada's auth byte is set to 0x70
     const auth = @as(*volatile u8, @ptrFromInt(types.KERNEL_AUTH)).*;
     if (auth != 0x70) return;
+
+    // === PHASE 22-b: Read real exchange data ===
+    // Check if external feeder is populating the exchange buffer @ 0x140000
+    if (exchange_reader.isBufferActive()) {
+        exchange_reader.readAndInjectPrices();
+    }
 
     // Process pending DMA slots (bounded loop for determinism)
     var processed: u32 = 0;

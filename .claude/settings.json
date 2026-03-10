@@ -68,7 +68,9 @@
       "Bash(timeout 120 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase20_final.log -display none)",
       "Bash(timeout 60 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase21_prof.log -display none)",
       "Bash(timeout 180 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase21_optimized.log -display none)",
-      "Bash(timeout 180 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase21_test.log -display none)"
+      "Bash(timeout 180 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase21_test.log -display none)",
+      "Bash(/home/kiss/OmniBus/PHASE_22_EXCHANGE_INTEGRATION.md:*)",
+      "Bash(timeout 60 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/phase22_test.log -display none)"
     ]
   }
 }
