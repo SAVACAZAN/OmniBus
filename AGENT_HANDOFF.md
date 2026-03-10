@@ -57,11 +57,12 @@ Phase 5D· Real disk I/O    ✅ 100%  ATA PIO reading all 5 modules from disk
 Phase 8 · IDT/handlers     ✅ 100%  Exception handling verified
 Phase 9 · Grid Trading     ✅ 100%  Grid OS on live Kraken prices
 Phase 10· Multi-Exch Arb   ✅ 100%  Kraken↔Coinbase↔LCX spread detection
-Phase 13-19 (this session) ✅ 100%  See above
-Phase 20  NeuroOS state reader (0x2D0000, magic "NERO")                 🔜 NEXT
+Phase 13-19 (prior session)✅ 100%  Dashboard + SHM bridge + order tracking
+Phase 20  NeuroOS evolution panel  ✅ 100%  read_neuro_state() + dashboard
+Phase 21+ Advanced features        🔜 TBD  (Module direct calls, safety checks, etc)
 ```
 
-**Overall: ~95% Complete**
+**Overall: ~96% Complete — System Stable, All Core Features Live**
 
 ### Live Data Architecture (WORKING):
 ```
@@ -103,19 +104,34 @@ python3 dashboard_3pane.py --shm /tmp/omnibus_live_mem
 - **Dashboard**: 3-pane prices + arb monitor + kernel metrics + orders panel
 - Stability: runs indefinitely
 
-### NEXT: Phase 20 — NeuroOS State Reader
-**File**: `modules/neuro_os/types.zig`
-**Address**: `NEURO_BASE = 0x2D0000`
-**Struct**: `NeuroState` (128 bytes):
-  - magic: u32 = 0x4E45524F ("NERO")
-  - flags: u32
-  - generation: u64
-  - evolution_cycles: u64
-  - best_fitness: f64
-  - worst_fitness: f64
-  - tsc_last_update: u64
-  - _reserved: [40]u8
-**Task**: Add `read_neuro_state()` to `shm_reader.py` + NEURO panel to dashboard
+### NEXT: Phase 21+ Options
+**Current Status**: 96% complete, all 5 modules loaded + running via simulators
+
+**Option A: Module Direct Execution** (Known blocker from Phase 16)
+- Fix CPU restart bug when calling `call 0x2D0000` type addresses
+- Replace simulator frameworks with real module function calls
+- Requires GDB debugging + potential GDT/paging fixes
+- Est. 4-8 hours
+
+**Option B: Safety & Consensus** (Improve robustness)
+- Add quorum voting for order execution (Phase 20)
+- Consensus-based fill validation (Phase 21)
+- MEV protection hardening (Phase 22)
+- Est. 3-6 hours
+
+**Option C: Performance Optimizations**
+- Profile kernel cycle frequency (currently ~50K/sec in QEMU)
+- Reduce scheduler latency
+- Optimize memory access patterns
+- Est. 2-4 hours
+
+**Option D: Integration Testing**
+- Run 24-hour stress test on live data
+- Validate all 5 modules under load
+- Check for memory leaks/drift
+- Est. 1-2 hours (plus 24hr soak)
+
+**Recommendation**: Option B (safety) then Option A (direct calls) for production readiness
 
 ### Last git log:
 ```
