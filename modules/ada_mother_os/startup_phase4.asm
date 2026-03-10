@@ -658,6 +658,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; AutoRepair OS .bss @ 0x320080, size 0x100 (256 bytes)
+    mov rdi, 0x320080
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -691,6 +697,9 @@ ada64_stub_event_loop:
 
     ; Checksum OS init_plugin @ 0x310000
     call 0x310000
+
+    ; AutoRepair OS init_plugin @ 0x320000
+    call 0x320000
 
     ; === SUCCESS ===
     mov al, '!'
@@ -844,6 +853,13 @@ scheduler_loop:
     jnz .skip_checksum_dispatch
     call 0x310080                       ; Checksum: run_checksum_cycle (validates + updates OmniStruct)
 .skip_checksum_dispatch:
+
+    ; AutoRepair OS: trigger every 2048 cycles (self-healing)
+    mov rax, r11
+    test al, 0x7FF
+    jnz .skip_autorepair_dispatch
+    call 0x320080                       ; AutoRepair: run_autorepair_cycle (monitors failures + repairs)
+.skip_autorepair_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
