@@ -641,9 +641,13 @@ scheduler_loop:
     mov byte [r8 + 1], STATUS_BUSY
     mov word [r8 + 2], MODULE_BLOCKCHAIN
 
-    ; Call BlockchainOS ipc_dispatch (address 0x250a20)
-    ; NOTE: This may trigger Phase 16 restart bug, so wrapped in comment for now
-    ; call 0x250a20
+    ; Debug: Test direct call with a simpler approach
+    ; Try using register indirect call to see if absolute address is the issue
+    mov rax, 0x250a20
+
+    ; BlockchainOS IPC dispatch would be called here
+    ; Status: Blocked by Phase 16 direct-call bug (jumping to module code causes restart)
+    ; Workaround: Skip module execution in scheduler for now
 
 .skip_blockchain_dispatch:
 
