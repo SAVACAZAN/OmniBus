@@ -45,7 +45,24 @@
       "Bash(timeout 6 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -display none -serial file:/tmp/final_test.log -monitor none)",
       "Bash(timeout 6 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -display none -serial file:/tmp/phase5_test.log -monitor none)",
       "Bash(git add modules/ada_mother_os/startup_phase4.asm)",
-      "Bash(timeout 8 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -display none -serial file:/tmp/phase5b_test.log -monitor none)"
+      "Bash(timeout 8 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -display none -serial file:/tmp/phase5b_test.log -monitor none)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_call.log -display none)",
+      "Bash(xxd build/grid_os.bin)",
+      "Bash(zig build-obj grid_os.zig -target x86_64-freestanding -O ReleaseFast -fno-pic -ofmt=elf)",
+      "Bash(zig build-obj grid_os.zig -target x86_64-freestanding -O ReleaseFast -fno-PIC -ofmt=elf)",
+      "Bash(zig build-obj modules/grid_os/grid_os.zig -target x86_64-freestanding -O ReleaseFast -fno-PIC -ofmt=elf)",
+      "Bash(xxd grid_os.o)",
+      "Bash(ls -lh build/grid_os*)",
+      "Bash(readelf -r build/grid_os.elf)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_call2.log -display none)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_call3.log -display none)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_call4.log -display none)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_call5.log -display none)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_call6.log -display none)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_call7.log -display none)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_call8.log -display none)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_modules.log -display none)",
+      "Bash(timeout 10 qemu-system-x86_64 -m 256 -drive format=raw,file=./build/omnibus.iso -serial file:/tmp/test_mem.log -display none)"
     ]
   }
 }
