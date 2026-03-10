@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniBus Phase 29 - HTMX Dashboard</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'omnibus-dark': '#0f172a',
+                        'omnibus-grid': '#1e293b',
+                        'omnibus-accent': '#0ea5e9',
+                        'omnibus-danger': '#ef4444',
+                        'omnibus-success': '#10b981',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-omnibus-dark text-white font-mono">
+    <!-- Header -->
+    <header class="bg-omnibus-grid border-b border-omnibus-accent p-4 sticky top-0 z-50">
+        <div class="max-w-full mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-bold text-omnibus-accent">⚡ OmniBus Phase 29</h1>
+                <span class="text-sm text-gray-400">Real-time HTMX Dashboard</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="connection-status" class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm">Connecting...</span>
+                </div>
+                <div id="kernel-mode" class="text-xs bg-omnibus-grid px-3 py-1 rounded">
+                    Mode: <span id="mode-display">demo</span>
+                </div>
+                <span id="timestamp" class="text-xs text-gray-400"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Grid Layout (5 panels) -->
+    <main class="max-w-full mx-auto p-4">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4" id="dashboard-grid">
+            <!-- 1. TRADING PANEL -->
+            <div id="trading-panel" class="lg:col-span-2 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
+                                          hx-get='/panels/trading'
+                                          hx-trigger='every 500ms'
+                                          hx-swap='innerHTML'">
+                <div class="text-center text-gray-400">
+                    <p>Loading Trading Panel...</p>
+                </div>
+            </div>
+
+            <!-- 2. COMPLIANCE PANEL -->
+            <div id="compliance-panel" class="lg:col-span-2 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
+                                            hx-get='/panels/compliance'
+                                            hx-trigger='every 500ms'
+                                            hx-swap='innerHTML'">
+                <div class="text-center text-gray-400">
+                    <p>Loading Compliance Panel...</p>
+                </div>
+            </div>
+
+            <!-- 3. HEALTH PANEL -->
+            <div id="health-panel" class="lg:col-span-1 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
+                                         hx-get='/panels/health'
+                                         hx-trigger='every 500ms'
+                                         hx-swap='innerHTML'">
+                <div class="text-center text-gray-400">
+                    <p>Loading Health Panel...</p>
+                </div>
+            </div>
+
+            <!-- 4. AUDIT PANEL (spans 3 cols) -->
+            <div id="audit-panel" class="lg:col-span-3 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
+                                        hx-get='/panels/audit'
+                                        hx-trigger='every 1s'
+                                        hx-swap='innerHTML'">
+                <div class="text-center text-gray-400">
+                    <p>Loading Audit Panel...</p>
+                </div>
+            </div>
+
+            <!-- 5. NEURO PANEL (spans 2 cols) -->
+            <div id="neuro-panel" class="lg:col-span-2 bg-omnibus-grid border border-omnibus-accent rounded-lg p-4
+                                        hx-get='/panels/neuro'
+                                        hx-trigger='every 500ms'
+                                        hx-swap='innerHTML'">
+                <div class="text-center text-gray-400">
+                    <p>Loading NeuroOS Panel...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-omnibus-grid border-t border-omnibus-accent p-4 mt-8 text-center text-sm text-gray-400">
+        <p>OmniBus Phase 29 HTMX Dashboard · WebSocket Bridge to Kernel Memory · Updates every 100-1000ms</p>
+    </footer>
+
+    <!-- JavaScript: WebSocket Integration -->
+    <script src="{{ url_for('static', filename='kernel-bridge.js') }}"></script>
+</body>
+</html>
