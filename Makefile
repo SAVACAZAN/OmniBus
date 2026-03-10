@@ -34,28 +34,40 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(BUILD_DIR) $(OUTPUT)
+build: $(OUTPUT)
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Run with: make qemu"
 
-$(BUILD_DIR):
+# Order-only prereq: create build dir without triggering false 'build' conflict
+$(BUILD_DIR)/.keep:
 	mkdir -p $(BUILD_DIR)
+	@touch $@
 
 # Compile boot sector (Stage 1)
-$(BUILD_DIR)/boot.bin: $(ARCH_DIR)/boot.asm
+$(BUILD_DIR)/boot.bin: $(ARCH_DIR)/boot.asm | $(BUILD_DIR)/.keep
 	@echo "[AS] Compiling boot sector..."
 	$(NASM) -f bin -o $@ $<
 	@echo "  Boot sector: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
 
 # Compile Stage 2 bootloader (using fixed version with register-indirect addressing)
-$(BUILD_DIR)/stage2.bin: $(ARCH_DIR)/stage2_fixed.asm
+$(BUILD_DIR)/stage2.bin: $(ARCH_DIR)/stage2_fixed.asm | $(BUILD_DIR)/.keep
 	@echo "[AS] Compiling Stage 2..."
 	$(NASM) -f bin -o $@ $<
 	@echo "  Stage 2: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
 
+# Phase 3: Rebuild Ada kernel from standalone startup (no gprbuild needed)
+# Produces identical layout to Ada-linked kernel but with Ada stubs inline
+ADA_STARTUP := ./modules/ada_mother_os/startup_phase3.asm
+ADA_KERNEL_BIN := ./modules/ada_mother_os/kernel.bin
+
+$(ADA_KERNEL_BIN): $(ADA_STARTUP)
+	@echo "[AS] Rebuilding Ada kernel binary from Phase 3 startup..."
+	$(NASM) -f bin -o $@ $<
+	@echo "  Ada kernel: $@ (size: $$(stat -c%s $@) bytes)"
+
 # Copy Ada kernel binary
-$(BUILD_DIR)/kernel_stub.bin: ./modules/ada_mother_os/kernel.bin
+$(BUILD_DIR)/kernel_stub.bin: $(ADA_KERNEL_BIN)
 	@echo "[CP] Copying Ada kernel binary..."
 	cp $< $@
 	@echo "  Kernel binary: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
@@ -76,7 +88,7 @@ $(BUILD_DIR)/paging_test.iso: $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BU
 	@echo "  Paging test image: $@"
 
 # Build and run paging verification test
-test-paging: $(BUILD_DIR) $(BUILD_DIR)/paging_test.iso
+test-paging: $(BUILD_DIR)/.keep $(BUILD_DIR)/paging_test.iso
 	@echo "[TEST] Running paging verification (3 second boot wait)..."
 	@echo "  UART serial output → /tmp/omnibus_paging.log"
 	@echo "  PASS: serial shows STRCPIL or P-I-L chars"
