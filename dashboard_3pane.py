@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Phase 23-d: 3-Pane Metrics Dashboard with Colors
-=================================================
+Phase 14: 3-Pane Dashboard + Real-Time Arbitrage Monitor
+=========================================================
 
-Real-time display of prices from all 3 exchanges side-by-side:
+Real-time display of prices from all 3 exchanges + live arbitrage detection:
 - Pane 0 (Left, Yellow): Kraken
 - Pane 1 (Middle, Green): Coinbase
-- Pane 2 (Right, Blue): LCX Exchange
+- Pane 2 (Right, Cyan): LCX Exchange
+- Bottom: Arbitrage opportunities + cumulative P&L tracking
 
 Usage:
     python3 dashboard_3pane.py
@@ -29,6 +30,14 @@ LCX_FILE = "/tmp/omnibus_lcx_buffer.bin"
 
 REFRESH_MS = 500
 WINDOW_SIZE = 60
+
+# Exchange fees (maker+taker combined, conservative)
+KRAKEN_FEE   = 0.0026   # 0.26%
+COINBASE_FEE = 0.0040   # 0.40%
+LCX_FEE      = 0.0010   # 0.10%
+
+# Min spread (bps) to report as opportunity
+MIN_SPREAD_BPS = 10      # 0.10% gross minimum
 
 
 class ExchangeData:
@@ -83,20 +92,116 @@ class PriceTracker:
         return ((newest - oldest) / oldest) * 100
 
 
+class ArbOpportunity:
+    """Single arbitrage opportunity snapshot"""
+
+    def __init__(self, pair, buy_ex, sell_ex, buy_price_cents, sell_price_cents, fee_total):
+        self.pair = pair
+        self.buy_ex = buy_ex
+        self.sell_ex = sell_ex
+        self.buy_price = buy_price_cents
+        self.sell_price = sell_price_cents
+        if buy_price_cents > 0:
+            self.gross_bps = int(((sell_price_cents - buy_price_cents) / buy_price_cents) * 10000)
+        else:
+            self.gross_bps = 0
+        self.net_bps = self.gross_bps - int(fee_total * 10000)
+        self.profitable = self.net_bps > 50   # >0.5% net = actionable
+
+
+class ArbTracker:
+    """Tracks arbitrage opportunities across all exchange pairs"""
+
+    def __init__(self):
+        self.opportunities_count = 0
+        self.profitable_count = 0
+        self.cumulative_net_bps = 0
+        self.best_bps = 0
+        self.best_pair = ""
+        self.best_pair_hist: deque = deque(maxlen=5)   # last 5 profitable arbs
+        self.start_time = time.time()
+
+    def scan(self, kraken: ExchangeData, coinbase: ExchangeData, lcx_exch: ExchangeData):
+        """Scan all pairs and return best opportunity for each asset"""
+        best_btc: ArbOpportunity | None = None
+        best_eth: ArbOpportunity | None = None
+        best_lcx: ArbOpportunity | None = None
+
+        # --- BTC arbitrage ---
+        candidates_btc = []
+        if kraken.btc > 0 and coinbase.btc > 0:
+            fee = KRAKEN_FEE + COINBASE_FEE
+            if kraken.btc < coinbase.btc:
+                candidates_btc.append(ArbOpportunity("BTC", "Kraken", "Coinbase", kraken.btc, coinbase.btc, fee))
+            else:
+                candidates_btc.append(ArbOpportunity("BTC", "Coinbase", "Kraken", coinbase.btc, kraken.btc, fee))
+        if kraken.btc > 0 and lcx_exch.btc > 0:
+            fee = KRAKEN_FEE + LCX_FEE
+            if kraken.btc < lcx_exch.btc:
+                candidates_btc.append(ArbOpportunity("BTC", "Kraken", "LCX", kraken.btc, lcx_exch.btc, fee))
+            else:
+                candidates_btc.append(ArbOpportunity("BTC", "LCX", "Kraken", lcx_exch.btc, kraken.btc, fee))
+        if coinbase.btc > 0 and lcx_exch.btc > 0:
+            fee = COINBASE_FEE + LCX_FEE
+            if coinbase.btc < lcx_exch.btc:
+                candidates_btc.append(ArbOpportunity("BTC", "Coinbase", "LCX", coinbase.btc, lcx_exch.btc, fee))
+            else:
+                candidates_btc.append(ArbOpportunity("BTC", "LCX", "Coinbase", lcx_exch.btc, coinbase.btc, fee))
+        if candidates_btc:
+            best_btc = max(candidates_btc, key=lambda o: o.net_bps)
+
+        # --- ETH arbitrage ---
+        candidates_eth = []
+        if kraken.eth > 0 and coinbase.eth > 0:
+            fee = KRAKEN_FEE + COINBASE_FEE
+            if kraken.eth < coinbase.eth:
+                candidates_eth.append(ArbOpportunity("ETH", "Kraken", "Coinbase", kraken.eth, coinbase.eth, fee))
+            else:
+                candidates_eth.append(ArbOpportunity("ETH", "Coinbase", "Kraken", coinbase.eth, kraken.eth, fee))
+        if candidates_eth:
+            best_eth = max(candidates_eth, key=lambda o: o.net_bps)
+
+        # --- LCX arbitrage (Kraken LCX vs LCX Exchange LCX) ---
+        if kraken.lcx > 0 and lcx_exch.lcx > 0:
+            fee = KRAKEN_FEE + LCX_FEE
+            if kraken.lcx < lcx_exch.lcx:
+                best_lcx = ArbOpportunity("LCX", "Kraken", "LCX", kraken.lcx, lcx_exch.lcx, fee)
+            else:
+                best_lcx = ArbOpportunity("LCX", "LCX", "Kraken", lcx_exch.lcx, kraken.lcx, fee)
+
+        # Track stats
+        for opp in [best_btc, best_eth, best_lcx]:
+            if opp and opp.gross_bps >= MIN_SPREAD_BPS:
+                self.opportunities_count += 1
+                self.cumulative_net_bps += max(0, opp.net_bps)
+                if opp.profitable:
+                    self.profitable_count += 1
+                    if opp.net_bps > self.best_bps:
+                        self.best_bps = opp.net_bps
+                        self.best_pair = f"{opp.pair}:{opp.buy_ex[:3]}→{opp.sell_ex[:3]}"
+                    self.best_pair_hist.append(
+                        f"{opp.pair} {opp.buy_ex[:3]}→{opp.sell_ex[:3]} +{opp.net_bps}bps"
+                    )
+
+        return best_btc, best_eth, best_lcx
+
+
 class Dashboard3Pane:
-    """3-pane terminal dashboard with colors"""
+    """3-pane terminal dashboard with colors + arbitrage monitor"""
 
     def __init__(self, stdscr):
         self.stdscr = stdscr
         self.stdscr.nodelay(True)
         curses.curs_set(0)
 
-        # Initialize colors
-        curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)  # Kraken
-        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)   # Coinbase
-        curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)    # LCX
-        curses.init_pair(4, curses.COLOR_WHITE, curses.COLOR_BLACK)   # Default
-        curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)     # Error
+        # Colors
+        curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)   # Kraken
+        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)    # Coinbase
+        curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)     # LCX
+        curses.init_pair(4, curses.COLOR_WHITE, curses.COLOR_BLACK)    # Default
+        curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)      # Error/loss
+        curses.init_pair(6, curses.COLOR_MAGENTA, curses.COLOR_BLACK)  # Arb header
+        curses.init_pair(7, curses.COLOR_GREEN, curses.COLOR_BLACK)    # Profitable arb
 
         self.kraken_btc = PriceTracker()
         self.kraken_eth = PriceTracker()
@@ -108,6 +213,8 @@ class Dashboard3Pane:
 
         self.lcx_lcx = PriceTracker()
 
+        self.arb = ArbTracker()
+
     def safe_addstr(self, row, col, text, attr=0):
         """Safely add string to curses window"""
         try:
@@ -117,8 +224,19 @@ class Dashboard3Pane:
         except:
             pass
 
+    def _fmt_arb(self, opp: ArbOpportunity | None) -> tuple[str, int]:
+        """Format arb opportunity → (text, color_pair)"""
+        if opp is None:
+            return "  ---", curses.color_pair(4)
+        gross = opp.gross_bps / 100
+        net = opp.net_bps / 100
+        arrow = "✓" if opp.profitable else "✗"
+        color = curses.color_pair(7) if opp.profitable else curses.color_pair(5)
+        text = f"  {arrow} {opp.buy_ex[:3]}→{opp.sell_ex[:3]}  gross:{gross:+.2f}%  net:{net:+.2f}%"
+        return text, color
+
     def render(self):
-        """Render 3-pane dashboard"""
+        """Render dashboard"""
         try:
             self.stdscr.clear()
         except:
@@ -142,7 +260,7 @@ class Dashboard3Pane:
         coinbase = ExchangeData.from_file(COINBASE_FILE)
         lcx_exch = ExchangeData.from_file(LCX_FILE)
 
-        # Update trackers
+        # Update price trackers
         if kraken.btc > 0:
             self.kraken_btc.update(kraken.btc)
             self.kraken_eth.update(kraken.eth)
@@ -156,12 +274,15 @@ class Dashboard3Pane:
         if lcx_exch.lcx > 0:
             self.lcx_lcx.update(lcx_exch.lcx)
 
-        # Pane width
+        # Run arbitrage scan
+        best_btc, best_eth, best_lcx = self.arb.scan(kraken, coinbase, lcx_exch)
+
         pane_w = w // 3 - 1
 
         # === HEADER ===
         now_str = time.strftime('%H:%M:%S')
-        header = f"OmniBus 3-Exchange Dashboard [{now_str}]"
+        uptime = int(time.time() - self.arb.start_time)
+        header = f"OmniBus Multi-Exchange Dashboard [{now_str}] uptime:{uptime}s"
         self.safe_addstr(0, 0, header[:w].ljust(w), curses.color_pair(4) | curses.A_BOLD)
 
         # === KRAKEN PANE (Yellow) ===
@@ -233,9 +354,63 @@ class Dashboard3Pane:
         else:
             self.safe_addstr(row+2, col+1, "NO DATA", curses.color_pair(5))
 
+        # === ARBITRAGE MONITOR (bottom section) ===
+        arb_row = 11  # Below price panes
+        sep = "═" * (w - 2)
+        self.safe_addstr(arb_row, 1, sep, curses.color_pair(6))
+        arb_row += 1
+
+        title = f"  ARB MONITOR  │  scans:{self.arb.opportunities_count}  profitable:{self.arb.profitable_count}  best:{self.arb.best_bps}bps  record:{self.arb.best_pair}"
+        self.safe_addstr(arb_row, 0, title, curses.color_pair(6) | curses.A_BOLD)
+        arb_row += 1
+
+        # BTC opportunities
+        self.safe_addstr(arb_row, 2, "BTC:", curses.color_pair(4) | curses.A_BOLD)
+        if best_btc:
+            txt, color = self._fmt_arb(best_btc)
+            self.safe_addstr(arb_row, 6, txt, color)
+            if best_btc.buy_price > 0 and best_btc.profitable:
+                profit_usd = (best_btc.net_bps / 10000) * (best_btc.buy_price / 100)
+                self.safe_addstr(arb_row, min(55, w-20), f"  ~${profit_usd:.0f}/BTC", curses.color_pair(7))
+        else:
+            self.safe_addstr(arb_row, 6, "  waiting for data...", curses.color_pair(4))
+        arb_row += 1
+
+        # ETH opportunities
+        self.safe_addstr(arb_row, 2, "ETH:", curses.color_pair(4) | curses.A_BOLD)
+        if best_eth:
+            txt, color = self._fmt_arb(best_eth)
+            self.safe_addstr(arb_row, 6, txt, color)
+            if best_eth.buy_price > 0 and best_eth.profitable:
+                profit_usd = (best_eth.net_bps / 10000) * (best_eth.buy_price / 100)
+                self.safe_addstr(arb_row, min(55, w-20), f"  ~${profit_usd:.2f}/ETH", curses.color_pair(7))
+        else:
+            self.safe_addstr(arb_row, 6, "  waiting for data...", curses.color_pair(4))
+        arb_row += 1
+
+        # LCX opportunities
+        self.safe_addstr(arb_row, 2, "LCX:", curses.color_pair(4) | curses.A_BOLD)
+        if best_lcx:
+            txt, color = self._fmt_arb(best_lcx)
+            self.safe_addstr(arb_row, 6, txt, color)
+            if best_lcx.buy_price > 0 and best_lcx.profitable:
+                profit_usd = (best_lcx.net_bps / 10000) * (best_lcx.buy_price / 100) * 10000  # per 10k LCX
+                self.safe_addstr(arb_row, min(55, w-22), f"  ~${profit_usd:.4f}/10kLCX", curses.color_pair(7))
+        else:
+            self.safe_addstr(arb_row, 6, "  waiting for data...", curses.color_pair(4))
+        arb_row += 1
+
+        # Recent profitable arbs history
+        if self.arb.best_pair_hist:
+            arb_row += 1
+            self.safe_addstr(arb_row, 2, "Recent:", curses.color_pair(6))
+            for entry in list(self.arb.best_pair_hist)[-3:]:
+                arb_row += 1
+                self.safe_addstr(arb_row, 4, f"• {entry}", curses.color_pair(7))
+
         # === FOOTER ===
         row = h - 2
-        footer = "Press 'q' to quit | Updates every 500ms"
+        footer = "Press 'q' to quit | Updates every 500ms | Phase 14: Arb Monitor Active"
         self.safe_addstr(row, 1, footer, curses.color_pair(4))
 
         try:
