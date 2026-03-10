@@ -39,22 +39,25 @@ No mock/test/simulated data. Real prices from Kraken, Coinbase, LCX only.
 Phase 1 · Bootloader    ✅ 100%  commit: df7dc5d
 Phase 2 · Paging        ✅ 100%  commit: 2300135
 Phase 3 · Kernel stub   ✅ 100%  commit: 7944927
-Phase 4 · Long mode     ✅ 100%  commit: 206e2da  ← LAST COMPLETED
-Phase 5 · OS loader     ⏳   0%  ← WORK HERE NEXT
+Phase 4 · Long mode     ✅ 100%  commit: 206e2da
+Phase 5A· OS loader     ✅ 100%  commit: 80b4de2  ← LAST COMPLETED (stubs)
 Phase 6 · BlockchainOS  ⏳   0%
 Phase 7 · Neuro OS      ⏳   0%
 Phase 8 · IDT/drivers   ⏳   0%
 Overall: ~22%
 ```
 
-### Last verified serial output (QEMU):
+### Last verified serial output (QEMU — Phase 5A):
 ```
-KTCRPLONG_MODE_OK
+KD123TCRPLONG_MODE_OK
+GRID_OS_64_OK
+ANALYTICS_64_OK
+EXEC_OS_64_OK
 ADA64_INIT
 MOTHER_OS_64_OK
 ```
-K=kernel reached, T=PAE+tables, C=CR3, R=EFER.LME, P=CR0.PG→long mode,
-LONG_MODE_OK=64-bit code running, ADA64_INIT=stub init, MOTHER_OS_64_OK=event loop
+K=kernel, D=disk loads, 1/2/3=stubs loaded via PIO ATA, T=PAE+tables, C=CR3,
+R=EFER.LME, P=long mode, LONG_MODE_OK=64-bit, GRID/ANALYTICS/EXEC=stubs running
 
 ---
 
@@ -139,36 +142,34 @@ make qemu-debug
 
 ---
 
-## WHAT TO DO NEXT: Phase 5 — OS Layer Loader
+## WHAT TO DO NEXT: Phase 5B — Link Real Zig Modules
 
-**Goal**: Load the 3 Zig OS modules from disk into memory, call their init_plugin().
+**Phase 5A DONE** (stubs loaded, proved disk loading mechanism works).
+**Phase 5B Goal**: Replace NASM stubs with real Zig module flat binaries.
 
-### Step 1 — Compile Zig modules to flat binaries:
-```bash
-zig build-lib modules/grid_os/grid_os.zig -target x86_64-freestanding -O ReleaseFast
-zig build-lib modules/analytics_os/analytics_os.zig -target x86_64-freestanding -O ReleaseFast
-zig build-lib modules/execution_os/execution_os.zig -target x86_64-freestanding -O ReleaseFast
+### Challenge: Zig modules need linker scripts to place init_plugin at offset 0.
+Execution OS has init_plugin at offset 0x73c0 in its .a file — cannot call base directly.
+
+### Approach for Phase 5B (linker script per module):
+```
+ENTRY(init_plugin)
+. = 0x110000;          ← or 0x130000 / 0x150000
+SECTIONS {
+  .text : { *(.text.init_plugin) *(.text*) }
+  .rodata : { *(.rodata*) }
+  .data : { *(.data*) }
+  .bss : { *(.bss*) }
+}
+→ objcopy -O binary module.elf module.bin
 ```
 
-### Step 2 — Add binaries to disk image:
+### Disk sector layout (for real Zig binaries):
 ```
-Grid OS     → sectors 4096-4351  (128KB = 256 sectors)
-Analytics OS → sectors 4352-5375 (512KB = 1024 sectors)
-Execution OS → sectors 5376-5631 (128KB = 256 sectors)
+Grid OS real:      sectors 4096-4351  (128KB = 256 sectors)
+Analytics OS real: sectors 4352-5375  (512KB = 1024 sectors)
+Execution OS real: sectors 5376-5631  (128KB = 256 sectors)
 ```
-
-### Step 3 — Extend startup_phase4.asm (or new startup_phase5.asm):
-Add 64-bit LBA disk reads + copy to target addresses + call init_plugin()
-
-### Step 4 — Expected serial after Phase 5:
-```
-KTCRPLONG_MODE_OK
-ADA64_INIT
-MOTHER_OS_64_OK
-GRID_INIT_OK
-ANALYTICS_INIT_OK
-EXECUTION_INIT_OK
-```
+Update startup_phase5.asm sector counts from 16 → 256/1024/256.
 
 ---
 
@@ -176,9 +177,9 @@ EXECUTION_INIT_OK
 
 | Module | Location | Lines | Target Addr | Status |
 |--------|----------|-------|-------------|--------|
-| Analytics OS | `modules/analytics_os/` | ~830 | 0x150000 | Code done, needs loader |
-| Grid OS | `modules/grid_os/` | 1914 | 0x110000 | Code done, needs loader |
-| Execution OS | `modules/execution_os/` | 1996 | 0x130000 | Code done, needs loader |
+| Analytics OS | `modules/analytics_os/` | ~830 | 0x150000 | ✅ stub loaded, needs real binary |
+| Grid OS | `modules/grid_os/` | 1914 | 0x110000 | ✅ stub loaded, needs real binary |
+| Execution OS | `modules/execution_os/` | 1996 | 0x130000 | ✅ stub loaded, needs real binary |
 | BlockchainOS | `modules/blockchain_os/` | 0 | 0x250000 | Not started |
 | BankOS | `modules/bank_os/` | 0 | 0x280000 | Not started |
 | Neuro OS | `modules/neuro_os/` | 0 | 0x2D0000 | Not started |
