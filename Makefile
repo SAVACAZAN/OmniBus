@@ -58,7 +58,7 @@ $(BUILD_DIR)/stage2.bin: $(ARCH_DIR)/stage2_fixed.asm | $(BUILD_DIR)/.keep
 
 # Phase 3: Rebuild Ada kernel from standalone startup (no gprbuild needed)
 # Produces identical layout to Ada-linked kernel but with Ada stubs inline
-ADA_STARTUP := ./modules/ada_mother_os/startup_phase3.asm
+ADA_STARTUP := ./modules/ada_mother_os/startup_phase4.asm
 ADA_KERNEL_BIN := ./modules/ada_mother_os/kernel.bin
 
 $(ADA_KERNEL_BIN): $(ADA_STARTUP)
