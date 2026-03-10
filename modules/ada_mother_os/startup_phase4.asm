@@ -722,6 +722,9 @@ ada64_stub_event_loop:
     ; Parameter Tuning OS init_plugin @ 0x360000
     call 0x360000
 
+    ; Historical Analytics OS init_plugin @ 0x370000
+    call 0x370000
+
     ; === SUCCESS ===
     mov al, '!'
     out dx, al
@@ -902,6 +905,13 @@ scheduler_loop:
     jnz .skip_param_tuning_dispatch
     call 0x360100                       ; Parameter Tuning: run_param_tuning_cycle (apply + validate parameters)
 .skip_param_tuning_dispatch:
+
+    ; Historical Analytics OS: trigger every 32768 cycles (time-series aggregation)
+    mov rax, r11
+    test al, 0x7FFF
+    jnz .skip_hist_analytics_dispatch
+    call 0x370100                       ; Historical Analytics: run_historical_analytics_cycle (collect + aggregate metrics)
+.skip_hist_analytics_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
