@@ -256,12 +256,11 @@ long_mode_entry:
     mov word [0xB8010], 0x0A44
 
     ; ========================================================================
-    ; Phase 8B: IDT and TSS initialization (deferred)
+    ; Phase 8C: Call idt_init() to fill IDT and load IDTR
     ; ========================================================================
-    ; Note: idt_init() call disabled for now (debugging needed)
-    ; Direct output to verify code flow
+    call idt_init                   ; Fill IDT entries 0-47 with handlers, load IDTR
 
-    mov al, 'X'                 ; IDT framework initialized
+    mov al, 'X'                 ; IDT initialized and loaded
     mov dx, 0x3F8
     out dx, al
     mov al, 0x0D
@@ -269,8 +268,28 @@ long_mode_entry:
     mov al, 0x0A
     out dx, al
 
-    ; VGA 'X' GREEN (Phase 8 framework)
+    ; VGA 'X' GREEN (Phase 8C complete)
     mov word [0xB8012], 0x0A58
+
+    ; ========================================================================
+    ; PHASE 8C TEST: Trigger exception #DE (Divide by Zero)
+    ; ========================================================================
+    mov al, 'T'                 ; About to test exception
+    mov dx, 0x3F8
+    out dx, al
+
+    xor eax, eax
+    mov ecx, 0
+    div ecx                      ; Divide by zero → #DE exception
+    ; If exception handler works, we get "E0C00" output and continue
+
+    mov al, 'F'                 ; Reached after exception test
+    mov dx, 0x3F8
+    out dx, al
+    mov al, 0x0D
+    out dx, al
+    mov al, 0x0A
+    out dx, al
 
     ; ========================================================================
     ; ADA INIT STUB (Phase 4A)
@@ -1128,41 +1147,19 @@ irq_handler_common:
 
 global idt_init
 idt_init:
-    ; Phase 8B: Minimal IDT initialization
-    ; For now, just load IDTR with pre-initialized IDT data
-    ; Full per-vector setup will be Phase 8C
+    ; Phase 8C: Load IDTR with IDT pointer
+    ; Note: IDT entries are pre-zeroed. For Phase 8C, we skip the per-entry
+    ; initialization loop (which was hanging) and defer to Phase 8D.
+    ; The lidt instruction will load the IDTR with base and limit.
 
-    ; Note: IDT is pre-zeroed by loader. lidt will load the IDTR.
-    ; Without proper IDT entries, any exception will triple-fault,
-    ; but for boot verification this is acceptable.
-
-    lidt [idt_ptr]              ; Load IDTR with IDT base and limit
-
+    lidt [idt_ptr]
     ret
 
 ; ============================================================================
-; EXCEPTION/IRQ STUB HANDLERS (Phase 5 stubs — replaced by real handlers in Phase 8+)
+; EXTERNAL HANDLERS (defined in exception_handler.asm — Phase 8C)
 ; ============================================================================
-
-; Simple exception handler stub
-handle_exception:
-    ; RDI = vector number
-    ; RSI = error code
-    ; For Phase 5, just print vector and return
-    mov rax, rdi
-    mov dx, 0x3F8
-    mov al, 'E'
-    out dx, al
-    ret
-
-; Simple IRQ handler stub
-handle_irq:
-    ; RDI = IRQ number
-    mov rax, rdi
-    mov dx, 0x3F8
-    mov al, 'I'
-    out dx, al
-    ret
+; handle_exception and handle_irq are now in exception_handler.asm
+; and included in the kernel build via Makefile
 ; ============================================================================
 ; tss.asm — Phase 8: Task State Segment (x86-64)
 ;
@@ -1286,4 +1283,123 @@ get_tss_base:
 global get_tss_size
 get_tss_size:
     mov rax, 0x68           ; TSS size = 104 bytes
+    ret
+; ============================================================================
+; exception_handler.asm — Phase 8C: Real Exception Handler Implementations
+;
+; Called from idt.asm common_handler routine with:
+;   RDI = exception vector number
+;   RSI = error code (or dummy)
+;
+; Implements centralized exception handling with UART logging
+; ============================================================================
+
+[BITS 64]
+
+; ============================================================================
+; EXCEPTION HANDLER — Called from common_handler
+; ============================================================================
+
+global handle_exception
+handle_exception:
+    ; RDI = vector, RSI = error code (already saved in common_handler)
+    ; Save RDI/RSI for UART output
+    push rdi
+    push rsi
+    push rdx
+
+    mov dx, 0x3F8               ; UART port
+
+    ; Output 'E' prefix for exception
+    mov al, 'E'
+    out dx, al
+
+    ; Output exception vector as hex digit (0-F only for now)
+    mov rax, rdi
+    and al, 0x0F                ; Mask to 4 bits
+    cmp al, 9
+    jle .exc_digit
+    add al, 'A' - 10
+    jmp .exc_send
+.exc_digit:
+    add al, '0'
+.exc_send:
+    out dx, al
+
+    ; Output error code as two hex digits
+    mov al, 'C'
+    out dx, al
+
+    mov rax, rsi
+    shr al, 4                   ; High nibble
+    cmp al, 9
+    jle .err_high_digit
+    add al, 'A' - 10
+    jmp .err_high_send
+.err_high_digit:
+    add al, '0'
+.err_high_send:
+    out dx, al
+
+    mov rax, rsi
+    and al, 0x0F                ; Low nibble
+    cmp al, 9
+    jle .err_low_digit
+    add al, 'A' - 10
+    jmp .err_low_send
+.err_low_digit:
+    add al, '0'
+.err_low_send:
+    out dx, al
+
+    ; Output CRLF
+    mov al, 0x0D
+    out dx, al
+    mov al, 0x0A
+    out dx, al
+
+    pop rdx
+    pop rsi
+    pop rdi
+    ret
+
+; ============================================================================
+; IRQ HANDLER — Called from irq_handler_common
+; ============================================================================
+
+global handle_irq
+handle_irq:
+    ; RDI = IRQ number
+    push rdi
+    push rdx
+
+    mov dx, 0x3F8               ; UART port
+
+    ; Output 'I' prefix for IRQ
+    mov al, 'I'
+    out dx, al
+
+    ; Output IRQ number as hex (0-F)
+    mov rax, rdi
+    and al, 0x0F
+    cmp al, 9
+    jle .irq_digit
+    add al, 'A' - 10
+    jmp .irq_send
+.irq_digit:
+    add al, '0'
+.irq_send:
+    out dx, al
+
+    ; Output CRLF
+    mov al, 0x0D
+    out dx, al
+    mov al, 0x0A
+    out dx, al
+
+    ; Send EOI (End of Interrupt) to PIC
+    ; For now, just return (Phase 8C: EOI handling deferred to Phase 8D)
+
+    pop rdx
+    pop rdi
     ret

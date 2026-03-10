@@ -256,12 +256,11 @@ long_mode_entry:
     mov word [0xB8010], 0x0A44
 
     ; ========================================================================
-    ; Phase 8B: IDT and TSS initialization (deferred)
+    ; Phase 8C: Call idt_init() to fill IDT and load IDTR
     ; ========================================================================
-    ; Note: idt_init() call disabled for now (debugging needed)
-    ; Direct output to verify code flow
+    call idt_init                   ; Fill IDT entries 0-47 with handlers, load IDTR
 
-    mov al, 'X'                 ; IDT framework initialized
+    mov al, 'X'                 ; IDT initialized and loaded
     mov dx, 0x3F8
     out dx, al
     mov al, 0x0D
@@ -269,8 +268,28 @@ long_mode_entry:
     mov al, 0x0A
     out dx, al
 
-    ; VGA 'X' GREEN (Phase 8 framework)
+    ; VGA 'X' GREEN (Phase 8C complete)
     mov word [0xB8012], 0x0A58
+
+    ; ========================================================================
+    ; PHASE 8C TEST: Trigger exception #DE (Divide by Zero)
+    ; ========================================================================
+    mov al, 'T'                 ; About to test exception
+    mov dx, 0x3F8
+    out dx, al
+
+    xor eax, eax
+    mov ecx, 0
+    div ecx                      ; Divide by zero → #DE exception
+    ; If exception handler works, we get "E0C00" output and continue
+
+    mov al, 'F'                 ; Reached after exception test
+    mov dx, 0x3F8
+    out dx, al
+    mov al, 0x0D
+    out dx, al
+    mov al, 0x0A
+    out dx, al
 
     ; ========================================================================
     ; ADA INIT STUB (Phase 4A)

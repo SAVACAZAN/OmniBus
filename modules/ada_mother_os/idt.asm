@@ -373,38 +373,16 @@ irq_handler_common:
 
 global idt_init
 idt_init:
-    ; Phase 8B: Minimal IDT initialization
-    ; For now, just load IDTR with pre-initialized IDT data
-    ; Full per-vector setup will be Phase 8C
+    ; Phase 8C: Load IDTR with IDT pointer
+    ; Note: IDT entries are pre-zeroed. For Phase 8C, we skip the per-entry
+    ; initialization loop (which was hanging) and defer to Phase 8D.
+    ; The lidt instruction will load the IDTR with base and limit.
 
-    ; Note: IDT is pre-zeroed by loader. lidt will load the IDTR.
-    ; Without proper IDT entries, any exception will triple-fault,
-    ; but for boot verification this is acceptable.
-
-    lidt [idt_ptr]              ; Load IDTR with IDT base and limit
-
+    lidt [idt_ptr]
     ret
 
 ; ============================================================================
-; EXCEPTION/IRQ STUB HANDLERS (Phase 5 stubs — replaced by real handlers in Phase 8+)
+; EXTERNAL HANDLERS (defined in exception_handler.asm — Phase 8C)
 ; ============================================================================
-
-; Simple exception handler stub
-handle_exception:
-    ; RDI = vector number
-    ; RSI = error code
-    ; For Phase 5, just print vector and return
-    mov rax, rdi
-    mov dx, 0x3F8
-    mov al, 'E'
-    out dx, al
-    ret
-
-; Simple IRQ handler stub
-handle_irq:
-    ; RDI = IRQ number
-    mov rax, rdi
-    mov dx, 0x3F8
-    mov al, 'I'
-    out dx, al
-    ret
+; handle_exception and handle_irq are now in exception_handler.asm
+; and included in the kernel build via Makefile

@@ -82,10 +82,10 @@ $(BUILD_DIR)/tss.o: $(ADA_TSS) | $(BUILD_DIR)/.keep
 	nasm -f elf64 -o $@ $<
 
 # Link all Phase 5 components into single flat binary kernel
-# Combine startup + uart + idt + tss into temporary assembly file, then compile
-$(BUILD_DIR)/kernel_phase5_combined.asm: $(ADA_STARTUP) $(ADA_UART) $(ADA_IDT) $(ADA_TSS) | $(BUILD_DIR)/.keep
+# Combine startup + uart + idt + tss + exception_handler into temporary assembly file
+$(BUILD_DIR)/kernel_phase5_combined.asm: $(ADA_STARTUP) $(ADA_UART) $(ADA_IDT) $(ADA_TSS) ./modules/ada_mother_os/exception_handler.asm | $(BUILD_DIR)/.keep
 	@echo "[PREP] Combining Phase 5 assembly sources..."
-	@cat $(ADA_STARTUP) $(ADA_UART) $(ADA_IDT) $(ADA_TSS) > $@
+	@cat $(ADA_STARTUP) $(ADA_UART) $(ADA_IDT) $(ADA_TSS) ./modules/ada_mother_os/exception_handler.asm > $@
 
 $(ADA_KERNEL_BIN): $(BUILD_DIR)/kernel_phase5_combined.asm
 	@echo "[AS] Rebuilding Ada kernel binary (Phase 5: startup + uart + idt + tss)..."
