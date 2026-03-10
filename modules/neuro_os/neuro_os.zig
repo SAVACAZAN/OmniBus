@@ -349,3 +349,61 @@ fn rdtsc() u64 {
     );
     return (@as(u64, hi) << 32) | @as(u64, lo);
 }
+
+// ============================================================================
+// PHASE 10: IPC DISPATCHER (Kernel ↔ Module Communication)
+// ============================================================================
+
+/// IPC Control Block structure (shared with kernel @ 0x100110)
+const IpcControlBlock = extern struct {
+    request: u8,
+    status: u8,
+    module_id: u16,
+    _pad: u32,
+    cycle_count: u64,
+    return_value: u64,
+};
+
+/// IPC Request Codes
+const REQUEST_NONE = 0x00;
+const REQUEST_NEURO_CYCLE = 0x02;
+
+/// IPC Status Codes
+const STATUS_IDLE = 0x00;
+const STATUS_BUSY = 0x01;
+const STATUS_DONE = 0x02;
+const STATUS_ERROR = 0x03;
+
+/// Get pointer to IPC control block (shared kernel memory)
+fn getIpcBlockPtr() *volatile IpcControlBlock {
+    return @as(*volatile IpcControlBlock, @ptrFromInt(0x100110));
+}
+
+/// IPC Dispatcher: Kernel calls this to invoke module functions
+/// Returns 0 on success, non-zero on error
+export fn ipc_dispatch() u64 {
+    const ipc = getIpcBlockPtr();
+    const req = ipc.request;
+
+    // Initialize module on first call
+    if (!initialized) {
+        init_plugin();
+    }
+
+    // Route request to appropriate handler
+    switch (req) {
+        REQUEST_NEURO_CYCLE => {
+            // Execute evolution cycle
+            run_evolution_cycle();
+            ipc.return_value = generation_count;
+            ipc.status = STATUS_DONE;
+            return 0;  // Success
+        },
+        else => {
+            // Unknown request
+            ipc.return_value = 0;
+            ipc.status = STATUS_ERROR;
+            return 1;  // Error
+        },
+    }
+}

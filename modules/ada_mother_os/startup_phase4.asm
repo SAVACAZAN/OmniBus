@@ -526,28 +526,36 @@ scheduler_loop:
     inc r11
     mov [r10], r11
 
-    ; Simple modulo check using AND for power-of-2 divisors
-    ; BlockchainOS: call every 256 cycles (every cycle where cycle_count & 0xFF == 0)
+    ; BlockchainOS: trigger every 256 cycles (cycle_count & 0xFF == 0)
     mov rax, r11
     test al, 0xFF
     jnz .skip_blockchain_call
 
-    ; Issue BlockchainOS cycle request via IPC
-    mov byte [r8 + 0], REQUEST_BLOCKCHAIN_CYCLE  ; Set request code
-    mov word [r8 + 2], MODULE_BLOCKCHAIN         ; Set module ID
-    mov byte [r8 + 1], STATUS_BUSY               ; Set status to busy
+    ; Set IPC request for BlockchainOS
+    mov byte [r8 + 0], REQUEST_BLOCKCHAIN_CYCLE  ; IPC request code
+    mov word [r8 + 2], MODULE_BLOCKCHAIN         ; Module ID
+    mov byte [r8 + 1], STATUS_BUSY               ; Status = busy
+
+    ; NOTE: BlockchainOS must implement its own IPC polling loop to respond
+    ; When modules are given execution context, they will:
+    ; 1. Check IPC_REQUEST
+    ; 2. Execute requested function
+    ; 3. Set IPC_RETURN_VALUE
+    ; 4. Set IPC_STATUS = STATUS_DONE
 
 .skip_blockchain_call:
 
-    ; NeuroOS: call every 512 cycles (every cycle where cycle_count & 0x1FF == 0)
+    ; NeuroOS: trigger every 512 cycles (cycle_count & 0x1FF == 0)
     mov rax, r11
     test al, 0x1FF
     jnz .skip_neuro_call
 
-    ; Issue NeuroOS evolution request via IPC
-    mov byte [r8 + 0], REQUEST_NEURO_CYCLE  ; Set request code
-    mov word [r8 + 2], MODULE_NEURO         ; Set module ID
-    mov byte [r8 + 1], STATUS_BUSY          ; Set status to busy
+    ; Set IPC request for NeuroOS
+    mov byte [r8 + 0], REQUEST_NEURO_CYCLE      ; IPC request code
+    mov word [r8 + 2], MODULE_NEURO             ; Module ID
+    mov byte [r8 + 1], STATUS_BUSY              ; Status = busy
+
+    ; NOTE: NeuroOS must implement its own IPC polling loop to respond
 
 .skip_neuro_call:
 
