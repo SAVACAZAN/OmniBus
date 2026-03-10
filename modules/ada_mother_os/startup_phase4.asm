@@ -664,6 +664,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; Zorin OS .bss @ 0x330080, size 0x100 (256 bytes)
+    mov rdi, 0x330080
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -700,6 +706,9 @@ ada64_stub_event_loop:
 
     ; AutoRepair OS init_plugin @ 0x320000
     call 0x320000
+
+    ; Zorin OS init_plugin @ 0x330000
+    call 0x330000
 
     ; === SUCCESS ===
     mov al, '!'
@@ -860,6 +869,13 @@ scheduler_loop:
     jnz .skip_autorepair_dispatch
     call 0x320080                       ; AutoRepair: run_autorepair_cycle (monitors failures + repairs)
 .skip_autorepair_dispatch:
+
+    ; Zorin OS: trigger every 4096 cycles (access control & compliance)
+    mov rax, r11
+    test al, 0xFFF
+    jnz .skip_zorin_dispatch
+    call 0x330080                       ; Zorin: run_zorin_cycle (ACL enforcement + audit)
+.skip_zorin_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
