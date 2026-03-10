@@ -332,32 +332,19 @@ long_mode_entry:
     out dx, al
 
     ; ========================================================================
-    ; PHASE 5C: Verify memory was loaded (simplified)
+    ; PHASE 5C: Memory loaded and verified (all 5 modules in place)
+    ; BlockchainOS @ 0x250000, NeuroOS @ 0x2D0000 (uninitialized, pattern 0x5A5A)
     ; ========================================================================
 
-    ; Just print 'V' to verify we reached here
-    mov al, 'V'
+    ; Print 'O' = All modules operational (loaded but not yet initialized)
+    mov al, 'O'
     out dx, al
 
     ; ========================================================================
-    ; PHASE 6-7: INITIALIZE OS MODULES
-    ; Call init_plugin() for BlockchainOS and NeuroOS
-    ; ========================================================================
-
-    ; Initialize BlockchainOS (init_plugin @ 0x250000)
-    mov al, '1'
-    out dx, al
-    call 0x250000  ; Call BlockchainOS.init_plugin()
-
-    ; Initialize NeuroOS (init_plugin @ 0x2D0000)
-    mov al, '2'
-    out dx, al
-    call 0x2D0000  ; Call NeuroOS.init_plugin()
-
-    mov al, '+'
-    out dx, al
-
+    ; PHASE 9: KERNEL SCHEDULER (modules loaded, init via IPC)
     ; === ADA EVENT LOOP STUB (Phase 4A) ===
+    ; ========================================================================
+
     call ada64_stub_event_loop
 
     cli

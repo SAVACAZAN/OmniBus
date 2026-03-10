@@ -154,9 +154,10 @@ $(BUILD_DIR)/analytics_os.bin: $(BUILD_DIR)/analytics_os.elf
 	@echo "  Analytics OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # BlockchainOS (0x250000, 192KB)
+# Note: -fPIC enables Position-Independent Code (no relocation processing needed)
 $(BUILD_DIR)/blockchain_os.o: ./modules/blockchain_os/blockchain_os.zig | $(BUILD_DIR)/.keep
-	@echo "[ZIG] Compiling BlockchainOS to object file..."
-	cd ./modules/blockchain_os && zig build-obj blockchain_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@echo "[ZIG] Compiling BlockchainOS to object file (PIE)..."
+	cd ./modules/blockchain_os && zig build-obj blockchain_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf -fPIC 2>&1 | grep -v "note:" || true
 	@if [ -f ./modules/blockchain_os/blockchain_os.o ]; then mv ./modules/blockchain_os/blockchain_os.o $@; fi
 
 $(BUILD_DIR)/blockchain_os_stubs.o: ./modules/blockchain_os/libc_stubs.asm | $(BUILD_DIR)/.keep
@@ -173,9 +174,10 @@ $(BUILD_DIR)/blockchain_os.bin: $(BUILD_DIR)/blockchain_os.elf
 	@echo "  BlockchainOS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # Neuro OS (0x2D0000, 512KB)
+# Note: -fPIC enables Position-Independent Code (no relocation processing needed)
 $(BUILD_DIR)/neuro_os.o: ./modules/neuro_os/neuro_os.zig | $(BUILD_DIR)/.keep
-	@echo "[ZIG] Compiling Neuro OS to object file..."
-	cd ./modules/neuro_os && zig build-obj neuro_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@echo "[ZIG] Compiling Neuro OS to object file (PIE)..."
+	cd ./modules/neuro_os && zig build-obj neuro_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf -fPIC 2>&1 | grep -v "note:" || true
 	@if [ -f ./modules/neuro_os/neuro_os.o ]; then mv ./modules/neuro_os/neuro_os.o $@; fi
 
 $(BUILD_DIR)/neuro_os_stubs.o: ./modules/neuro_os/libc_stubs.asm | $(BUILD_DIR)/.keep
