@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash build.sh)",
+      "Bash(nasm -f elf32 startup.asm -o build/startup.o)",
+      "Bash(qemu-system-x86_64 -m 256 -drive format=raw,file=/home/kiss/OmniBus/build/test_paging.iso -display none -monitor stdio)",
+      "Bash(git commit -m \"Fix Ada kernel paging: 256→257 page identity map + breadcrumb markers:*)"
+    ]
+  }
+}
