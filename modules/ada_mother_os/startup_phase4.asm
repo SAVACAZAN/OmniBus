@@ -725,121 +725,30 @@ scheduler_loop:
     ; Call module dispatch functions to handle IPC requests
     ; These functions read the IPC control block and execute module code
 
+    ; === PHASE 22: BLOCKCHAIN REAL EXECUTION ===
     ; BlockchainOS: trigger every 256 cycles
     mov rax, r11
     test al, 0xFF
     jnz .skip_blockchain_dispatch
 
-    ; === PHASE 21-2: OPTIMIZED BLOCKCHAIN SIMULATOR ===
-    ; Hot path optimization: reduce memory reads, parallelize checks
-
-    ; Start timing
+    ; Measure latency: call real run_blockchain_cycle()
     rdtsc
-    mov r9, rax                         ; R9 = start time (preserve for latency calc)
-
-    ; Parallel reads (fetch all blockchain state at once)
-    mov rax, [0x110018]  ; Grid profit (prefetch)
-    mov rbx, [0x110028]  ; Grid order_count
-    mov rcx, [0x250008]  ; Blockchain cycle_count
-    mov rdx, [0x250010]  ; Blockchain flash_loan_count
-
-    ; Set IPC request (single write instead of 3)
-    mov [r8 + 0], dword REQUEST_BLOCKCHAIN_CYCLE | (STATUS_BUSY << 8) | (MODULE_BLOCKCHAIN << 16)
-
-    ; Increment cycle counter
-    inc rcx
-    mov [0x250008], rcx
-
-    ; Process loans if profit > 0 (single compare)
-    cmp rax, 0
-    jle .blockchain_skip_loans
-    inc rdx                             ; One instruction instead of mov+add
-
-.blockchain_skip_loans:
-    ; Simulate swaps if orders active
-    mov rsi, [0x250018]  ; swap_count
-    test rbx, rbx
-    jz .blockchain_skip_swaps
-    inc rsi
-
-.blockchain_skip_swaps:
-    ; Write back updated counters (grouped write)
-    mov [0x250010], rdx  ; flash_loan_count
-    mov [0x250018], rsi  ; swap_count
-
-    ; Update TSC and complete IPC
+    mov r9, rax                         ; R9 = start time
+    call 0x250150                       ; BlockchainOS: run_blockchain_cycle @ 0x250150
     rdtsc
-    mov [0x250020], rax  ; tsc_last_update
-    mov byte [r8 + 1], STATUS_DONE  ; Complete IPC
-
-    ; Measure actual latency
-    sub rax, r9                         ; RAX = elapsed CPU cycles (FIXED)
+    sub rax, r9
     mov qword [0x100228], rax           ; Store blockchain latency
 
 .skip_blockchain_dispatch:
 
+    ; === PHASE 22: NEURO REAL EXECUTION ===
     ; NeuroOS: trigger every 512 cycles
     mov rax, r11
     test al, 0x1FF
     jnz .skip_neuro_dispatch
 
-    ; === PHASE 19B-d: NEURO SIMULATOR ===
-    ; Simulate genetic algorithm evolution
-    ; 1. Read fitness inputs from Grid metrics
-    ; 2. Evolve population (simulate generation)
-    ; 3. Update optimization parameters
-    ; 4. Complete IPC request
-
-    ; Set IPC request
-    mov byte [r8 + 0], REQUEST_NEURO_CYCLE
-    mov byte [r8 + 1], STATUS_BUSY
-    mov word [r8 + 2], MODULE_NEURO
-
-    ; Read fitness inputs from Grid OS export buffer (0x120000)
-    ; Grid writes: profit @ 0x120000, order_count @ 0x120020
-    mov rax, [0x120000]  ; Last profit (fitness metric)
-    mov rbx, [0x120020]  ; Order count (secondary fitness)
-
-    ; NeuroOS state at 0x2D0000
-    ; Simulate generation counter increment
-    mov rcx, [0x2D0008]  ; generation_count
-    inc rcx
-    mov [0x2D0008], rcx
-
-    ; === PHASE 21-2: OPTIMIZED NEURO SIMULATOR ===
-    ; Simulate population size tracking with bounds checking
-    mov rdx, [0x2D0010]  ; population_size
-    cmp rax, 0           ; Check if fitness > 0
-    jle .neuro_skip_grow
-    inc rdx               ; Grow (single instruction)
-    cmp rdx, 256
-    jle .neuro_write_state
-    mov rdx, 256          ; Cap
-
-.neuro_write_state:
-    ; Write NeuroOS state and export parameters (optimized writes)
-    mov [0x2D0010], rdx   ; Update population_size
-    mov [0x120040], rdx   ; Export to Grid (no intermediate move)
-    mov [0x120048], rcx   ; Export generation
-
-    ; Update TSC once
-    rdtsc
-    mov [0x2D0018], rax   ; tsc_last_update
-
-    ; Complete IPC and mark valid in single write
-    mov byte [r8 + 1], STATUS_DONE
-    mov byte [0x120050], 0x01  ; Mark parameters valid
-    jmp .neuro_done
-
-.neuro_skip_grow:
-    ; Even without growth, export current state
-    mov qword [0x2D0010], rdx
-    mov qword [0x120040], rdx
-    mov qword [0x120048], rcx
-    mov byte [0x120050], 0x01
-    mov byte [r8 + 1], STATUS_DONE
-
-.neuro_done:
+    ; Call real run_evolution_cycle()
+    call 0x2D0180                       ; NeuroOS: run_evolution_cycle @ 0x2D0180
 
 .skip_neuro_dispatch:
 
@@ -865,6 +774,38 @@ scheduler_loop:
 
 .skip_grid_metrics:
 
+    ; === PHASE 22: OTHER MODULE CYCLE EXECUTION ===
+
+    ; Grid OS: trigger every 1 cycle (always run)
+    call 0x1103E0                       ; Grid: run_grid_cycle @ 0x1103E0
+
+    ; Analytics OS: trigger every 2 cycles
+    mov rax, r11
+    test al, 0x1
+    jnz .skip_analytics_dispatch
+    call 0x150E10                       ; Analytics: run_analytics_cycle @ 0x150E10
+.skip_analytics_dispatch:
+
+    ; Execution OS: trigger every 4 cycles
+    mov rax, r11
+    test al, 0x3
+    jnz .skip_execution_dispatch
+    call 0x130000                       ; Execution: run_execution_cycle @ 0x130000
+.skip_execution_dispatch:
+
+    ; BankOS: trigger every 64 cycles
+    mov rax, r11
+    test al, 0x3F
+    jnz .skip_bank_dispatch
+    call 0x2803E0                       ; Bank: run_bank_cycle @ 0x2803E0
+.skip_bank_dispatch:
+
+    ; StealthOS: trigger every 128 cycles
+    mov rax, r11
+    test al, 0x7F
+    jnz .skip_stealth_dispatch
+    call 0x2C0640                       ; Stealth: run_stealth_cycle @ 0x2C0640
+.skip_stealth_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
