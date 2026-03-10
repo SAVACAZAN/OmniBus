@@ -676,6 +676,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; Consensus Engine OS .bss @ 0x390100, size 0x100 (256 bytes)
+    mov rdi, 0x390100
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -727,6 +733,9 @@ ada64_stub_event_loop:
 
     ; Alert System OS init_plugin @ 0x380000
     call 0x380000
+
+    ; Consensus Engine OS init_plugin @ 0x390000
+    call 0x390000
 
     ; === SUCCESS ===
     mov al, '!'
@@ -923,6 +932,14 @@ scheduler_loop:
     jnz .skip_alert_system_dispatch
     call 0x380080                       ; Alert System: run_alert_cycle (evaluate rules + queue notifications)
 .skip_alert_system_dispatch:
+
+    ; Consensus Engine OS: trigger every 131072 cycles (byzantine fault tolerance voting)
+    mov rax, r11
+    mov rbx, 0x1FFFF
+    and rax, rbx
+    jnz .skip_consensus_dispatch
+    call 0x390100                       ; Consensus Engine: run_consensus_cycle (finalize votes + detect consensus)
+.skip_consensus_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
