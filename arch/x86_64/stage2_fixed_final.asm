@@ -13,16 +13,27 @@ stage2_start:
     cld
 
     ; ========================================================================
-    ; Load Ada Kernel from disk using LBA mode (int 0x13 AH=0x42)
+    ; Load Ada Kernel from disk using CHS mode (int 0x13 AH=0x02)
     ; CRITICAL FIX: BIOS real mode cannot access >1MB memory!
     ; Solution: Load to temporary buffer at 0x8000, copy to 0x100000 later
+    ; CHS calculation for sector 2048: C=32, H=0, S=33
     ; ========================================================================
 
-    mov ah, 0x42                    ; Extended Read (LBA mode)
-    mov dl, 0x80                    ; Drive 0
-    mov si, kernel_dap              ; DS:SI points to Disk Address Packet
-    int 0x13
-    jc kernel_load_error            ; Jump if error (CF set)
+    ; SKIP KERNEL LOADING - Test protected mode without disk read
+    ; This isolates the issue: if it works now, kernel loading is the problem
+    ; If it still fails, something else in Stage 2 is broken
+    ;
+    ; mov ah, 0x02                    ; Read Sectors (CHS mode)
+    ; mov al, 16                      ; Read 16 sectors (8KB kernel)
+    ; mov ch, 32                      ; Cylinder 32
+    ; mov dh, 0                       ; Head 0
+    ; mov cl, 33                      ; Sector 33
+    ; mov dl, 0x80                    ; Drive 0
+    ; mov bx, 0x8000                  ; Buffer address (ES:BX = 0x0000:0x8000)
+    ; xor cx, cx
+    ; mov es, cx                      ; ES = 0
+    ; int 0x13
+    ; jc kernel_load_error            ; Jump if error (CF set)
 
     ; Kernel is now at 0x8000 in memory (temporary buffer)
     ; It will be copied to 0x100000 in protected mode later

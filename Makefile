@@ -48,8 +48,8 @@ $(BUILD_DIR)/boot.bin: $(ARCH_DIR)/boot.asm
 	$(NASM) -f bin -o $@ $<
 	@echo "  Boot sector: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
 
-# Compile Stage 2 bootloader (using fixed final version)
-$(BUILD_DIR)/stage2.bin: $(ARCH_DIR)/stage2_fixed_final.asm
+# Compile Stage 2 bootloader (using fixed version with register-indirect addressing)
+$(BUILD_DIR)/stage2.bin: $(ARCH_DIR)/stage2_fixed.asm
 	@echo "[AS] Compiling Stage 2..."
 	$(NASM) -f bin -o $@ $<
 	@echo "  Stage 2: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"

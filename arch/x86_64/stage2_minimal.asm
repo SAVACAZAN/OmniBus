@@ -1,47 +1,63 @@
-; ============================================================================
-; Stage 2: MINIMAL WORKING VERSION
-; Just transition to protected mode and stay alive
-; ============================================================================
-
+; MINIMAL Stage 2 - Just enter protected mode and jump to kernel
 [BITS 16]
 [ORG 0x7E00]
 
+minimal_stage2:
     cli
+    cld
 
-    ; Load minimal GDT
-    lgdt [gdt_descriptor]
+    ; Load GDT
+    lgdt [gdt_descriptor_addr]
 
-    ; Enter protected mode
+    ; Load IDT
+    lidt [idt_descriptor_addr]
+
+    ; Enable protected mode
     mov eax, cr0
     or eax, 1
     mov cr0, eax
 
-    ; Far jump to 32-bit code
-    jmp 0x08:pmode
-
-    ; GDT
-    align 8
-    gdt:
-        dq 0                        ; Null
-        dw 0xFFFF,0,0x9A,0xCF      ; Code
-        dw 0xFFFF,0,0x92,0xCF      ; Data
-    gdt_end:
-
-    gdt_descriptor:
-        dw gdt_end - gdt - 1
-        dd gdt
-
-    align 256
+    ; Far jump to protected mode
+    jmp 0x08:pmode_code
 
 [BITS 32]
+align 16
 
-pmode:
+pmode_code:
+    ; Setup segment registers
     mov ax, 0x10
     mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
     mov ss, ax
-    mov esp, 0x7F000
 
-    ; Infinite loop
-    jmp $
+    ; Setup stack
+    mov esp, 0x7E000
 
-    times (0x2000 - ($ - $$)) db 0
+    ; Jump to Ada kernel
+    jmp 0x100030
+
+; Data section
+align 16
+
+; GDT
+gdt_table:
+    dq 0x0000000000000000  ; Null descriptor
+    dq 0x00cf9a000000ffff  ; Code descriptor (CS=0x08)
+    dq 0x00cf92000000ffff  ; Data descriptor (DS=0x10)
+
+gdt_descriptor_addr:
+    dw (3 * 8) - 1         ; Size = 24 bytes - 1
+    dd gdt_table           ; Base
+
+; IDT (minimal)
+idt_table:
+    times 256 * 8 db 0
+
+idt_descriptor_addr:
+    dw (256 * 8) - 1       ; Size = 2048 bytes - 1
+    dd idt_table           ; Base
+
+; Padding to 4KB
+times (0x1000 - ($ - $$)) db 0
