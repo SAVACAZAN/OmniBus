@@ -34,10 +34,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics loaded from real Zig binaries"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS loaded from real Zig binaries"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -133,6 +133,25 @@ $(BUILD_DIR)/analytics_os.bin: $(BUILD_DIR)/analytics_os.elf
 	@echo "[OC] Converting Analytics OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Analytics OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# BlockchainOS (0x250000, 192KB)
+$(BUILD_DIR)/blockchain_os.o: ./modules/blockchain_os/blockchain_os.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling BlockchainOS to object file..."
+	cd ./modules/blockchain_os && zig build-obj blockchain_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/blockchain_os/blockchain_os.o ]; then mv ./modules/blockchain_os/blockchain_os.o $@; fi
+
+$(BUILD_DIR)/blockchain_os_stubs.o: ./modules/blockchain_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling BlockchainOS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/blockchain_os.elf: $(BUILD_DIR)/blockchain_os.o $(BUILD_DIR)/blockchain_os_stubs.o ./modules/blockchain_os/blockchain_os.ld
+	@echo "[LD] Linking BlockchainOS ELF..."
+	ld -T ./modules/blockchain_os/blockchain_os.ld -o $@ $(BUILD_DIR)/blockchain_os.o $(BUILD_DIR)/blockchain_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/blockchain_os.bin: $(BUILD_DIR)/blockchain_os.elf
+	@echo "[OC] Converting BlockchainOS to binary..."
+	objcopy -O binary $< $@
+	@echo "  BlockchainOS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)
