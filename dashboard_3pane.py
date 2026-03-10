@@ -525,6 +525,31 @@ class Dashboard3Pane:
                             f"  px:${fill.price_usd:,.2f}",
                             s_color)
                         arb_row += 1
+                # === NEURO EVOLUTION PANEL (Phase 20) ===
+                arb_row += 1
+                sep4 = "─" * (w - 2)
+                self.safe_addstr(arb_row, 1, sep4, curses.color_pair(6))
+                arb_row += 1
+
+                ns = km.neuro_state
+                if ns.valid:
+                    status_tag = "ACTIVE" if ns.active else "IDLE"
+                    self.safe_addstr(arb_row, 2,
+                        f"NEURO OS [{status_tag}]  gen:{ns.generation}"
+                        f"  cycles:{ns.evolution_cycles}",
+                        curses.color_pair(6) | curses.A_BOLD)
+                    arb_row += 1
+                    fitness_color = curses.color_pair(7) if ns.best_fitness > 0 else curses.color_pair(4)
+                    self.safe_addstr(arb_row, 4,
+                        f"best_fit:{ns.best_fitness:+.4f}  "
+                        f"worst_fit:{ns.worst_fitness:+.4f}  "
+                        f"range:{ns.fitness_range:+.4f}",
+                        fitness_color)
+                    arb_row += 1
+                else:
+                    self.safe_addstr(arb_row, 2, "NEURO OS: waiting (no NERO magic yet)",
+                        curses.color_pair(4))
+                    arb_row += 1
             else:
                 self.safe_addstr(arb_row, 2, "KERNEL: SHM not available (run with run_omnibus_live.sh)",
                     curses.color_pair(4))
@@ -532,7 +557,7 @@ class Dashboard3Pane:
         # === FOOTER ===
         row = h - 2
         shm_tag = " | SHM LIVE" if self._shm_reader else ""
-        footer = f"Press 'q' to quit | Updates every 500ms | Phase 19: Execution OS Orders{shm_tag}"
+        footer = f"Press 'q' to quit | Updates every 500ms | Phase 20: NeuroOS Evolution{shm_tag}"
         self.safe_addstr(row, 1, footer, curses.color_pair(4))
 
         try:

@@ -90,6 +90,12 @@ PAIR_NAMES   = {0: "BTC", 1: "ETH", 2: "XRP", 0xFFFF: "???"}
 SIDE_NAMES   = {0: "BUY", 1: "SELL"}
 STATUS_NAMES = {0: "PENDING", 1: "FILLED", 2: "PARTIAL", 3: "REJECTED"}
 
+# NeuroState @ 0x2D0000 (88 bytes)
+# magic(4)+flags(4)+generation(8)+evolution_cycles(8)+best_fitness(8)+worst_fitness(8)+tsc(8)+reserved(40)
+NEURO_MAGIC      = 0x4E45524F   # "NERO"
+NEURO_STATE_FMT  = '<IIQQddQ40s'
+NEURO_STATE_SIZE = struct.calcsize(NEURO_STATE_FMT)  # 88
+
 
 @dataclass
 class GridStateData:
@@ -240,6 +246,25 @@ class FillResultData:
 
 
 @dataclass
+class NeuroStateData:
+    valid: bool = False
+    flags: int = 0
+    generation: int = 0
+    evolution_cycles: int = 0
+    best_fitness: float = 0.0
+    worst_fitness: float = 0.0
+    tsc_last_update: int = 0
+
+    @property
+    def active(self) -> bool:
+        return bool(self.flags & 0x01)
+
+    @property
+    def fitness_range(self) -> float:
+        return self.best_fitness - self.worst_fitness
+
+
+@dataclass
 class KernelMetrics:
     grid_state: GridStateData = field(default_factory=GridStateData)
     arb_opps: list[ArbOppData] = field(default_factory=list)   # active opportunities
@@ -247,6 +272,7 @@ class KernelMetrics:
     exec_state: ExecutionStateData = field(default_factory=ExecutionStateData)
     pending_orders: list[OrderData] = field(default_factory=list)
     fill_results: list[FillResultData] = field(default_factory=list)
+    neuro_state: NeuroStateData = field(default_factory=NeuroStateData)
     shm_available: bool = False
 
 
@@ -457,6 +483,28 @@ class ShmMetricsReader:
                 continue
         return fills[-5:]   # Show 5 most recent
 
+    def read_neuro_state(self) -> NeuroStateData:
+        """Read NeuroState from 0x2D0000 — genetic algorithm evolution header"""
+        data = self._read_bytes(NEURO_STATE_ADDR, NEURO_STATE_SIZE)
+        if not data or len(data) < NEURO_STATE_SIZE:
+            return NeuroStateData()
+        try:
+            magic, flags, generation, evolution_cycles, best_fitness, worst_fitness, tsc, _ = \
+                struct.unpack(NEURO_STATE_FMT, data)
+            if magic != NEURO_MAGIC:
+                return NeuroStateData()
+            return NeuroStateData(
+                valid=True,
+                flags=flags,
+                generation=generation,
+                evolution_cycles=evolution_cycles,
+                best_fitness=best_fitness,
+                worst_fitness=worst_fitness,
+                tsc_last_update=tsc,
+            )
+        except struct.error:
+            return NeuroStateData()
+
     def read(self) -> KernelMetrics:
         """Read all kernel metrics from SHM"""
         if not self._open():
@@ -469,6 +517,7 @@ class ShmMetricsReader:
         metrics.exec_state = self.read_execution_state()
         metrics.pending_orders = self.read_execution_orders()
         metrics.fill_results = self.read_fill_results()
+        metrics.neuro_state = self.read_neuro_state()
         return metrics
 
     def close(self):
