@@ -1,5 +1,5 @@
 # OmniBus — Agent Handoff Document
-**Updated**: 2026-03-10 | **Read this first before doing anything**
+**Updated**: 2026-03-11 | **Read this first before doing anything**
 
 ---
 
@@ -41,23 +41,22 @@ Phase 2 · Paging        ✅ 100%  commit: 2300135
 Phase 3 · Kernel stub   ✅ 100%  commit: 7944927
 Phase 4 · Long mode     ✅ 100%  commit: 206e2da
 Phase 5A· OS loader     ✅ 100%  commit: 80b4de2
+Phase 5D· Real disk I/O  ✅ 100%  commit: 9ecd2d6 (ATA PIO reading all modules from actual disk)
 Phase 8 · IDT/handlers  ✅ 100%  commit: dbab659 (exceptions verified)
-Phase 5C· Disk load     ✅  95%  commit: 01a072a (5 modules load: GZWBNSV)
 Phase 6 · BlockchainOS  ✅  50%  (compiled 3.5KB, loaded@0x250000, awaits init)
 Phase 7 · Neuro OS      ✅  50%  (compiled 2.3KB, loaded@0x2D0000, awaits init)
-Overall: ~52%
+Overall: ~75% (real disk I/O complete, modules running, IPC next)
 ```
 
-### Last verified serial output (QEMU — Phase 5C integration):
+### Last verified serial output (QEMU — Phase 5D real disk I/O):
 ```
 KTCRPLONG_MODE_OK
 XIYADA64_INIT
-GZWBNSV
-MOTHER_OS_64_OK
+GZWBNSVOMOTHER_OS_64_OK
 ```
 K=kernel, T=TSC, C=CR3, R=EFER, P=long, X=IDT start, I=IDT init, Y=LIDT done,
 A=Ada64 init, D=ADA64_INIT, G=Grid load, Z=Analytics load, W=Exec load,
-B=Blockchain load, N=Neuro load, S=sectors done, V=verify
+B=Blockchain load, N=Neuro load, S=sectors done, V=verify, O=operational
 
 ---
 
@@ -238,29 +237,32 @@ make qemu                     # Boot in QEMU (all 7 modules load)
 make qemu-debug               # Boot with GDB stub @ port 1234
 ```
 
-### Next Priority — Phase 8 Unblocking
-1. **Phase 8 Ada Implementation** (2-3 hours):
-   - Implement idt_init() in Ada with proper linker support
-   - Unblocks Phase 5 (OS loader), subsequent phases
-   - Known working approach (Grid OS uses same linker pattern)
+### Next Priority — Phase 13-15 Module Integration ✅ (Phase 5D-1 COMPLETE)
+1. **Phase 13: NeuroOS Fitness Integration** (1-2 hours):
+   - NeuroOS reads Grid metrics from 0x120000 in evaluate_fitness()
+   - Incorporate real trading performance (profit/win_rate) into GA
+   - Closes feedback loop: Grid → Neuro → Grid evolving parameters
 
-2. **Alternative Phase 8 Quick Fix** (1-2 hours):
-   - Try computing handler address using .bin file analysis
-   - Parse startup_phase5.bin size, uart.bin size to calculate exact offset
-   - Hardcode correct address if found
+2. **Phase 14: Module Initialization via IPC** (2-3 hours):
+   - Call init_plugin() for all modules (BlockchainOS, NeuroOS)
+   - Use IPC protocol to trigger init in scheduler context
+   - Verify modules initialize cleanly (no reboots)
 
-3. **Phase 6 Week 6**: BlockchainOS swap logic expansion (2 weeks)
-   - Pool registry (hardcoded Raydium pools)
+3. **Phase 15: Full Integration Testing** (1-2 hours):
+   - Boot system, let it run 60+ seconds
+   - Monitor: Scheduler cycles/sec, IPC latencies, memory stability
+   - Verify no crashes or exceptions
+   - Baseline performance profiling (TSC-based cycle counting)
 
-2. **Phase 6 Week 6**: BlockchainOS swap logic expansion (2 weeks)
+4. **Phase 6 Week 6**: BlockchainOS swap logic expansion (2 weeks)
    - Pool registry (hardcoded Raydium pools)
    - Deterministic price impact calculation
    - Multi-hop routing (settlement path finding)
    - Integration with Grid OS profitable opportunities
 
-3. **Phase 7 Week 3+**: Neuro OS GA dynamics (3 weeks)
-   - Real Grid OS metrics integration
-   - Feedback loop testing
+5. **Phase 7 Week 3+**: Neuro OS GA dynamics (3 weeks)
+   - Real Grid OS metrics integration (after Phase 13)
+   - Feedback loop testing (after Phase 14)
    - Population convergence verification
 
 ---
