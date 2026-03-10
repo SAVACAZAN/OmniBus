@@ -7,7 +7,16 @@
       "Bash(git commit -m \"Fix Ada kernel paging: 256→257 page identity map + breadcrumb markers:*)",
       "Bash(zig build-obj --help)",
       "Bash(rm -f build/*.o build/*.elf build/*_os.bin)",
-      "Bash(make build)"
+      "Bash(make build)",
+      "Bash(make clean build)",
+      "Bash(grep -n \"handler_stub\" /home/kiss/OmniBus/modules/ada_mother_os/*.asm)",
+      "Read(//home/kiss/OmniBus/**)",
+      "Bash(timeout 3 qemu-system-x86_64 -drive file=./build/omnibus.iso,format=raw -serial stdio -display none)",
+      "Bash(for addr in 0x100400 0x100500 0x100600 0x100800)",
+      "Bash(do echo \"Testing $addr...\")",
+      "Bash(timeout 2 qemu-system-x86_64 -drive file=./build/omnibus.iso,format=raw -serial stdio -display none)",
+      "Bash(done)",
+      "Bash(for addr in 0x100100 0x100150 0x100280)"
     ]
   }
 }

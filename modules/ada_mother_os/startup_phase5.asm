@@ -256,13 +256,22 @@ long_mode_entry:
     mov word [0xB8010], 0x0A44
 
     ; ========================================================================
-    ; Phase 8D: idt_init() call disabled for debugging
+    ; Phase 8E: Load IDT inline with debug output + address verification
     ; ========================================================================
-    ; Note: Calling idt_init() causes system restart (likely lidt address resolution issue)
-    ; Deferred to Phase 8E with proper C/Ada handler setup
-    ; call idt_init
 
-    mov al, 'X'                 ; IDT framework verified (without lidt call)
+    ; Debug: Before LIDT
+    mov al, 'B'
+    mov dx, 0x3F8
+    out dx, al
+
+    ; Try inline LIDT instead of calling idt_init
+    ; Compute idt_ptr address: it should be after all handlers
+    ; For now, use a placeholder - we'll adjust once we know the exact offset
+    lea rax, [rel idt_ptr]       ; RIP-relative load of idt_ptr address
+    lidt [rax]                    ; Load IDTR from that address
+
+    ; Debug: After LIDT
+    mov al, 'X'                 ; IDT loaded successfully
     mov dx, 0x3F8
     out dx, al
     mov al, 0x0D
@@ -392,6 +401,19 @@ ada64_stub_event_loop:
 .halt:
     hlt
     jmp .halt
+
+; ============================================================================
+; EXCEPTION HANDLER STUB (placed after main code)
+; ============================================================================
+align 16
+simple_handler:
+    ; Output 'H' to indicate handler was called
+    mov dx, 0x3F8
+    mov al, 'H'
+    out dx, al
+
+    ; Return from interrupt
+    iretq
 
 ; ============================================================================
 ; MESSAGES (placed in-line for flat binary compatibility)
