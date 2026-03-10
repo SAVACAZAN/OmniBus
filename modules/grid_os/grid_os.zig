@@ -275,13 +275,15 @@ export fn export_metrics() void {
 /// IPC request dispatcher
 /// Modules call this periodically to check for kernel requests
 export fn ipc_dispatch() void {
-    const ipc = @as(*volatile types.IpcControlBlock, @ptrFromInt(0x100110));
-
-    // Check if there's a request for us (request code + module ID match Grid)
-    // For now, just handle init if not already done
+    // Ensure module is initialized on first call
     if (!initialized) {
         init_plugin();
     }
 
-    // TODO: Handle other IPC request codes when defined
+    // TODO: Handle IPC request codes when defined
+    // IPC control block @ 0x100110:
+    // - request @ 0x100110
+    // - status @ 0x100111
+    // - module_id @ 0x100112-0x100113
+    // - return_value @ 0x100120-0x100127
 }

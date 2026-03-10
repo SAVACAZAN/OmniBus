@@ -548,8 +548,8 @@ ada64_stub_event_loop:
     out dx, al
 
     ; === PHASE 14: MODULE INITIALIZATION (IPC-based) ===
-    ; Modules will call init_plugin() when triggered via IPC
-    ; For now: Print marker to show kernel ready for IPC
+    ; Modules initialize on first IPC request via ipc_dispatch()
+    ; Kernel prints marker to show ready for module IPC
     mov al, 'I'
     out dx, al
     mov al, 'P'
@@ -608,13 +608,6 @@ scheduler_loop:
     mov word [r8 + 2], MODULE_BLOCKCHAIN         ; Module ID
     mov byte [r8 + 1], STATUS_BUSY               ; Status = busy
 
-    ; NOTE: BlockchainOS must implement its own IPC polling loop to respond
-    ; When modules are given execution context, they will:
-    ; 1. Check IPC_REQUEST
-    ; 2. Execute requested function
-    ; 3. Set IPC_RETURN_VALUE
-    ; 4. Set IPC_STATUS = STATUS_DONE
-
 .skip_blockchain_call:
 
     ; NeuroOS: trigger every 512 cycles (cycle_count & 0x1FF == 0)
@@ -626,8 +619,6 @@ scheduler_loop:
     mov byte [r8 + 0], REQUEST_NEURO_CYCLE      ; IPC request code
     mov word [r8 + 2], MODULE_NEURO             ; Module ID
     mov byte [r8 + 1], STATUS_BUSY              ; Status = busy
-
-    ; NOTE: NeuroOS must implement its own IPC polling loop to respond
 
 .skip_neuro_call:
 
