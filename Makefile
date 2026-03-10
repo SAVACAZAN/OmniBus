@@ -36,10 +36,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
@@ -52,6 +52,11 @@ build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_
 	@echo "  Phase 34: Consensus Engine OS (Byzantine fault tolerance) ✅"
 	@echo "  Phase 35: MEV Guard OS (Sandwich/frontrun protection) ✅"
 	@echo "  Phase 36: Cross-Chain Bridge OS (Multi-blockchain swaps) ✅"
+	@echo "  Phase 37: DAO Governance OS (Decentralized voting) ✅"
+	@echo "  Phase 38: Performance Profiler OS (Function latency tracking) ✅"
+	@echo "  Phase 39: Disaster Recovery OS (Checkpoint/restore) ✅"
+	@echo "  Phase 40: Compliance Reporter OS (Regulatory audits) ✅"
+	@echo "  Phase 41: Liquid Staking OS (Ethereum rewards) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -520,6 +525,66 @@ $(BUILD_DIR)/cross_chain_bridge_os.bin: $(BUILD_DIR)/cross_chain_bridge_os.elf
 	@echo "[OC] Converting Cross-Chain Bridge OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Cross-Chain Bridge OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 37: DAO Governance OS (0x3D0000, 64KB)
+$(BUILD_DIR)/dao_governance_os.o: ./modules/dao_governance_os/dao_governance_os.zig ./modules/dao_governance_os/dao_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/dao_governance_os && zig build-obj dao_governance_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/dao_governance_os/dao_governance_os.o ]; then mv ./modules/dao_governance_os/dao_governance_os.o $@; fi
+$(BUILD_DIR)/dao_governance_os_stubs.o: ./modules/dao_governance_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/dao_governance_os.elf: $(BUILD_DIR)/dao_governance_os.o $(BUILD_DIR)/dao_governance_os_stubs.o ./modules/dao_governance_os/dao_governance_os.ld
+	ld -T ./modules/dao_governance_os/dao_governance_os.ld -o $@ $(BUILD_DIR)/dao_governance_os.o $(BUILD_DIR)/dao_governance_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/dao_governance_os.bin: $(BUILD_DIR)/dao_governance_os.elf
+	objcopy -O binary $< $@
+	@echo "  DAO Governance OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 38: Performance Profiler OS (0x3E0000, 64KB)
+$(BUILD_DIR)/performance_profiler_os.o: ./modules/performance_profiler_os/performance_profiler_os.zig ./modules/performance_profiler_os/profiler_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/performance_profiler_os && zig build-obj performance_profiler_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/performance_profiler_os/performance_profiler_os.o ]; then mv ./modules/performance_profiler_os/performance_profiler_os.o $@; fi
+$(BUILD_DIR)/performance_profiler_os_stubs.o: ./modules/performance_profiler_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/performance_profiler_os.elf: $(BUILD_DIR)/performance_profiler_os.o $(BUILD_DIR)/performance_profiler_os_stubs.o ./modules/performance_profiler_os/performance_profiler_os.ld
+	ld -T ./modules/performance_profiler_os/performance_profiler_os.ld -o $@ $(BUILD_DIR)/performance_profiler_os.o $(BUILD_DIR)/performance_profiler_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/performance_profiler_os.bin: $(BUILD_DIR)/performance_profiler_os.elf
+	objcopy -O binary $< $@
+	@echo "  Performance Profiler OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 39: Disaster Recovery OS (0x3F0000, 64KB)
+$(BUILD_DIR)/disaster_recovery_os.o: ./modules/disaster_recovery_os/disaster_recovery_os.zig ./modules/disaster_recovery_os/recovery_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/disaster_recovery_os && zig build-obj disaster_recovery_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/disaster_recovery_os/disaster_recovery_os.o ]; then mv ./modules/disaster_recovery_os/disaster_recovery_os.o $@; fi
+$(BUILD_DIR)/disaster_recovery_os_stubs.o: ./modules/disaster_recovery_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/disaster_recovery_os.elf: $(BUILD_DIR)/disaster_recovery_os.o $(BUILD_DIR)/disaster_recovery_os_stubs.o ./modules/disaster_recovery_os/disaster_recovery_os.ld
+	ld -T ./modules/disaster_recovery_os/disaster_recovery_os.ld -o $@ $(BUILD_DIR)/disaster_recovery_os.o $(BUILD_DIR)/disaster_recovery_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/disaster_recovery_os.bin: $(BUILD_DIR)/disaster_recovery_os.elf
+	objcopy -O binary $< $@
+	@echo "  Disaster Recovery OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 40: Compliance Reporter OS (0x410000, 64KB)
+$(BUILD_DIR)/compliance_reporter_os.o: ./modules/compliance_reporter_os/compliance_reporter_os.zig ./modules/compliance_reporter_os/compliance_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/compliance_reporter_os && zig build-obj compliance_reporter_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/compliance_reporter_os/compliance_reporter_os.o ]; then mv ./modules/compliance_reporter_os/compliance_reporter_os.o $@; fi
+$(BUILD_DIR)/compliance_reporter_os_stubs.o: ./modules/compliance_reporter_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/compliance_reporter_os.elf: $(BUILD_DIR)/compliance_reporter_os.o $(BUILD_DIR)/compliance_reporter_os_stubs.o ./modules/compliance_reporter_os/compliance_reporter_os.ld
+	ld -T ./modules/compliance_reporter_os/compliance_reporter_os.ld -o $@ $(BUILD_DIR)/compliance_reporter_os.o $(BUILD_DIR)/compliance_reporter_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/compliance_reporter_os.bin: $(BUILD_DIR)/compliance_reporter_os.elf
+	objcopy -O binary $< $@
+	@echo "  Compliance Reporter OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 41: Liquid Staking OS (0x420000, 64KB)
+$(BUILD_DIR)/liquid_staking_os.o: ./modules/liquid_staking_os/liquid_staking_os.zig ./modules/liquid_staking_os/staking_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/liquid_staking_os && zig build-obj liquid_staking_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/liquid_staking_os/liquid_staking_os.o ]; then mv ./modules/liquid_staking_os/liquid_staking_os.o $@; fi
+$(BUILD_DIR)/liquid_staking_os_stubs.o: ./modules/liquid_staking_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/liquid_staking_os.elf: $(BUILD_DIR)/liquid_staking_os.o $(BUILD_DIR)/liquid_staking_os_stubs.o ./modules/liquid_staking_os/liquid_staking_os.ld
+	ld -T ./modules/liquid_staking_os/liquid_staking_os.ld -o $@ $(BUILD_DIR)/liquid_staking_os.o $(BUILD_DIR)/liquid_staking_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/liquid_staking_os.bin: $(BUILD_DIR)/liquid_staking_os.elf
+	objcopy -O binary $< $@
+	@echo "  Liquid Staking OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)

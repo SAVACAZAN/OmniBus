@@ -758,6 +758,21 @@ ada64_stub_event_loop:
     ; Cross-Chain Bridge OS init_plugin @ 0x3C0000
     call 0x3C0000
 
+    ; DAO Governance OS init_plugin @ 0x3D0000
+    call 0x3D0000
+
+    ; Performance Profiler OS init_plugin @ 0x3E0000
+    call 0x3E0000
+
+    ; Disaster Recovery OS init_plugin @ 0x3F0000
+    call 0x3F0000
+
+    ; Compliance Reporter OS init_plugin @ 0x410000
+    call 0x410000
+
+    ; Liquid Staking OS init_plugin @ 0x420000
+    call 0x420000
+
     ; === SUCCESS ===
     mov al, '!'
     out dx, al
@@ -985,6 +1000,46 @@ scheduler_loop:
     jnz .skip_cross_chain_dispatch
     call 0x3C0100                       ; Cross-Chain: run_cross_chain_cycle (swap timeout check)
 .skip_cross_chain_dispatch:
+
+    ; DAO Governance OS dispatch: every 2097152 cycles (0x200000)
+    mov rax, r11
+    mov rbx, 0x1FFFFF
+    and rax, rbx
+    jnz .skip_dao_dispatch
+    call 0x3D0000                       ; DAO: run_dao_cycle (proposal voting)
+.skip_dao_dispatch:
+
+    ; Performance Profiler OS dispatch: every 4194304 cycles (0x400000)
+    mov rax, r11
+    mov rbx, 0x3FFFFF
+    and rax, rbx
+    jnz .skip_profiler_dispatch
+    call 0x3E0100                       ; Profiler: run_profiler_cycle (latency stats)
+.skip_profiler_dispatch:
+
+    ; Disaster Recovery OS dispatch: every 262144 cycles (0x40000)
+    mov rax, r11
+    mov rbx, 0x3FFFF
+    and rax, rbx
+    jnz .skip_recovery_dispatch
+    call 0x3F0100                       ; Recovery: run_recovery_cycle (checkpoint mgmt)
+.skip_recovery_dispatch:
+
+    ; Compliance Reporter OS dispatch: every 524288 cycles (0x80000)
+    mov rax, r11
+    mov rbx, 0x7FFFF
+    and rax, rbx
+    jnz .skip_compliance_dispatch
+    call 0x410100                       ; Compliance: run_compliance_cycle (audit)
+.skip_compliance_dispatch:
+
+    ; Liquid Staking OS dispatch: every 131072 cycles (0x20000)
+    mov rax, r11
+    mov rbx, 0x1FFFF
+    and rax, rbx
+    jnz .skip_staking_dispatch
+    call 0x420100                       ; Staking: run_staking_cycle (reward accrual)
+.skip_staking_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
