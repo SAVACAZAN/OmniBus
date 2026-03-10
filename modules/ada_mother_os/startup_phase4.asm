@@ -594,8 +594,8 @@ ada64_stub_event_loop:
     out dx, al
 
     ; Zero-initialize Grid OS .bss region
-    ; From readelf: .bss @ 0x111778, size 0x2C (44 bytes)
-    mov rdi, 0x111778
+    ; From readelf: .bss @ 0x111878, size 0x2C (44 bytes)
+    mov rdi, 0x111878
     mov rcx, 0x2C / 8  ; 44 / 8 = 5 qwords (+ remainder)
     xor rax, rax
     rep stosq
