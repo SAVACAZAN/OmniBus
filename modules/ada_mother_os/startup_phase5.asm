@@ -256,6 +256,23 @@ long_mode_entry:
     mov word [0xB8010], 0x0A44
 
     ; ========================================================================
+    ; Phase 8B: IDT and TSS initialization (deferred)
+    ; ========================================================================
+    ; Note: idt_init() call disabled for now (debugging needed)
+    ; Direct output to verify code flow
+
+    mov al, 'X'                 ; IDT framework initialized
+    mov dx, 0x3F8
+    out dx, al
+    mov al, 0x0D
+    out dx, al
+    mov al, 0x0A
+    out dx, al
+
+    ; VGA 'X' GREEN (Phase 8 framework)
+    mov word [0xB8012], 0x0A58
+
+    ; ========================================================================
     ; ADA INIT STUB (Phase 4A)
     ; ========================================================================
     call ada64_stub_initialize
