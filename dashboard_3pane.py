@@ -474,6 +474,57 @@ class Dashboard3Pane:
                             f"net:{opp.net_profit_bps}bps ~${opp.profit_usd_per_unit:.2f}",
                             opp_color)
                         arb_row += 1
+
+                # === ORDERS PANEL (Phase 19 — Execution OS ring buffer) ===
+                arb_row += 1
+                sep3 = "─" * (w - 2)
+                self.safe_addstr(arb_row, 1, sep3, curses.color_pair(6))
+                arb_row += 1
+
+                es = km.exec_state
+                if es.valid:
+                    status_tag = "ACTIVE" if es.active else "IDLE"
+                    self.safe_addstr(arb_row, 2,
+                        f"EXEC OS [{status_tag}]  cycles:{es.cycle_count}"
+                        f"  in:{es.order_in_count}  fills:{es.fill_out_count}",
+                        curses.color_pair(6) | curses.A_BOLD)
+                else:
+                    self.safe_addstr(arb_row, 2, "EXEC OS: waiting (no EXEC magic yet)",
+                        curses.color_pair(4))
+                arb_row += 1
+
+                # Pending orders in ring buffer
+                if km.pending_orders:
+                    self.safe_addstr(arb_row, 2,
+                        f"  QUEUE ({len(km.pending_orders)} pending):",
+                        curses.color_pair(4) | curses.A_BOLD)
+                    arb_row += 1
+                    for ord_data in km.pending_orders[:4]:
+                        side_color = curses.color_pair(7) if ord_data.side == 0 else curses.color_pair(5)
+                        self.safe_addstr(arb_row, 4,
+                            f"• {ord_data.side_name:4} {ord_data.pair_name}"
+                            f"@{ord_data.exchange_name[:3]}"
+                            f"  qty:{ord_data.quantity_asset:.6f}"
+                            f"  px:${ord_data.price_usd:,.2f}",
+                            side_color)
+                        arb_row += 1
+
+                # Recent fill results
+                if km.fill_results:
+                    self.safe_addstr(arb_row, 2,
+                        f"  FILLS (recent {len(km.fill_results)}):",
+                        curses.color_pair(4) | curses.A_BOLD)
+                    arb_row += 1
+                    for fill in km.fill_results[-3:]:
+                        s_color = curses.color_pair(7) if fill.status == 1 else \
+                                  curses.color_pair(5) if fill.status == 3 else curses.color_pair(4)
+                        self.safe_addstr(arb_row, 4,
+                            f"• #{fill.order_id}  {fill.pair_name}@{fill.exchange_name[:3]}"
+                            f"  {fill.status_name}"
+                            f"  qty:{fill.filled_asset:.6f}"
+                            f"  px:${fill.price_usd:,.2f}",
+                            s_color)
+                        arb_row += 1
             else:
                 self.safe_addstr(arb_row, 2, "KERNEL: SHM not available (run with run_omnibus_live.sh)",
                     curses.color_pair(4))
@@ -481,7 +532,7 @@ class Dashboard3Pane:
         # === FOOTER ===
         row = h - 2
         shm_tag = " | SHM LIVE" if self._shm_reader else ""
-        footer = f"Press 'q' to quit | Updates every 500ms | Phase 17: Kernel Metrics{shm_tag}"
+        footer = f"Press 'q' to quit | Updates every 500ms | Phase 19: Execution OS Orders{shm_tag}"
         self.safe_addstr(row, 1, footer, curses.color_pair(4))
 
         try:

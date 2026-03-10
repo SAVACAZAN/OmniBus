@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
-Phase 17: SHM Kernel Metrics Reader
-=====================================
+Phase 19: SHM Kernel Metrics Reader (Execution OS + Grid OS + NeuroOS)
+=======================================================================
 
 Reads live kernel state from QEMU shared memory file.
-Used by dashboard to show real-time Grid OS + NeuroOS metrics.
+Used by dashboard to show real-time Grid OS + Execution OS metrics.
 
-Memory addresses (matching grid_os/types.zig extern structs):
+Memory addresses (matching kernel extern structs):
   0x110000  GridState (64 bytes) — trading state header
   0x113840  ArbitrageOpportunity[32] (32 × 96 bytes) — detected arbs
   0x120000  GridMetrics export buffer (kernel writes every cycle)
+  0x130000  ExecutionState (64 bytes) — execution OS header
+  0x130040  OrderRingHeader (16 bytes) — ring buffer head/tail
+  0x130050  OrderPacket[256] (128 bytes per slot) — pending orders
+  0x13E050  FillResult[256] (64 bytes per slot) — exchange fills
   0x2D0000  NeuroState (128 bytes) — evolution state
 
 Usage:
@@ -53,6 +57,38 @@ GRID_EXPORT_PROFIT_FMT = '<q'   # i64 at 0x120000
 GRID_EXPORT_TRADES_FMT = '<Q'   # u64 at 0x120020
 
 EXCHANGE_NAMES = {0: "Kraken", 1: "Coinbase", 2: "LCX", 3: "?"}
+
+# Execution OS memory addresses (execution_os/types.zig)
+EXEC_STATE_ADDR       = 0x130000   # ExecutionState (64 bytes; slot size from RING_HEADER_OFFSET=0x40)
+EXEC_RING_HEADER_ADDR = 0x130040   # OrderRingHeader (16 bytes)
+EXEC_ORDER_RING_ADDR  = 0x130050   # OrderPacket[256] (128 bytes per slot)
+EXEC_FILL_RESULT_ADDR = 0x13E050   # FillResult[256] (64 bytes per slot; API_KEY_OFFSET-FILL_RESULT_OFFSET=0x4000)
+
+EXEC_MAGIC = 0x45584543            # "EXEC"
+
+# ExecutionState: magic(4)+flags(1)+pad(3)+cycle(8)+order_in(4)+fill_out(4)+tsc(8) = 32 data bytes; slot=64
+EXEC_STATE_FMT  = '<IB3xQIIQ'
+EXEC_STATE_SIZE = 64
+
+# OrderRingHeader: head(4)+tail(4)+pad(8) = 16 bytes
+RING_HEADER_FMT  = '<II8x'
+RING_HEADER_SIZE = 16
+
+# OrderPacket: opcode(1)+pad(1)+exchange_id(2)+pad(4)+pair_id(2)+side(1)+pad(1)+qty(8)+price(8)+sig[64] = 92 data bytes; slot=128
+ORDER_PACKET_FMT  = '<BBHIHBBQQ64s'
+ORDER_PACKET_DATA = struct.calcsize(ORDER_PACKET_FMT)   # 92
+ORDER_PACKET_SLOT = 128
+ORDER_RING_MAX    = 256
+
+# FillResult: order_id(4)+pair_id(2)+exchange_id(1)+status(1)+filled(8)+price(8)+tsc(8) = 32 data bytes; slot=64
+FILL_RESULT_FMT  = '<IHBBQQQ'
+FILL_RESULT_DATA = struct.calcsize(FILL_RESULT_FMT)     # 32
+FILL_RESULT_SLOT = 64
+FILL_RESULT_MAX  = 256
+
+PAIR_NAMES   = {0: "BTC", 1: "ETH", 2: "XRP", 0xFFFF: "???"}
+SIDE_NAMES   = {0: "BUY", 1: "SELL"}
+STATUS_NAMES = {0: "PENDING", 1: "FILLED", 2: "PARTIAL", 3: "REJECTED"}
 
 
 @dataclass
@@ -136,10 +172,81 @@ class GridExportData:
 
 
 @dataclass
+class ExecutionStateData:
+    valid: bool = False
+    active: bool = False
+    cycle_count: int = 0
+    order_in_count: int = 0
+    fill_out_count: int = 0
+
+
+@dataclass
+class OrderData:
+    exchange_id: int = 0    # 0=Kraken, 1=Coinbase, 2=LCX
+    pair_id: int = 0        # 0=BTC, 1=ETH, 2=XRP
+    side: int = 0           # 0=buy, 1=sell
+    quantity_sats: int = 0
+    price_cents: int = 0
+
+    @property
+    def pair_name(self) -> str:
+        return PAIR_NAMES.get(self.pair_id, f"P{self.pair_id}")
+
+    @property
+    def side_name(self) -> str:
+        return SIDE_NAMES.get(self.side, "?")
+
+    @property
+    def exchange_name(self) -> str:
+        return EXCHANGE_NAMES.get(self.exchange_id, "?")
+
+    @property
+    def price_usd(self) -> float:
+        return self.price_cents / 100.0
+
+    @property
+    def quantity_asset(self) -> float:
+        return self.quantity_sats / 1e8
+
+
+@dataclass
+class FillResultData:
+    order_id: int = 0
+    pair_id: int = 0
+    exchange_id: int = 0
+    status: int = 0         # 0=pending, 1=filled, 2=partial, 3=rejected
+    filled_sats: int = 0
+    price_cents: int = 0
+
+    @property
+    def status_name(self) -> str:
+        return STATUS_NAMES.get(self.status, f"?{self.status}")
+
+    @property
+    def pair_name(self) -> str:
+        return PAIR_NAMES.get(self.pair_id, f"P{self.pair_id}")
+
+    @property
+    def exchange_name(self) -> str:
+        return EXCHANGE_NAMES.get(self.exchange_id, "?")
+
+    @property
+    def price_usd(self) -> float:
+        return self.price_cents / 100.0
+
+    @property
+    def filled_asset(self) -> float:
+        return self.filled_sats / 1e8
+
+
+@dataclass
 class KernelMetrics:
     grid_state: GridStateData = field(default_factory=GridStateData)
     arb_opps: list[ArbOppData] = field(default_factory=list)   # active opportunities
     grid_export: GridExportData = field(default_factory=GridExportData)
+    exec_state: ExecutionStateData = field(default_factory=ExecutionStateData)
+    pending_orders: list[OrderData] = field(default_factory=list)
+    fill_results: list[FillResultData] = field(default_factory=list)
     shm_available: bool = False
 
 
@@ -267,6 +374,89 @@ class ShmMetricsReader:
         except struct.error:
             return GridExportData()
 
+    def read_execution_state(self) -> ExecutionStateData:
+        """Read ExecutionState from 0x130000"""
+        data = self._read_bytes(EXEC_STATE_ADDR, EXEC_STATE_SIZE)
+        if not data or len(data) < EXEC_STATE_SIZE:
+            return ExecutionStateData()
+        try:
+            fmt_size = struct.calcsize(EXEC_STATE_FMT)
+            magic, flags, cycle, order_in, fill_out, tsc = struct.unpack(EXEC_STATE_FMT, data[:fmt_size])
+            if magic != EXEC_MAGIC:
+                return ExecutionStateData()
+            return ExecutionStateData(
+                valid=True,
+                active=bool(flags & 0x01),
+                cycle_count=cycle,
+                order_in_count=order_in,
+                fill_out_count=fill_out,
+            )
+        except struct.error:
+            return ExecutionStateData()
+
+    def read_execution_orders(self) -> list[OrderData]:
+        """Read pending orders from ring buffer at 0x130050 (head..tail slots)"""
+        hdr_data = self._read_bytes(EXEC_RING_HEADER_ADDR, RING_HEADER_SIZE)
+        if not hdr_data or len(hdr_data) < RING_HEADER_SIZE:
+            return []
+        try:
+            head, tail = struct.unpack('<II', hdr_data[:8])
+        except struct.error:
+            return []
+
+        if head == tail:
+            return []   # Ring empty
+
+        count = min((tail - head) & 0xFF, 8)   # At most 8 pending slots
+        orders = []
+        for i in range(count):
+            slot_idx = (head + i) & 0xFF
+            addr = EXEC_ORDER_RING_ADDR + slot_idx * ORDER_PACKET_SLOT
+            data = self._read_bytes(addr, ORDER_PACKET_DATA)
+            if not data or len(data) < ORDER_PACKET_DATA:
+                continue
+            try:
+                opcode, _p0, exchange_id, _p1, pair_id, side, _p2, qty_sats, price_cents, _ = \
+                    struct.unpack(ORDER_PACKET_FMT, data)
+                if opcode == 0:
+                    continue   # Uninitialized slot
+                orders.append(OrderData(
+                    exchange_id=exchange_id & 0xFF,
+                    pair_id=pair_id,
+                    side=side,
+                    quantity_sats=qty_sats,
+                    price_cents=price_cents,
+                ))
+            except struct.error:
+                continue
+        return orders
+
+    def read_fill_results(self) -> list[FillResultData]:
+        """Read recent fill results from 0x13E050 (non-blank slots only)"""
+        fills = []
+        for i in range(FILL_RESULT_MAX):
+            addr = EXEC_FILL_RESULT_ADDR + i * FILL_RESULT_SLOT
+            data = self._read_bytes(addr, FILL_RESULT_DATA)
+            if not data or len(data) < FILL_RESULT_DATA:
+                continue
+            try:
+                order_id, pair_id, exchange_id, status, filled_sats, price_cents, tsc = \
+                    struct.unpack(FILL_RESULT_FMT, data)
+                # Skip blank/uninitialized slots
+                if order_id == 0 and price_cents == 0:
+                    continue
+                fills.append(FillResultData(
+                    order_id=order_id,
+                    pair_id=pair_id,
+                    exchange_id=exchange_id,
+                    status=status,
+                    filled_sats=filled_sats,
+                    price_cents=price_cents,
+                ))
+            except struct.error:
+                continue
+        return fills[-5:]   # Show 5 most recent
+
     def read(self) -> KernelMetrics:
         """Read all kernel metrics from SHM"""
         if not self._open():
@@ -276,6 +466,9 @@ class ShmMetricsReader:
         metrics.grid_state = self.read_grid_state()
         metrics.arb_opps = self.read_arb_opportunities()
         metrics.grid_export = self.read_grid_export()
+        metrics.exec_state = self.read_execution_state()
+        metrics.pending_orders = self.read_execution_orders()
+        metrics.fill_results = self.read_fill_results()
         return metrics
 
     def close(self):
