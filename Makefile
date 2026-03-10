@@ -3,7 +3,7 @@
 # Builds bare-metal bootloader and kernel for QEMU x86-64
 # ============================================================================
 
-.PHONY: all build clean qemu qemu-debug help test-paging
+.PHONY: all build clean qemu qemu-debug help test-paging test-phase5
 
 # Directories
 BUILD_DIR := ./build
@@ -56,13 +56,13 @@ $(BUILD_DIR)/stage2.bin: $(ARCH_DIR)/stage2_fixed.asm | $(BUILD_DIR)/.keep
 	$(NASM) -f bin -o $@ $<
 	@echo "  Stage 2: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
 
-# Phase 3: Rebuild Ada kernel from standalone startup (no gprbuild needed)
-# Produces identical layout to Ada-linked kernel but with Ada stubs inline
-ADA_STARTUP := ./modules/ada_mother_os/startup_phase4.asm
+# Phase 5: OS Layer Loader (PIO ATA + 64-bit module stubs)
+# startup_phase5.asm = phase4 long mode + disk reader + 3 OS module stubs
+ADA_STARTUP := ./modules/ada_mother_os/startup_phase5.asm
 ADA_KERNEL_BIN := ./modules/ada_mother_os/kernel.bin
 
 $(ADA_KERNEL_BIN): $(ADA_STARTUP)
-	@echo "[AS] Rebuilding Ada kernel binary from Phase 3 startup..."
+	@echo "[AS] Rebuilding Ada kernel binary (Phase 5)..."
 	$(NASM) -f bin -o $@ $<
 	@echo "  Ada kernel: $@ (size: $$(stat -c%s $@) bytes)"
 
@@ -71,6 +71,22 @@ $(BUILD_DIR)/kernel_stub.bin: $(ADA_KERNEL_BIN)
 	@echo "[CP] Copying Ada kernel binary..."
 	cp $< $@
 	@echo "  Kernel binary: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
+
+# OS module stubs (64-bit NASM flat binaries, loaded from disk at runtime)
+$(BUILD_DIR)/grid_stub.bin: $(ARCH_DIR)/grid_stub.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Grid OS stub..."
+	$(NASM) -f bin -o $@ $<
+	@echo "  Grid stub: $@ (size: $$(stat -c%s $@) bytes)"
+
+$(BUILD_DIR)/analytics_stub.bin: $(ARCH_DIR)/analytics_stub.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Analytics OS stub..."
+	$(NASM) -f bin -o $@ $<
+	@echo "  Analytics stub: $@ (size: $$(stat -c%s $@) bytes)"
+
+$(BUILD_DIR)/execution_stub.bin: $(ARCH_DIR)/execution_stub.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Execution OS stub..."
+	$(NASM) -f bin -o $@ $<
+	@echo "  Execution stub: $@ (size: $$(stat -c%s $@) bytes)"
 
 # Standalone paging test kernel (no Ada/C deps, pure NASM)
 $(BUILD_DIR)/kernel_paging_test.bin: $(ARCH_DIR)/kernel_paging_test.asm
@@ -101,22 +117,39 @@ test-paging: $(BUILD_DIR)/.keep $(BUILD_DIR)/paging_test.iso
 	@echo "--- Serial output ---"
 	@cat /tmp/omnibus_paging.log 2>/dev/null || echo "(no serial output)"
 
-# Create bootable disk image
-$(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stub.bin
-	@echo "[IMG] Creating bootable disk image..."
+# Create bootable disk image (Phase 5: includes OS module stubs at fixed sectors)
+$(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stub.bin \
+           $(BUILD_DIR)/grid_stub.bin $(BUILD_DIR)/analytics_stub.bin $(BUILD_DIR)/execution_stub.bin
+	@echo "[IMG] Creating bootable disk image (Phase 5)..."
 	@# Create an empty 10MB disk image
 	dd if=/dev/zero of=$(OUTPUT) bs=512 count=20480 2>/dev/null
-	@# Write boot sector at offset 0
+	@# Stage 1: boot sector @ sector 0
 	dd if=$(BUILD_DIR)/boot.bin of=$(OUTPUT) bs=512 count=1 conv=notrunc 2>/dev/null
-	@# Write Stage 2 at offset 1 sector (0x200 bytes)
+	@# Stage 2: @ sector 1
 	dd if=$(BUILD_DIR)/stage2.bin of=$(OUTPUT) bs=512 seek=1 conv=notrunc 2>/dev/null
-	@# Write kernel stub at offset 0x100000 (1MB) = 2048 sectors (1MB / 512 bytes per sector)
+	@# Kernel (startup_phase5.asm): @ sector 2048 (= 1MB offset)
 	dd if=$(BUILD_DIR)/kernel_stub.bin of=$(OUTPUT) bs=512 seek=2048 conv=notrunc 2>/dev/null
+	@# Grid OS stub: @ sector 4096 (= 2MB offset), 16 sectors = 8KB
+	dd if=$(BUILD_DIR)/grid_stub.bin of=$(OUTPUT) bs=512 seek=4096 conv=notrunc 2>/dev/null
+	@# Analytics OS stub: @ sector 4352 (= 2.125MB offset), 16 sectors = 8KB
+	dd if=$(BUILD_DIR)/analytics_stub.bin of=$(OUTPUT) bs=512 seek=4352 conv=notrunc 2>/dev/null
+	@# Execution OS stub: @ sector 4608 (= 2.25MB offset), 16 sectors = 8KB
+	dd if=$(BUILD_DIR)/execution_stub.bin of=$(OUTPUT) bs=512 seek=4608 conv=notrunc 2>/dev/null
 	@echo "  Disk image: $(OUTPUT) ($$(stat -f%z $(OUTPUT) 2>/dev/null || stat -c%s $(OUTPUT)) bytes)"
 
 # ============================================================================
 # RUN: Execute in QEMU
 # ============================================================================
+
+# Quick automated Phase 5 boot test (6 second timeout)
+test-phase5: build
+	@echo "[TEST] Phase 5 — OS Layer Loader boot test..."
+	@rm -f /tmp/omnibus_phase5.log
+	@timeout 6 $(QEMU) -m 256 -drive format=raw,file=$(OUTPUT) \
+	  -display none -serial file:/tmp/omnibus_phase5.log -monitor none 2>/dev/null || true
+	@echo "--- Serial output ---"
+	@cat /tmp/omnibus_phase5.log 2>/dev/null || echo "(no output)"
+	@echo "--- Expected: KD123TCRP LONG_MODE_OK GRID_OS_64_OK ANALYTICS_64_OK EXEC_OS_64_OK ADA64_INIT MOTHER_OS_64_OK ---"
 
 qemu: build
 	@echo "[QEMU] Starting emulation..."
