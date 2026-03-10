@@ -142,27 +142,72 @@ make qemu-debug
 
 ---
 
-## CURRENT PROGRESS — Phase 5C + Phase 6-7 in Parallel (as of 2026-03-11)
+## CURRENT PROGRESS — Phase 8 WIP + Phase 6-7 Parallel (as of 2026-03-11)
 
-### Just Completed ✅
-- **Phase 5C**: Real Zig module loading verified (Grid 4.9KB, Analytics 7.4KB, Execution 33.9KB)
-  - Linker script approach works (ENTRY(init_plugin) places entry at offset 0)
-  - Chunked sector loading handles >256 sector binaries
-  - Boot chain: bootloader → stage2 → kernel → all 4 modules load successfully
+### Phase 8: IDT/UART Framework — PARTIAL COMPLETE ⚠️
+**Status**: 50% — Infrastructure built, blocked on handler address resolution
 
-- **Phase 6 Week 5**: BlockchainOS Raydium integration (3.5KB)
-  - Flash loan request + atomic swap execution
-  - 3-instruction transaction builder (loan → swap → repay)
-  - Solana RPC client stubs
-  - processFlashLoanWithSwap() with fee calculation
-  - Compiles successfully, loads into 0x250000
+#### Completed Components ✅
+- **Static IDT generation** (NASM macros): 256 pre-computed gate descriptors
+- **LIDT instruction**: Successfully loads IDTR into CPU (confirmed 'X' serial output)
+- **UART driver** (uart.asm): 115200 baud, 8-N-1
+  - uart_init(), uart_putchar(), uart_getchar(), uart_send_string()
+  - uart_write_hex(), uart_write_hex8(), uart_write_dec32()
+  - ~370 bytes, fully functional
+- **Exception handler framework** (idt.asm + exception_handler.asm):
+  - Handlers 0-31 (exceptions), 32-47 (IRQs)
+  - common_handler() + irq_handler_common() save/restore all registers
+  - Real exception_handler() and handle_irq() implementations
+- **Inline LIDT** (startup_phase5.asm): Uses lea+lidt with RIP-relative addressing
 
-- **Phase 7 Week 1-2**: Neuro OS genetic algorithm skeleton (2.3KB)
-  - Population initialization (100 individuals)
-  - Multi-objective fitness function (profit/win_rate/drawdown)
-  - Tournament selection, crossover, mutation operators
-  - Feedback loop infrastructure (writes to Grid OS @ 0x110000)
-  - Compiles successfully, loads into 0x2D0000
+#### Current Blocker ❌
+**Flat binary address resolution**: Exception handlers not found by IDT
+- IDT entries point to handler_stub, but correct address cannot be calculated
+- Tested 10+ addresses manually: none triggered handler execution
+- Root cause: File concatenation (startup_phase5 + uart + idt + tss) creates ambiguous address space
+
+#### Recommended Solution
+**Move IDT initialization to Ada/C** with proper linker support (proven approach with Grid OS)
+- Write idt_init() in Ada (50-100 lines)
+- Compile to x86_64 ELF object
+- Link with kernel using linker script
+- Linker resolves all addresses deterministically
+- **Estimated effort**: 2-3 hours
+
+**Alternative** (not recommended): Merge all .asm files into single kernel.asm (~450 lines)
+- Label resolution works within single file
+- But loses modularity
+
+#### Files Modified
+- `modules/ada_mother_os/startup_phase5.asm`: Added inline LIDT + simple_handler stub
+- `modules/ada_mother_os/idt.asm`: 4096-byte static IDT table + handler framework
+- `modules/ada_mother_os/uart.asm`: Complete UART driver
+- `modules/ada_mother_os/exception_handler.asm`: Real exception handlers (framework)
+- `modules/ada_mother_os/tss.asm`: Task State Segment (stub)
+
+**Latest commit**: `ebbc09e` — Phase 8 WIP static IDT (uncommitted work remains)
+
+---
+
+### Phase 5 — Blocked by Phase 8
+Cannot proceed with OS layer loader until exception handling infrastructure is ready
+(Phase 8 provides interrupt handling needed for disk I/O)
+
+### Phase 6 Week 5: BlockchainOS Raydium integration ✅ (3.5KB)
+- Flash loan request + atomic swap execution
+- 3-instruction transaction builder (loan → swap → repay)
+- Solana RPC client stubs
+- processFlashLoanWithSwap() with fee calculation
+- Compiles successfully, loads into 0x250000
+
+### Phase 7 Week 1-2: Neuro OS genetic algorithm ✅ (2.3KB)
+- Population initialization (100 individuals)
+- Multi-objective fitness function (profit/win_rate/drawdown)
+- Tournament selection, crossover, mutation operators
+- Feedback loop infrastructure (writes to Grid OS @ 0x110000)
+- Compiles successfully, loads into 0x2D0000
+
+---
 
 ### What's Available to Use
 ```bash
@@ -171,12 +216,19 @@ make qemu                     # Boot in QEMU (all 7 modules load)
 make qemu-debug               # Boot with GDB stub @ port 1234
 ```
 
-### Next Priority Options
-1. **Phase 8**: IDT + exception handlers (blocking infrastructure, 2-3 weeks)
-   - Interrupt descriptor table (256 entries)
-   - UART driver for serial output
-   - Exception handlers (divide by zero, page fault, etc.)
-   - Task switching mechanism
+### Next Priority — Phase 8 Unblocking
+1. **Phase 8 Ada Implementation** (2-3 hours):
+   - Implement idt_init() in Ada with proper linker support
+   - Unblocks Phase 5 (OS loader), subsequent phases
+   - Known working approach (Grid OS uses same linker pattern)
+
+2. **Alternative Phase 8 Quick Fix** (1-2 hours):
+   - Try computing handler address using .bin file analysis
+   - Parse startup_phase5.bin size, uart.bin size to calculate exact offset
+   - Hardcode correct address if found
+
+3. **Phase 6 Week 6**: BlockchainOS swap logic expansion (2 weeks)
+   - Pool registry (hardcoded Raydium pools)
 
 2. **Phase 6 Week 6**: BlockchainOS swap logic expansion (2 weeks)
    - Pool registry (hardcoded Raydium pools)
