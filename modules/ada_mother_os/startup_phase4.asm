@@ -547,6 +547,16 @@ ada64_stub_event_loop:
     mov al, 0x0A
     out dx, al
 
+    ; === PHASE 14: MODULE INITIALIZATION (IPC-based) ===
+    ; Modules will call init_plugin() when triggered via IPC
+    ; For now: Print marker to show kernel ready for IPC
+    mov al, 'I'
+    out dx, al
+    mov al, 'P'
+    out dx, al
+    mov al, 'C'
+    out dx, al
+
     ; === SCHEDULER LOOP WITH IPC MODULE CALLS ===
     lea r10, [rel kernel_cycle_count]
     lea r8, [rel ipc_control_block]    ; R8 = IPC control block base

@@ -267,3 +267,21 @@ export fn export_metrics() void {
     metrics.timestamp = rdtsc();
     metrics.valid = 1;
 }
+
+// ============================================================================
+// IPC Dispatch (Phase 14)
+// ============================================================================
+
+/// IPC request dispatcher
+/// Modules call this periodically to check for kernel requests
+export fn ipc_dispatch() void {
+    const ipc = @as(*volatile types.IpcControlBlock, @ptrFromInt(0x100110));
+
+    // Check if there's a request for us (request code + module ID match Grid)
+    // For now, just handle init if not already done
+    if (!initialized) {
+        init_plugin();
+    }
+
+    // TODO: Handle other IPC request codes when defined
+}
