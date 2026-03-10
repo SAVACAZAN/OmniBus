@@ -782,6 +782,15 @@ ada64_stub_event_loop:
     ; Circuit Breaker OS init_plugin @ 0x450000
     call 0x450000
 
+    ; Flash Loan Protection OS init_plugin @ 0x460000
+    call 0x460000
+
+    ; L2 Rollup Bridge OS init_plugin @ 0x470000
+    call 0x470000
+
+    ; Quantum-Resistant Crypto OS init_plugin @ 0x480000
+    call 0x480000
+
     ; === SUCCESS ===
     mov al, '!'
     out dx, al
@@ -1073,6 +1082,30 @@ scheduler_loop:
     jnz .skip_breaker_dispatch
     call 0x450100                       ; Breaker: run_breaker_cycle (emergency halt check)
 .skip_breaker_dispatch:
+
+    ; Flash Loan Protection OS dispatch: every 262144 cycles (0x40000)
+    mov rax, r11
+    mov rbx, 0x3FFFF
+    and rax, rbx
+    jnz .skip_flash_dispatch
+    call 0x460100                       ; Flash: run_flash_cycle (exploit detection)
+.skip_flash_dispatch:
+
+    ; L2 Rollup Bridge OS dispatch: every 131072 cycles (0x20000)
+    mov rax, r11
+    mov rbx, 0x1FFFF
+    and rax, rbx
+    jnz .skip_rollup_dispatch
+    call 0x470100                       ; Rollup: run_rollup_cycle (proof finality)
+.skip_rollup_dispatch:
+
+    ; Quantum-Resistant Crypto OS dispatch: every 524288 cycles (0x80000)
+    mov rax, r11
+    mov rbx, 0x7FFFF
+    and rax, rbx
+    jnz .skip_quantum_dispatch
+    call 0x480100                       ; Quantum: run_quantum_cycle (post-quantum ops)
+.skip_quantum_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000

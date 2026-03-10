@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker loaded"
@@ -804,3 +804,39 @@ clean:
 # ============================================================================
 
 .PHONY: build qemu qemu-debug clean help inspect all
+
+# Phase 45: Flash Loan Protection OS (0x460000, 64KB)
+$(BUILD_DIR)/flash_loan_protection_os.o: ./modules/flash_loan_protection_os/flash_loan_protection_os.zig ./modules/flash_loan_protection_os/flash_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/flash_loan_protection_os && zig build-obj flash_loan_protection_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/flash_loan_protection_os/flash_loan_protection_os.o ]; then mv ./modules/flash_loan_protection_os/flash_loan_protection_os.o $@; fi
+$(BUILD_DIR)/flash_loan_protection_os_stubs.o: ./modules/flash_loan_protection_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/flash_loan_protection_os.elf: $(BUILD_DIR)/flash_loan_protection_os.o $(BUILD_DIR)/flash_loan_protection_os_stubs.o ./modules/flash_loan_protection_os/flash_loan_protection_os.ld
+	ld -T ./modules/flash_loan_protection_os/flash_loan_protection_os.ld -o $@ $(BUILD_DIR)/flash_loan_protection_os.o $(BUILD_DIR)/flash_loan_protection_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/flash_loan_protection_os.bin: $(BUILD_DIR)/flash_loan_protection_os.elf
+	objcopy -O binary $< $@
+	@echo "  Flash Loan Protection OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 46: L2 Rollup Bridge OS (0x470000, 64KB)
+$(BUILD_DIR)/l2_rollup_bridge_os.o: ./modules/l2_rollup_bridge_os/l2_rollup_bridge_os.zig ./modules/l2_rollup_bridge_os/rollup_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/l2_rollup_bridge_os && zig build-obj l2_rollup_bridge_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/l2_rollup_bridge_os/l2_rollup_bridge_os.o ]; then mv ./modules/l2_rollup_bridge_os/l2_rollup_bridge_os.o $@; fi
+$(BUILD_DIR)/l2_rollup_bridge_os_stubs.o: ./modules/l2_rollup_bridge_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/l2_rollup_bridge_os.elf: $(BUILD_DIR)/l2_rollup_bridge_os.o $(BUILD_DIR)/l2_rollup_bridge_os_stubs.o ./modules/l2_rollup_bridge_os/l2_rollup_bridge_os.ld
+	ld -T ./modules/l2_rollup_bridge_os/l2_rollup_bridge_os.ld -o $@ $(BUILD_DIR)/l2_rollup_bridge_os.o $(BUILD_DIR)/l2_rollup_bridge_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/l2_rollup_bridge_os.bin: $(BUILD_DIR)/l2_rollup_bridge_os.elf
+	objcopy -O binary $< $@
+	@echo "  L2 Rollup Bridge OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 47: Quantum-Resistant Crypto OS (0x480000, 64KB)
+$(BUILD_DIR)/quantum_resistant_crypto_os.o: ./modules/quantum_resistant_crypto_os/quantum_resistant_crypto_os.zig ./modules/quantum_resistant_crypto_os/quantum_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/quantum_resistant_crypto_os && zig build-obj quantum_resistant_crypto_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/quantum_resistant_crypto_os/quantum_resistant_crypto_os.o ]; then mv ./modules/quantum_resistant_crypto_os/quantum_resistant_crypto_os.o $@; fi
+$(BUILD_DIR)/quantum_resistant_crypto_os_stubs.o: ./modules/quantum_resistant_crypto_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/quantum_resistant_crypto_os.elf: $(BUILD_DIR)/quantum_resistant_crypto_os.o $(BUILD_DIR)/quantum_resistant_crypto_os_stubs.o ./modules/quantum_resistant_crypto_os/quantum_resistant_crypto_os.ld
+	ld -T ./modules/quantum_resistant_crypto_os/quantum_resistant_crypto_os.ld -o $@ $(BUILD_DIR)/quantum_resistant_crypto_os.o $(BUILD_DIR)/quantum_resistant_crypto_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/quantum_resistant_crypto_os.bin: $(BUILD_DIR)/quantum_resistant_crypto_os.elf
+	objcopy -O binary $< $@
+	@echo "  Quantum-Resistant Crypto OS binary: $@ (size: $$(stat -c%s $@) bytes)"
