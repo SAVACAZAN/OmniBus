@@ -1,0 +1,33 @@
+# Phase 16 Quick GDB Debug Script
+# Usage: start QEMU with: make qemu-debug
+# Then in another terminal: gdb build/kernel.elf < gdb_quick_debug.txt
+
+set architecture i386:x86-64
+target remote :1234
+
+# Let system boot
+shell sleep 5
+interrupt
+
+# CPU state check
+printf "=== CHECKING CPU STATE ===\n"
+info registers
+
+printf "\n=== PAGING ENABLED? ===\n"
+print/x $cr0
+print/x $cr3
+
+printf "\n=== CURRENT INSTRUCTION ===\n"
+x/i $rip
+
+printf "\n=== MODULE MEMORY READABLE? ===\n"
+x/8x 0x250000
+
+printf "\n=== GDT DESCRIPTOR 0x08 (code) ===\n"
+x/gx 0x100110+0x08
+
+printf "\n=== IDT LOADED? ===\n"
+info registers idtr
+
+printf "\n=== ANALYSIS COMPLETE ===\n"
+quit
