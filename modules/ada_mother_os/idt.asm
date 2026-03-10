@@ -45,9 +45,10 @@ idt_base:
     ; Using direct values computed from kernel layout
     ; handler_stub address: 0x100000 + offset from concatenated binary (~0x500)
 
-    ; simple_handler is in startup_phase5.asm after the halt loop:
-    ; Testing address 0x100380
-    %assign handler_addr 0x100280
+    ; handler_stub is at line 819 of merged file
+    ; Estimated offset: ~2800 bytes from start = 0x0AF0
+    ; Address: 0x100000 + 0x0AF0 = 0x100AF0
+    %assign handler_addr 0x100AF0
 
     %assign i 0
     %rep 256

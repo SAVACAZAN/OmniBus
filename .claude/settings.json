@@ -16,7 +16,24 @@
       "Bash(do echo \"Testing $addr...\")",
       "Bash(timeout 2 qemu-system-x86_64 -drive file=./build/omnibus.iso,format=raw -serial stdio -display none)",
       "Bash(done)",
-      "Bash(for addr in 0x100100 0x100150 0x100280)"
+      "Bash(for addr in 0x100100 0x100150 0x100280)",
+      "Bash(git add AGENT_HANDOFF.md memory/)",
+      "Bash(git add AGENT_HANDOFF.md /home/kiss/.claude/projects/-home-kiss-OmniBus/memory/)",
+      "Bash(gnat --version)",
+      "Bash(nasm -f elf64 -o /tmp/idt_test.o modules/ada_mother_os/idt.asm)",
+      "Bash(for addr in 0x102100 0x102140 0x102160 0x102180 0x1021A0)",
+      "Bash(do)",
+      "Bash(echo \"Testing $addr...\")",
+      "Bash(for addr in 0x102400 0x102450 0x102500 0x102600 0x102800)",
+      "Bash(/tmp/merge_asm.sh:*)",
+      "Bash(__NEW_LINE_a399998e4ba219dc__ chmod +x /tmp/merge_asm.sh)",
+      "Bash(/tmp/merge_asm.sh)",
+      "Bash(/tmp/fix_merge.sh:*)",
+      "Bash(__NEW_LINE_efaead502fd308ed__ chmod +x /tmp/fix_merge.sh)",
+      "Bash(/tmp/fix_merge.sh)",
+      "Bash(/tmp/final_merge.sh:*)",
+      "Bash(__NEW_LINE_5517b082acc0f4fa__ chmod +x /tmp/final_merge.sh)",
+      "Bash(/tmp/final_merge.sh)"
     ]
   }
 }
