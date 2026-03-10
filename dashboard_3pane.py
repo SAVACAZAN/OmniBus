@@ -21,6 +21,7 @@ import struct
 import time
 import os
 import sys
+import argparse
 from collections import deque
 
 # Buffer files from each feeder
@@ -30,6 +31,16 @@ LCX_FILE = "/tmp/omnibus_lcx_buffer.bin"
 
 REFRESH_MS = 500
 WINDOW_SIZE = 60
+
+# Optional SHM file for kernel metrics (set via --shm flag)
+SHM_FILE = ""
+
+# Kernel metrics reader (optional — only when SHM file is given)
+try:
+    from shm_reader import ShmMetricsReader
+    _SHM_READER_AVAILABLE = True
+except ImportError:
+    _SHM_READER_AVAILABLE = False
 
 # Exchange fees (maker+taker combined, conservative)
 KRAKEN_FEE   = 0.0026   # 0.26%
@@ -214,6 +225,11 @@ class Dashboard3Pane:
         self.lcx_lcx = PriceTracker()
 
         self.arb = ArbTracker()
+
+        # Kernel metrics reader (SHM mode only)
+        self._shm_reader = None
+        if SHM_FILE and _SHM_READER_AVAILABLE:
+            self._shm_reader = ShmMetricsReader(SHM_FILE)
 
     def safe_addstr(self, row, col, text, attr=0):
         """Safely add string to curses window"""
@@ -408,9 +424,64 @@ class Dashboard3Pane:
                 arb_row += 1
                 self.safe_addstr(arb_row, 4, f"• {entry}", curses.color_pair(7))
 
+        # === KERNEL METRICS (Phase 17 — SHM mode only) ===
+        if self._shm_reader:
+            km = self._shm_reader.read()
+            arb_row += 1
+            sep2 = "─" * (w - 2)
+            self.safe_addstr(arb_row, 1, sep2, curses.color_pair(6))
+            arb_row += 1
+
+            if km.shm_available:
+                gs = km.grid_state
+                ge = km.grid_export
+
+                if gs.valid:
+                    status = "ACTIVE" if gs.active else "IDLE"
+                    if gs.rebalancing:
+                        status += "+REBAL"
+                    profit_color = curses.color_pair(7) if gs.profit_usd >= 0 else curses.color_pair(5)
+                    self.safe_addstr(arb_row, 2,
+                        f"KERNEL Grid[{status}]  levels:{gs.level_count}  orders:{gs.order_count}  "
+                        f"step:{gs.step_cents/100:.2f}  profit:",
+                        curses.color_pair(6) | curses.A_BOLD)
+                    profit_col = min(70, w - 15)
+                    self.safe_addstr(arb_row, profit_col,
+                        f"${gs.profit_usd:+.2f}", profit_color | curses.A_BOLD)
+                else:
+                    self.safe_addstr(arb_row, 2, "KERNEL Grid: waiting (SHM data not yet valid)",
+                        curses.color_pair(4))
+                arb_row += 1
+
+                if ge.valid:
+                    win_rate_pct = ge.win_rate * 100
+                    self.safe_addstr(arb_row, 2,
+                        f"  cycles:{ge.cycle_count}  wins:{ge.winning_trades}/{ge.total_trades}"
+                        f"  win_rate:{win_rate_pct:.1f}%  total_P&L:${ge.profit_usd:+.2f}",
+                        curses.color_pair(4))
+                    arb_row += 1
+
+                # Show top 2 kernel-detected arb opportunities
+                if km.arb_opps:
+                    for opp in km.arb_opps[:2]:
+                        pair_name = ["BTC", "ETH", "LCX"].get(opp.pair_id, f"P{opp.pair_id}") \
+                            if hasattr(opp.pair_id, '__index__') else f"P{opp.pair_id}"
+                        pair_name = ["BTC", "ETH", "LCX"][opp.pair_id] if opp.pair_id < 3 else f"P{opp.pair_id}"
+                        exec_tag = "[EXEC]" if opp.executed else "      "
+                        opp_color = curses.color_pair(7) if opp.net_profit_bps > 0 else curses.color_pair(5)
+                        self.safe_addstr(arb_row, 2,
+                            f"  {exec_tag} {pair_name} {opp.buy_exchange}→{opp.sell_exchange} "
+                            f"net:{opp.net_profit_bps}bps ~${opp.profit_usd_per_unit:.2f}",
+                            opp_color)
+                        arb_row += 1
+            else:
+                self.safe_addstr(arb_row, 2, "KERNEL: SHM not available (run with run_omnibus_live.sh)",
+                    curses.color_pair(4))
+
         # === FOOTER ===
         row = h - 2
-        footer = "Press 'q' to quit | Updates every 500ms | Phase 14: Arb Monitor Active"
+        shm_tag = " | SHM LIVE" if self._shm_reader else ""
+        footer = f"Press 'q' to quit | Updates every 500ms | Phase 17: Kernel Metrics{shm_tag}"
         self.safe_addstr(row, 1, footer, curses.color_pair(4))
 
         try:
@@ -432,6 +503,16 @@ def main(stdscr):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="OmniBus Multi-Exchange Dashboard")
+    parser.add_argument('--shm', default='', metavar='SHM_FILE',
+                        help='QEMU shared memory file for live kernel metrics '
+                             '(e.g. /tmp/omnibus_live_mem). Shows Grid OS state + arb opps.')
+    args = parser.parse_args()
+
+    # Set global SHM path before curses starts
+    if args.shm:
+        SHM_FILE = args.shm  # module-level global
+
     try:
         curses.wrapper(main)
     except KeyboardInterrupt:

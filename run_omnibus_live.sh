@@ -150,6 +150,7 @@ echo "  Live prices injected at: phys 0x140000 (via SHM mmap)"
 echo "  Kraken log:  /tmp/omnibus_live_kraken.log  (→ 0x140000)"
 echo "  Coinbase log: /tmp/omnibus_live_coinbase.log (→ 0x141000)"
 echo "  LCX log:     /tmp/omnibus_live_lcx.log     (→ 0x142000)"
+echo "  Dashboard:   python3 dashboard_3pane.py --shm $SHM_FILE"
 echo -e "${GREEN}═══════════════════════════════════════════════════════${NC}"
 echo ""
 
