@@ -6,12 +6,22 @@ const std = @import("std");
 
 const types = @import("types.zig");
 const crypto = @import("crypto.zig");
+const dilithium_sign = @import("dilithium_sign.zig");  // ← NEW: NIST ML-DSA
 const order_reader = @import("order_reader.zig");
 const order_format = @import("order_format.zig");
 const lcx_sign = @import("lcx_sign.zig");
 const kraken_sign = @import("kraken_sign.zig");
 const coinbase_sign = @import("coinbase_sign.zig");
 const fill_tracker = @import("fill_tracker.zig");
+
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+pub const MLDSAStats = extern struct {
+    orders_signed: u32,
+    initialized: u8,
+};
 
 // ============================================================================
 // Module State
@@ -21,6 +31,10 @@ var initialized: bool = false;
 var cycle_count: u64 = 0;
 var order_processed_count: u32 = 0;
 var fill_processed_count: u32 = 0;
+var ml_dsa_secret_key: [dilithium_sign.ML_DSA_SECRETKEY_BYTES]u8 = undefined;  // ← ML-DSA key
+var ml_dsa_public_key: [dilithium_sign.ML_DSA_PUBLICKEY_BYTES]u8 = undefined;
+var ml_dsa_initialized: bool = false;
+var ml_dsa_orders_signed: u32 = 0;  // ← Statistics
 
 // ============================================================================
 // ExecutionState Access
@@ -272,4 +286,48 @@ fn rdtsc() u64 {
           [hi] "={edx}" (hi),
     );
     return (@as(u64, hi) << 32) | @as(u64, lo);
+}
+
+// ============================================================================
+// ML-DSA (NIST Dilithium) Integration — Quantum-Resistant Order Signing
+// ============================================================================
+
+/// Initialize ML-DSA signer with seed (called by PQC-GATE)
+export fn init_ml_dsa_signer(seed_ptr: [*]const u8) void {
+    var seed: [dilithium_sign.ML_DSA_SEED_BYTES]u8 = undefined;
+    @memcpy(&seed, seed_ptr[0..dilithium_sign.ML_DSA_SEED_BYTES]);
+    
+    dilithium_sign.init_dilithium_signer(&ml_dsa_secret_key, &seed);
+    ml_dsa_initialized = true;
+}
+
+/// Sign an order with ML-DSA (quantum-resistant)
+/// Returns signature bytes in provided buffer
+export fn sign_order_with_dilithium(
+    order_bytes_ptr: [*]const u8,
+    order_len: usize,
+    sig_out_ptr: [*]u8,
+) void {
+    if (!ml_dsa_initialized) return;
+    
+    var signature: [dilithium_sign.ML_DSA_SIGNATURE_BYTES]u8 = undefined;
+    const order = order_bytes_ptr[0..order_len];
+    
+    dilithium_sign.sign_trading_order(&signature, order, &ml_dsa_secret_key);
+    
+    @memcpy(sig_out_ptr[0..dilithium_sign.ML_DSA_SIGNATURE_BYTES], &signature);
+    ml_dsa_orders_signed +|= 1;
+}
+
+/// Get ML-DSA public key for verification by peers
+export fn get_ml_dsa_public_key(pk_out_ptr: [*]u8) void {
+    @memcpy(pk_out_ptr[0..dilithium_sign.ML_DSA_PUBLICKEY_BYTES], &ml_dsa_public_key);
+}
+
+/// Get ML-DSA statistics
+export fn get_ml_dsa_stats() MLDSAStats {
+    return .{
+        .orders_signed = ml_dsa_orders_signed,
+        .initialized = if (ml_dsa_initialized) 1 else 0,
+    };
 }
