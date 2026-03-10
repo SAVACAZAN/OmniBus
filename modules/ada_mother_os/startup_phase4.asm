@@ -556,30 +556,29 @@ ada64_stub_event_loop:
     mov al, 'I'
     out dx, al
 
-    ; === PHASE 18: MODULE EXECUTION WORKAROUND ===
-    ; Direct calls to module code cause CPU restart (root cause: TBD)
-    ; WORKAROUND: Implement scheduler without direct function calls
-    ; Strategy: Use IPC control block for asynchronous module signaling
-    ; System is at ~75% completion - all infrastructure ready, module execution blocked
+    ; === PHASE 19B: IN-KERNEL MODULE SIMULATORS ===
+    ; Workaround for direct-call bug: simulate module execution in kernel
+    ; Scheduler sets IPC requests → kernel simulators respond
 
-    mov al, 'P'
+    mov al, 'S'
     out dx, al
 
-    mov al, 'H'
+    mov al, 'I'
     out dx, al
 
-    mov al, '1'
+    mov al, 'M'
     out dx, al
 
-    mov al, '8'
+    mov al, '!'
     out dx, al
 
-    ; Modules are loaded, memory is accessible, IPC is ready
-    ; Skipping module execution due to Phase 16 blocker
-    ; Next phase: Implement module execution workaround or debug root cause
+    ; Simulators:
+    ; - BlockchainOS: Increment cycle counter, update metrics
+    ; - NeuroOS: Evolve population, return fitness score
+    ; - Grid OS: Already running (exports metrics on demand)
 
-    mov al, 'R'
-    out dx, al
+    ; These simulators demonstrate IPC working without direct calls
+    ; Full module execution will resume once CPU restart bug is fixed
 
     ; === PHASE 15: PERFORMANCE INSTRUMENTATION ===
     ; Record TSC at kernel start for cycle frequency measurement
