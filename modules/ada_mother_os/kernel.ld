@@ -1,59 +1,68 @@
-/* Linker Script for Ada Mother OS Kernel
-   =======================================
-
-   Memory Layout:
-   - 0x100000–0x10FFFF: Ada Kernel (64KB)
-     - 0x100000: Kernel entry point
-     - 0x100010: Startup code entry
-
-   Output: kernel.bin (raw binary, no ELF header)
+/* ============================================================================
+   kernel.ld — Kernel Linker Script for Phase 8 (IDT + Ada)
+   ============================================================================
+   Links assembly startup code with Ada IDT initialization module.
+   Places sections at predictable addresses for deterministic execution.
 */
 
 ENTRY(startup_begin)
 
 SECTIONS
 {
-    /* Kernel code section - starts at 0x100010 */
-    . = 0x100010;
+  /* Kernel starts at 0x100000 */
+  . = 0x100000;
 
-    .text : ALIGN(16)
-    {
-        *(.text)
-        KEEP(uart_io.o(.text))
-        *(.text.*)
-    }
+  /* Startup code (32-bit and 64-bit) */
+  .text ALIGN(0x1000) : {
+    *(.text.startup_begin)
+    *(.text.long_mode_entry)
+    *(.text*)
+    *(.gnu.linkonce.t*)
+  }
 
-    /* Kernel data section */
-    . = ALIGN(16);
-    .data : ALIGN(16)
-    {
-        *(.data)
-        *(.data.*)
-    }
+  /* Exception handler stubs */
+  .text.handlers ALIGN(0x100) : {
+    exception_handler_stub = .;
+    *(.text.handler*)
+    *(.text.*handler*)
+  }
 
-    /* Read-only data */
-    . = ALIGN(16);
-    .rodata : ALIGN(16)
-    {
-        *(.rodata)
-        *(.rodata.*)
-    }
+  /* IDT table (must be at known address) */
+  .idt ALIGN(0x100) : {
+    idt_table = .;
+    . += 4096;  /* 256 entries × 16 bytes = 4096 bytes */
+  }
 
-    /* Uninitialized data (BSS) */
-    . = ALIGN(16);
-    .bss : ALIGN(16)
-    {
-        *(.bss)
-        *(.bss.*)
-        *(COMMON)
-    }
+  /* IDTR pointer structure (2B limit + 8B base) */
+  .idtr ALIGN(0x10) : {
+    idt_ptr = .;
+    . += 10;
+  }
 
-    /* Discard unnecessary sections */
-    /DISCARD/ :
-    {
-        *(.note.*)
-        *(.comment)
-        *(.eh_frame)
-        *(.gnu_hash)
-    }
+  /* Read-only data */
+  .rodata ALIGN(0x100) : {
+    *(.rodata*)
+    *(.gnu.linkonce.r*)
+  }
+
+  /* Initialized data */
+  .data ALIGN(0x100) : {
+    *(.data*)
+    *(.gnu.linkonce.d*)
+  }
+
+  /* Uninitialized data */
+  .bss ALIGN(0x100) : {
+    *(.bss*)
+    *(COMMON)
+  }
+
+  /* Discard unnecessary sections */
+  /DISCARD/ : {
+    *(.note.GNU-stack)
+    *(.gnu_debuglink)
+    *(.gnu_debugdata)
+    *(.eh_frame)
+    *(.comment)
+  }
 }

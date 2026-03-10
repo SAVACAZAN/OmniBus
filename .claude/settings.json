@@ -33,7 +33,8 @@
       "Bash(/tmp/fix_merge.sh)",
       "Bash(/tmp/final_merge.sh:*)",
       "Bash(__NEW_LINE_5517b082acc0f4fa__ chmod +x /tmp/final_merge.sh)",
-      "Bash(/tmp/final_merge.sh)"
+      "Bash(/tmp/final_merge.sh)",
+      "Bash(git add /home/kiss/.claude/projects/-home-kiss-OmniBus/memory/MEMORY.md)"
     ]
   }
 }

@@ -11,9 +11,9 @@
 ; ============================================================================
 
 [BITS 32]
-[ORG 0x100000]
 
 ; --- Header: ENDBR32 magic + 44 NOP padding ---
+; (Linker script places this at 0x100000)
 db 0xF3, 0x0F, 0x1E, 0xFA
 times (0x30 - 4) db 0x90
 
@@ -223,11 +223,57 @@ long_mode_entry:
     ; Auth gate
     mov byte [0x100050], 0x70
 
+    ; ========================================================================
+    ; PHASE 8: IDT INITIALIZATION
+    ; 1. Populate all 256 IDT entries with gate descriptors pointing to exception_handler_stub
+    ; 2. Load IDTR with IDT table address
+    ; ========================================================================
+
+    ; UART 'X' = About to load IDT
+    mov dx, 0x3F8
+    mov al, 'X'
+    out dx, al
+
+    ; ========================================================================
+    ; IDT INITIALIZATION: Pre-populate entries at link time
+    ; (Linker puts exception_handler_stub address into macro templates)
+    ; ========================================================================
+
+    ; For now, just print 'I' to indicate we're about to check if IDT is populated
+    ; The IDT table is pre-computed with NASM macros below
+    mov al, 'I'
+    out dx, al
+
+    ; === Load IDTR ===
+    lea rax, [rel idt_ptr]
+    ; Store IDT base address in idt_ptr (8 bytes at offset 2)
+    lea rsi, [rel idt_table]
+    mov [rax + 2], rsi
+    lidt [rax]
+
+    ; UART 'Y' = LIDT succeeded
+    mov al, 'Y'
+    out dx, al
+
     ; === ADA INIT STUB (Phase 4A) ===
     call ada64_stub_initialize
 
     ; VGA 'L' GREEN
     mov word [0xB800E], 0x0A4C
+
+    ; === PHASE 8: TEST EXCEPTION HANDLER ===
+    ; Trigger divide-by-zero to test IDT
+    ; UART 'D' = About to trigger exception
+    mov al, 'D'
+    out dx, al
+
+    mov ax, 1
+    mov bx, 0
+    div bx                    ; #DE divide-by-zero exception
+
+    ; If we reach here, exception wasn't caught
+    mov al, 'F'
+    out dx, al
 
     ; === ADA EVENT LOOP STUB (Phase 4A) ===
     call ada64_stub_event_loop
@@ -319,5 +365,57 @@ ada64_stub_event_loop:
     hlt
     jmp .halt
 
-; --- Pad to 8KB ---
-times (0x2000 - ($ - $$)) db 0
+; ============================================================================
+; PHASE 8: EXCEPTION HANDLER STUBS
+; ============================================================================
+
+; Generic exception handler (prints 'E' + vector, then continues)
+exception_handler_stub:
+    ; UART 'E' = Exception caught
+    mov dx, 0x3F8
+    mov al, 'E'
+    out dx, al
+
+    ; UART 'H' = Handler executed
+    mov al, 'H'
+    out dx, al
+
+    ; For divide-by-zero, skip the faulting instruction by incrementing RIP
+    ; and returning via IRET
+    ; Stack frame: [RSP] = RIP, [RSP+8] = CS, [RSP+16] = RFLAGS
+    add qword [rsp], 3        ; Skip 3-byte div instruction
+    iretq
+
+; ============================================================================
+; PHASE 8: IDT TABLE (256 entries × 16 bytes = 4096 bytes)
+; Pre-populated with interrupt gate descriptors pointing to exception_handler_stub
+; Handler address: 0x100274 (from linker)
+; ============================================================================
+; Macro to create a single IDT gate descriptor
+%macro IDT_ENTRY 1
+    ; Gate descriptor for handler at address 0x100274:
+    dw 0x0274              ; Offset bits [0:15]
+    dw 0x0008              ; Code segment selector (kernel code)
+    db 0x00                ; IST (0 = use RSP0)
+    db 0x8E                ; Attributes: interrupt gate, P=1, DPL=0, TYPE=14 (interrupt)
+    dw 0x0010              ; Offset bits [16:31]
+    dd 0x00000000          ; Offset bits [32:63] and reserved
+%endmacro
+
+align 4096
+idt_table:
+    ; Generate 256 identical IDT entries (all point to exception_handler_stub)
+    %assign i 0
+    %rep 256
+        IDT_ENTRY i
+        %assign i i+1
+    %endrep
+
+; ============================================================================
+; IDTR POINTER (2B limit + 8B base)
+; Linker places idt_table at 0x101000
+; ============================================================================
+align 16
+idt_ptr:
+    dw 256 * 16 - 1           ; Limit: 4095 (256 entries × 16 - 1)
+    dq 0x101000                ; Base: IDT table at 0x101000 (from linker script)

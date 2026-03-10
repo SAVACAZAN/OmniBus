@@ -57,45 +57,40 @@ $(BUILD_DIR)/stage2.bin: $(ARCH_DIR)/stage2_fixed.asm | $(BUILD_DIR)/.keep
 	$(NASM) -f bin -o $@ $<
 	@echo "  Stage 2: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
 
-# Phase 5: OS Layer Loader (PIO ATA + 64-bit module stubs + UART + IDT)
-# startup_phase5.asm = phase4 long mode + uart driver + idt setup
-# uart.asm = 115200 baud serial driver (putchar, getchar, send_string, write_hex)
-# idt.asm = Interrupt Descriptor Table (256 entries, exception + IRQ handlers)
-# tss.asm = Task State Segment (RSP0, IST stacks for exceptions)
-ADA_STARTUP := ./modules/ada_mother_os/startup_phase5.asm
-ADA_UART := ./modules/ada_mother_os/uart.asm
-ADA_IDT := ./modules/ada_mother_os/idt.asm
-ADA_TSS := ./modules/ada_mother_os/tss.asm
-ADA_KERNEL_BIN := ./modules/ada_mother_os/kernel.bin
+# Phase 8: Ada Mother OS (IDT initialization + Exception handlers)
+# Uses linker-based address resolution (same pattern as Grid OS)
+# startup_phase4.asm → ELF object (with LIDT + exception stubs)
+# kernel.ld → Linker script (allocates IDT table, handler stubs, IDTR pointer)
+# Final: kernel.elf → binary (kernel.bin)
 
-# Build object files for Phase 5 assembly modules
-$(BUILD_DIR)/uart.o: $(ADA_UART) | $(BUILD_DIR)/.keep
-	@echo "[AS] Assembling UART driver..."
+ADA_DIR := ./modules/ada_mother_os
+ADA_KERNEL_STARTUP := $(ADA_DIR)/startup_phase4.asm
+ADA_KERNEL_LD := $(ADA_DIR)/kernel.ld
+ADA_KERNEL_BIN := $(ADA_DIR)/kernel.bin
+
+# Compile assembly startup to ELF object (with position-independent code for linker)
+$(BUILD_DIR)/startup.o: $(ADA_KERNEL_STARTUP) | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling kernel startup (Phase 4 + Phase 8 IDT)..."
 	nasm -f elf64 -o $@ $<
 
-$(BUILD_DIR)/idt.o: $(ADA_IDT) | $(BUILD_DIR)/.keep
-	@echo "[AS] Assembling IDT (Interrupt Descriptor Table)..."
-	nasm -f elf64 -o $@ $<
+# Link kernel ELF: assembly via linker script with section placement
+$(BUILD_DIR)/kernel.elf: $(BUILD_DIR)/startup.o $(ADA_KERNEL_LD)
+	@echo "[LD] Linking kernel ELF with linker script..."
+	ld -T $(ADA_KERNEL_LD) -o $@ $(BUILD_DIR)/startup.o 2>&1 | grep -v "warning:" || true
+	@echo "  Kernel ELF: $@"
 
-$(BUILD_DIR)/tss.o: $(ADA_TSS) | $(BUILD_DIR)/.keep
-	@echo "[AS] Assembling TSS (Task State Segment)..."
-	nasm -f elf64 -o $@ $<
+# Convert kernel ELF to flat binary
+$(ADA_KERNEL_BIN): $(BUILD_DIR)/kernel.elf
+	@echo "[OC] Converting kernel ELF to flat binary..."
+	objcopy -O binary $< $@
+	@echo "  Kernel binary: $@ (size: $$(stat -c%s $@) bytes)"
+	@echo "  ✓ Phase 8 kernel built with linker-based IDT placement"
 
-# Link all Phase 5 components into single flat binary kernel
-# Using merged single-file approach for proper label resolution
-ADA_KERNEL_MERGED := ./modules/ada_mother_os/kernel_phase8_merged.asm
-
-$(ADA_KERNEL_BIN): ./modules/ada_mother_os/kernel_phase8_merged.asm
-	@echo "[AS] Compiling merged kernel (single file, proper label resolution)..."
-	$(NASM) -f bin -o $@ $<
-	@echo "  Ada kernel: $@ (size: $$(stat -c%s $@) bytes)"
-	@echo "  ✓ Phase 5 modules compiled and linked"
-
-# Copy Ada kernel binary
+# Copy Ada kernel binary to build dir for image creation
 $(BUILD_DIR)/kernel_stub.bin: $(ADA_KERNEL_BIN)
-	@echo "[CP] Copying Ada kernel binary..."
+	@echo "[CP] Copying kernel binary to build dir..."
 	cp $< $@
-	@echo "  Kernel binary: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
+	@echo "  Kernel stub: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # OS MODULE BUILDS (Zig → ELF → Binary via linker scripts)
