@@ -10,13 +10,14 @@
 ;   4. Load Execution OS stub (8KB) from LBA 4608 → 0x130000
 ;   5. Call init_plugin() for each module in [BITS 64] (after long mode)
 ;
-; DISK LAYOUT (sectors):
+; DISK LAYOUT (sectors) — PHASE 5C with chunked loading:
 ;   0         Stage 1 (boot.asm, 512B)
 ;   1-8       Stage 2 (stage2_fixed.asm, 4KB)
-;   2048-2063 This kernel (startup_phase5.asm, 8KB)
-;   4096-4111 Grid OS stub (grid_stub.asm, 8KB)
-;   4352-4367 Analytics OS stub (analytics_stub.asm, 8KB)
-;   4608-4623 Execution OS stub (execution_stub.asm, 8KB)
+;   2048-2176 This kernel (startup_phase5.asm, 128KB)
+;   4096-4351 Grid OS (grid_os.bin, 128KB, 256 sectors)
+;   4352-5375 Analytics OS (analytics_os.bin, 512KB, 1024 sectors)
+;   5376-5631 Execution OS (execution_os.bin, 128KB, 256 sectors)
+; Loaded in 16-sector chunks via load_sectors_chunked()
 ;
 ; EXPECTED SERIAL: KD123TCRP LONG_MODE_OK GRID_OS_64_OK
 ;                  ANALYTICS_64_OK EXEC_OS_64_OK ADA64_INIT MOTHER_OS_64_OK
@@ -55,33 +56,34 @@ startup_begin:
     mov al, 'D'
     out dx, al
 
-    ; --- Load Grid OS stub: LBA 4096, 16 sectors → 0x110000 ---
-    mov ebx, 4096
-    mov ecx, 16
-    mov edi, 0x110000
-    call ata_read_sectors
+    ; --- Load Grid OS: LBA 4096, 256 sectors (16KB chunks) → 0x110000 ---
+    ; Call load_sectors_chunked with: LBA, total sectors, destination
+    mov ebx, 4096           ; Starting LBA
+    mov ecx, 256            ; Total sectors (256 = 16 calls × 16 sectors)
+    mov edi, 0x110000       ; Destination address
+    call load_sectors_chunked
 
     ; UART '1' = Grid OS loaded
     mov dx, 0x3F8
     mov al, '1'
     out dx, al
 
-    ; --- Load Analytics OS stub: LBA 4352, 16 sectors → 0x150000 ---
-    mov ebx, 4352
-    mov ecx, 16
-    mov edi, 0x150000
-    call ata_read_sectors
+    ; --- Load Analytics OS: LBA 4352, 1024 sectors → 0x150000 ---
+    mov ebx, 4352           ; Starting LBA
+    mov ecx, 1024           ; Total sectors (1024 = 64 calls × 16 sectors)
+    mov edi, 0x150000       ; Destination address
+    call load_sectors_chunked
 
     ; UART '2' = Analytics OS loaded
     mov dx, 0x3F8
     mov al, '2'
     out dx, al
 
-    ; --- Load Execution OS stub: LBA 4608, 16 sectors → 0x130000 ---
-    mov ebx, 4608
-    mov ecx, 16
-    mov edi, 0x130000
-    call ata_read_sectors
+    ; --- Load Execution OS: LBA 5376, 256 sectors → 0x130000 ---
+    mov ebx, 5376           ; Starting LBA
+    mov ecx, 256            ; Total sectors (256 = 16 calls × 16 sectors)
+    mov edi, 0x130000       ; Destination address
+    call load_sectors_chunked
 
     ; UART '3' = Execution OS loaded
     mov dx, 0x3F8
@@ -194,6 +196,52 @@ startup_begin:
     ; STEP 7: Far jump to 64-bit CS → enters 64-bit long mode
     ; ========================================================================
     jmp 0x08:long_mode_entry
+
+; ============================================================================
+; Load Sectors in 16-Sector Chunks (chunked loader for large binaries)
+; Input:  EBX = LBA start sector
+;         ECX = total sector count (will be split into 16-sector chunks)
+;         EDI = destination buffer
+; Uses:   EAX, ECX, EDX, EDI, ESI (clobbered)
+; Notes:  Calls ata_read_sectors multiple times with 16 sectors per call.
+;         Updates EBX (LBA) and EDI (buffer) after each chunk.
+; ============================================================================
+load_sectors_chunked:
+    push ebp
+    push ebx
+    push ecx
+    push esi
+    push edi
+
+    mov esi, ecx            ; ESI = total sectors remaining
+    mov eax, 16             ; Chunk size = 16 sectors per read
+
+.chunk_loop:
+    cmp esi, 0
+    je .chunk_done
+
+    ; Read min(16, remaining) sectors
+    mov ecx, 16
+    cmp esi, 16
+    jge .read_chunk
+    mov ecx, esi            ; If less than 16 sectors remain, read only what's left
+.read_chunk:
+    ; Call ata_read_sectors(EBX=LBA, ECX=sector_count, EDI=dest)
+    call ata_read_sectors
+
+    ; Update for next chunk
+    add ebx, 16             ; Move to next 16-sector block
+    add edi, 8192           ; Advance buffer by 16 sectors × 512 bytes = 8192 bytes
+    sub esi, 16             ; Decrease remaining sector count
+    jmp .chunk_loop
+
+.chunk_done:
+    pop edi
+    pop esi
+    pop ecx
+    pop ebx
+    pop ebp
+    ret
 
 ; ============================================================================
 ; PIO ATA Disk Read Subroutine (32-bit mode)
