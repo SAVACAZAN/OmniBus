@@ -3,7 +3,7 @@
 # Builds bare-metal bootloader and kernel for QEMU x86-64
 # ============================================================================
 
-.PHONY: all build clean qemu qemu-debug help
+.PHONY: all build clean qemu qemu-debug help test-paging
 
 # Directories
 BUILD_DIR := ./build
@@ -59,6 +59,35 @@ $(BUILD_DIR)/kernel_stub.bin: ./modules/ada_mother_os/kernel.bin
 	@echo "[CP] Copying Ada kernel binary..."
 	cp $< $@
 	@echo "  Kernel binary: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
+
+# Standalone paging test kernel (no Ada/C deps, pure NASM)
+$(BUILD_DIR)/kernel_paging_test.bin: $(ARCH_DIR)/kernel_paging_test.asm
+	@echo "[AS] Assembling paging test kernel..."
+	$(NASM) -f bin -o $@ $<
+	@echo "  Paging test kernel: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Bootable image using paging test kernel instead of Ada kernel
+$(BUILD_DIR)/paging_test.iso: $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_paging_test.bin
+	@echo "[IMG] Creating paging test ISO..."
+	dd if=/dev/zero of=$@ bs=512 count=20480 2>/dev/null
+	dd if=$(BUILD_DIR)/boot.bin of=$@ bs=512 count=1 conv=notrunc 2>/dev/null
+	dd if=$(BUILD_DIR)/stage2.bin of=$@ bs=512 seek=1 conv=notrunc 2>/dev/null
+	dd if=$(BUILD_DIR)/kernel_paging_test.bin of=$@ bs=512 seek=2048 conv=notrunc 2>/dev/null
+	@echo "  Paging test image: $@"
+
+# Build and run paging verification test
+test-paging: $(BUILD_DIR) $(BUILD_DIR)/paging_test.iso
+	@echo "[TEST] Running paging verification (3 second boot wait)..."
+	@echo "  UART serial output → /tmp/omnibus_paging.log"
+	@echo "  PASS: serial shows STRCPIL or P-I-L chars"
+	@echo "  FAIL: no output or triple fault (QEMU restarts loop)"
+	@rm -f /tmp/omnibus_paging.log
+	@( sleep 3; echo "xp /16bx 0xb8000"; sleep 0.2; echo quit ) | \
+	  $(QEMU) -m 256 -drive format=raw,file=$(BUILD_DIR)/paging_test.iso \
+	  -display none -monitor stdio -serial file:/tmp/omnibus_paging.log 2>&1 | \
+	  grep -E "^0x|FAIL|ERROR" || true
+	@echo "--- Serial output ---"
+	@cat /tmp/omnibus_paging.log 2>/dev/null || echo "(no serial output)"
 
 # Create bootable disk image
 $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stub.bin
