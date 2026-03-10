@@ -20,14 +20,30 @@ pub const ExchangeBuffer = struct {
     lcx_volume_sats: u64,     // 0x140040: LCX volume in satoshis
 };
 
+// Phase 16: Multi-source SHM buffers
+// Kraken feeder    → 0x140000 (flags=0x01)
+// Coinbase feeder  → 0x141000 (flags=0x02)
+// LCX Exch feeder  → 0x142000 (flags=0x04)
 const EXCHANGE_BUFFER_ADDR: usize = 0x140000;
+const COINBASE_BUFFER_ADDR: usize = 0x141000;
+const LCX_BUFFER_ADDR: usize      = 0x142000;
 const KRAKEN_VALID = 0x01;
 const COINBASE_VALID = 0x02;
 const LCX_VALID = 0x04;
 
-/// Get pointer to exchange buffer
+/// Get pointer to Kraken exchange buffer (primary)
 fn getExchangeBuffer() *volatile ExchangeBuffer {
     return @as(*volatile ExchangeBuffer, @ptrFromInt(EXCHANGE_BUFFER_ADDR));
+}
+
+/// Get pointer to Coinbase exchange buffer (Phase 16)
+fn getCoinbaseBuffer() *volatile ExchangeBuffer {
+    return @as(*volatile ExchangeBuffer, @ptrFromInt(COINBASE_BUFFER_ADDR));
+}
+
+/// Get pointer to LCX Exchange buffer (Phase 16)
+fn getLCXBuffer() *volatile ExchangeBuffer {
+    return @as(*volatile ExchangeBuffer, @ptrFromInt(LCX_BUFFER_ADDR));
 }
 
 /// Read real price from exchange buffer and inject into consensus
@@ -62,24 +78,58 @@ pub fn readAndInjectPrices() void {
         consensus.submit(1, @intFromEnum(types.SourceId.kraken), eth_price);
     }
 
-    // === Coinbase fallback (pair 0 & 1) ===
+    // === Coinbase fallback from Kraken buffer (old single-source mode) ===
     if ((flags & COINBASE_VALID) != 0 and (flags & KRAKEN_VALID) == 0) {
         if (btc_price > 0) {
             consensus.submit(0, @intFromEnum(types.SourceId.coinbase), btc_price);
         }
     }
 
-    // === LCX integration (Phase 22-d) ===
+    // === LCX from Kraken buffer (old single-source mode, Phase 22-d) ===
     if ((flags & LCX_VALID) != 0) {
         const lcx_price = buf.lcx_price_cents;
         if (lcx_price > 0) {
             consensus.submit(2, @intFromEnum(types.SourceId.lcx), lcx_price);
         }
     }
+
+    // === Phase 16: Read Coinbase from dedicated buffer @ 0x141000 ===
+    const cb_buf = getCoinbaseBuffer();
+    const cb_flags = cb_buf.exchange_flags;
+    if ((cb_flags & COINBASE_VALID) != 0 and cb_buf.timestamp > 0) {
+        if (cb_buf.btc_price_cents > 0) {
+            consensus.submit(0, @intFromEnum(types.SourceId.coinbase), cb_buf.btc_price_cents);
+        }
+        if (cb_buf.eth_price_cents > 0) {
+            consensus.submit(1, @intFromEnum(types.SourceId.coinbase), cb_buf.eth_price_cents);
+        }
+        if (cb_buf.lcx_price_cents > 0) {
+            consensus.submit(2, @intFromEnum(types.SourceId.coinbase), cb_buf.lcx_price_cents);
+        }
+    }
+
+    // === Phase 16: Read LCX Exchange from dedicated buffer @ 0x142000 ===
+    const lcx_buf = getLCXBuffer();
+    const lcx_ex_flags = lcx_buf.exchange_flags;
+    if ((lcx_ex_flags & LCX_VALID) != 0 and lcx_buf.timestamp > 0) {
+        if (lcx_buf.btc_price_cents > 0) {
+            consensus.submit(0, @intFromEnum(types.SourceId.lcx), lcx_buf.btc_price_cents);
+        }
+        if (lcx_buf.eth_price_cents > 0) {
+            consensus.submit(1, @intFromEnum(types.SourceId.lcx), lcx_buf.eth_price_cents);
+        }
+        if (lcx_buf.lcx_price_cents > 0) {
+            consensus.submit(2, @intFromEnum(types.SourceId.lcx), lcx_buf.lcx_price_cents);
+        }
+    }
 }
 
-/// Check if exchange buffer is active
+/// Check if any exchange buffer is active (Kraken primary + Coinbase/LCX secondary)
 pub fn isBufferActive() bool {
     const buf = getExchangeBuffer();
-    return (buf.exchange_flags & (KRAKEN_VALID | COINBASE_VALID | LCX_VALID)) != 0;
+    if ((buf.exchange_flags & (KRAKEN_VALID | COINBASE_VALID | LCX_VALID)) != 0) return true;
+    const cb_buf = getCoinbaseBuffer();
+    if ((cb_buf.exchange_flags & COINBASE_VALID) != 0) return true;
+    const lcx_buf = getLCXBuffer();
+    return (lcx_buf.exchange_flags & LCX_VALID) != 0;
 }

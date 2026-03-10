@@ -81,30 +81,60 @@ chmod 600 "$SHM_FILE"
 echo -e "${GREEN}✓ $SHM_FILE created (256MB)${NC}"
 echo ""
 
-# === Step 3: Start price feeder (writes to SHM at 0x140000) ===
-echo -e "${YELLOW}[3/4] Starting Kraken price feeder (SHM mode)...${NC}"
+# === Step 3: Start all 3 price feeders (SHM mode) ===
+echo -e "${YELLOW}[3/4] Starting price feeders (SHM mode)...${NC}"
+
+# Kraken: BTC/ETH/LCX → 0x140000
 python3 "$SCRIPT_DIR/kraken_feeder.py" \
     --shm "$SHM_FILE" \
     --interval "$INTERVAL_MS" \
-    --verbose \
-    > /tmp/omnibus_live_feeder.log 2>&1 &
+    > /tmp/omnibus_live_kraken.log 2>&1 &
 FEEDER_PID=$!
-echo -e "${GREEN}✓ Feeder PID: $FEEDER_PID${NC}"
+echo -e "${GREEN}  ✓ Kraken feeder PID: $FEEDER_PID (→ 0x140000)${NC}"
 
-# Wait for first price write
+# Coinbase: BTC/ETH/LCX → 0x141000
+python3 "$SCRIPT_DIR/coinbase_feeder.py" \
+    --shm "$SHM_FILE" \
+    --interval "$INTERVAL_MS" \
+    > /tmp/omnibus_live_coinbase.log 2>&1 &
+CB_PID=$!
+echo -e "${GREEN}  ✓ Coinbase feeder PID: $CB_PID (→ 0x141000)${NC}"
+
+# LCX Exchange: BTC/ETH/LCX → 0x142000
+python3 "$SCRIPT_DIR/lcx_feeder.py" \
+    --shm "$SHM_FILE" \
+    --interval "$INTERVAL_MS" \
+    > /tmp/omnibus_live_lcx.log 2>&1 &
+LCX_PID=$!
+echo -e "${GREEN}  ✓ LCX feeder PID: $LCX_PID (→ 0x142000)${NC}"
+
+# Wait for first price writes (check Kraken which is fastest)
 echo "  Waiting for first prices..."
-for i in $(seq 1 10); do
+for i in $(seq 1 12); do
     sleep 0.5
     if [ -f /tmp/omnibus_kraken_buffer.bin ]; then
         BTC_HEX=$(xxd -p /tmp/omnibus_kraken_buffer.bin 2>/dev/null | tr -d '\n' | cut -c17-32)
         BTC_CENTS=$(printf '%d\n' "0x$(echo $BTC_HEX | sed 's/\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)/\8\7\6\5\4\3\2\1/')" 2>/dev/null || echo 0)
         if [ "$BTC_CENTS" -gt 0 ] 2>/dev/null; then
             BTC_USD=$(echo "scale=2; $BTC_CENTS / 100" | bc 2>/dev/null || echo "?")
-            echo -e "  ${GREEN}✓ Live price: BTC=\$$BTC_USD${NC}"
+            echo -e "  ${GREEN}✓ Live BTC=\$$BTC_USD (Kraken)${NC}"
             break
         fi
     fi
 done
+
+# Update cleanup to kill all feeders
+cleanup() {
+    echo -e "\n${YELLOW}Shutting down...${NC}"
+    for pid in "$FEEDER_PID" "$CB_PID" "$LCX_PID"; do
+        [[ -n "$pid" ]] && kill "$pid" 2>/dev/null || true
+    done
+    wait "$FEEDER_PID" "$CB_PID" "$LCX_PID" 2>/dev/null || true
+    rm -f "$SHM_FILE"
+    echo -e "${GREEN}✓ Stopped cleanly${NC}"
+    exit 0
+}
+trap cleanup SIGINT SIGTERM EXIT
 echo ""
 
 # === Step 4: Boot QEMU with shared memory ===
@@ -117,7 +147,9 @@ echo "    INISIM!            (simulators active)"
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════════════════${NC}"
 echo "  Live prices injected at: phys 0x140000 (via SHM mmap)"
-echo "  Feeder log: /tmp/omnibus_live_feeder.log"
+echo "  Kraken log:  /tmp/omnibus_live_kraken.log  (→ 0x140000)"
+echo "  Coinbase log: /tmp/omnibus_live_coinbase.log (→ 0x141000)"
+echo "  LCX log:     /tmp/omnibus_live_lcx.log     (→ 0x142000)"
 echo -e "${GREEN}═══════════════════════════════════════════════════════${NC}"
 echo ""
 
@@ -137,8 +169,8 @@ fi
 echo ""
 echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
 echo -e "${BLUE}  OmniBus session ended${NC}"
-FEEDER_CYCLES=$(grep -c "Cycle\|cycle" /tmp/omnibus_live_feeder.log 2>/dev/null || echo "0")
-LAST_PRICE=$(grep -o "BTC=\\\$[0-9.]*" /tmp/omnibus_live_feeder.log 2>/dev/null | tail -1 || echo "N/A")
+FEEDER_CYCLES=$(grep -c "Cycle\|cycle" /tmp/omnibus_live_kraken.log 2>/dev/null || echo "0")
+LAST_PRICE=$(grep -o "BTC=\$[0-9.]*" /tmp/omnibus_live_kraken.log 2>/dev/null | tail -1 || echo "N/A")
 echo "  Feeder cycles: $FEEDER_CYCLES"
 echo "  Last price:    $LAST_PRICE"
 echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"

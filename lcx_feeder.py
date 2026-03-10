@@ -17,6 +17,8 @@ API: https://docs.lcx.com/
 Endpoint: https://exchange-api.lcx.com/api/ticker?pair=LCX/USDC
 """
 
+import mmap
+import os
 import requests
 import struct
 import time
@@ -87,8 +89,14 @@ class ExchangeBuffer:
 class LCXExchangeFeeder:
     """Fetches prices from LCX Exchange API"""
 
-    def __init__(self, buffer_file: str = "/tmp/omnibus_lcx_buffer.bin"):
+    # LCX Exchange buffer at 0x142000 (Kraken=0x140000, Coinbase=0x141000)
+    KERNEL_BUFFER_ADDR = 0x142000
+
+    def __init__(self, buffer_file: str = "/tmp/omnibus_lcx_buffer.bin",
+                 shm_file: str = ""):
         self.buffer_file = buffer_file
+        self.shm_file = shm_file
+        self._shm_mm: mmap.mmap | None = None
         self.session = requests.Session()
         self.cycle = 0
         self.error_count = 0
@@ -148,8 +156,30 @@ class LCXExchangeFeeder:
             log.debug(f"LCX Exchange parse error for {pair}: {e}")
             return None
 
+    def write_buffer_shm(self, buf: ExchangeBuffer) -> bool:
+        """Write to QEMU shared memory at 0x142000"""
+        try:
+            if not self.shm_file or not os.path.exists(self.shm_file):
+                return False
+            if self._shm_mm is None:
+                fd = open(self.shm_file, 'r+b')
+                self._shm_mm = mmap.mmap(fd.fileno(), 0)
+            data = buf.to_bytes()
+            self._shm_mm.seek(self.KERNEL_BUFFER_ADDR)
+            self._shm_mm.write(data)
+            self._shm_mm.flush()
+            with open(self.buffer_file, 'wb') as f:
+                f.write(data)
+            return True
+        except Exception as e:
+            log.error(f"SHM write failed: {e}")
+            self._shm_mm = None
+            return False
+
     def write_buffer(self, buf: ExchangeBuffer) -> bool:
-        """Write buffer to file"""
+        """Write buffer (SHM if available, else file)"""
+        if self.shm_file:
+            return self.write_buffer_shm(buf)
         try:
             with open(self.buffer_file, 'wb') as f:
                 f.write(buf.to_bytes())
@@ -207,7 +237,10 @@ class LCXExchangeFeeder:
         """Run feeder loop"""
         log.info(f"Starting LCX Exchange feeder (interval={interval_ms}ms)")
         log.info(f"Pairs: BTC/USDC, ETH/USDC, LCX/USDC")
-        log.info(f"Buffer: {self.buffer_file}")
+        if self.shm_file:
+            log.info(f"SHM backend → {self.shm_file} (0x{self.KERNEL_BUFFER_ADDR:X})")
+        else:
+            log.info(f"File backend → {self.buffer_file}")
 
         try:
             while True:
@@ -231,13 +264,15 @@ def main():
     parser.add_argument('--interval', type=float, default=100, help='Update interval (ms)')
     parser.add_argument('--buffer-file', default='/tmp/omnibus_lcx_buffer.bin')
     parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--shm', default='', metavar='SHM_FILE',
+                        help='QEMU memory-backend-file path for live kernel injection at 0x142000')
 
     args = parser.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    feeder = LCXExchangeFeeder(buffer_file=args.buffer_file)
+    feeder = LCXExchangeFeeder(buffer_file=args.buffer_file, shm_file=args.shm)
     success = feeder.run(args.interval)
     return 0 if success else 1
 
