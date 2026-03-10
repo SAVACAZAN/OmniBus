@@ -24,9 +24,12 @@ import struct
 from dataclasses import dataclass, field
 
 # Memory addresses (must match kernel)
-GRID_STATE_ADDR    = 0x110000   # GridState (64 bytes)
-ARB_OPP_ADDR       = 0x113840   # ArbitrageOpportunity[32]
-GRID_EXPORT_ADDR   = 0x120000   # GridMetrics export (kernel writes)
+GRID_STATE_ADDR    = 0x110000   # GridState (64 bytes, extern struct)
+ARB_OPP_ADDR       = 0x113840   # ArbitrageOpportunity[32] (96 bytes each)
+KERNEL_CYCLE_ADDR  = 0x100100   # kernel_cycle_count (u64, from startup_phase4.asm)
+GRID_EXPORT_ADDR   = 0x120000   # profit i64 written by kernel every 128 cycles
+GRID_EXPORT_TRADES = 0x120020   # total_trades u64 (written by kernel)
+GRID_EXPORT_VALID  = 0x120040   # valid flag u8 (0x01 = valid)
 NEURO_STATE_ADDR   = 0x2D0000   # NeuroState (128 bytes)
 
 # GridState extern struct: 64 bytes
@@ -42,11 +45,12 @@ ARB_OPP_FMT  = '<H B B B 3x Q Q i B 3x Q 56s'
 ARB_OPP_SIZE = struct.calcsize(ARB_OPP_FMT)         # = 96
 ARB_OPP_COUNT = 32
 
-# GridMetrics export buffer (64 bytes, u64 fields written by kernel)
-# Kernel writes: [cycle_count(8)] [profit_i64(8)] [winning(8)] [total(8)]
-#                [valid_flag(1)] pad(7) rest(32)
-GRID_EXPORT_FMT  = '<Q q Q Q B 7x 32s'
-GRID_EXPORT_SIZE = struct.calcsize(GRID_EXPORT_FMT)  # = 64
+# Kernel writes (startup_phase4.asm, every 128 cycles):
+#   [0x120000] = i64 profit from 0x110100 (Grid profit metric)
+#   [0x120020] = u64 trades from 0x110120 (Grid order count)
+#   [0x120040] = byte 0x01 (valid flag)
+GRID_EXPORT_PROFIT_FMT = '<q'   # i64 at 0x120000
+GRID_EXPORT_TRADES_FMT = '<Q'   # u64 at 0x120020
 
 EXCHANGE_NAMES = {0: "Kraken", 1: "Coinbase", 2: "LCX", 3: "?"}
 
@@ -229,21 +233,36 @@ class ShmMetricsReader:
         return sorted(results, key=lambda o: o.net_profit_bps, reverse=True)
 
     def read_grid_export(self) -> GridExportData:
-        """Read kernel-written metrics export at 0x120000"""
-        data = self._read_bytes(GRID_EXPORT_ADDR, GRID_EXPORT_SIZE)
-        if not data or len(data) < GRID_EXPORT_SIZE:
-            return GridExportData()
+        """Read kernel-written metrics export.
+        Kernel writes every 128 cycles (startup_phase4.asm scheduler):
+          0x120000 = profit i64
+          0x120020 = trades u64
+          0x120040 = valid flag byte (0x01)
+          0x100100 = kernel cycle count u64
+        """
         try:
-            fields = struct.unpack(GRID_EXPORT_FMT, data)
-            cycle_cnt, profit_cents, winning, total, valid_flag, _ = fields
-            if valid_flag != 1:
+            # Check valid flag first
+            valid_data = self._read_bytes(GRID_EXPORT_VALID, 1)
+            if not valid_data or valid_data[0] != 0x01:
                 return GridExportData()
+
+            profit_data  = self._read_bytes(GRID_EXPORT_ADDR, 8)
+            trades_data  = self._read_bytes(GRID_EXPORT_TRADES, 8)
+            cycle_data   = self._read_bytes(KERNEL_CYCLE_ADDR, 8)
+
+            if not all([profit_data, trades_data, cycle_data]):
+                return GridExportData()
+
+            profit_cents = struct.unpack('<q', profit_data)[0]
+            total_trades = struct.unpack('<Q', trades_data)[0]
+            cycle_count  = struct.unpack('<Q', cycle_data)[0]
+
             return GridExportData(
                 valid=True,
-                cycle_count=cycle_cnt,
+                cycle_count=cycle_count,
                 total_profit_cents=profit_cents,
-                winning_trades=winning,
-                total_trades=total,
+                winning_trades=0,    # Not exported separately yet
+                total_trades=total_trades,
             )
         except struct.error:
             return GridExportData()
