@@ -12,6 +12,11 @@
 
 [BITS 32]
 
+; ============================================================================
+; EXTERNAL SYMBOLS (linked from other modules)
+; ============================================================================
+extern read_sectors_bios    ; From disk_io.asm (Phase 5D disk I/O driver)
+
 ; --- Header: ENDBR32 magic + 44 NOP padding ---
 ; (Linker script places this at 0x100000)
 db 0xF3, 0x0F, 0x1E, 0xFA
@@ -361,36 +366,27 @@ long_mode_entry:
 load_sectors_pio:
     ; ============================================================================
     ; Parameters: RAX=starting_lba, RDI=buffer, RCX=sector_count
-    ; PHASE 5C: Simplified disk read (stub version)
+    ; PHASE 5D: Call real disk I/O via BIOS wrapper
     ;
-    ; Full implementation blocked by:
-    ; - QEMU IDE emulation doesn't respond reliably to port I/O in long mode
-    ; - Requires AHCI driver or BIOS INT 0x13 wrapper
-    ; - Real hardware testing needed
+    ; Uses read_sectors_bios() from disk_io.asm which:
+    ; - Temporarily switches to real mode
+    ; - Calls BIOS INT 0x13 for disk read
+    ; - Switches back to long mode
     ; ============================================================================
 
-    ; Fill memory regions with recognizable stub pattern
-    ; Pattern helps verify load completed even without actual disk I/O
-    mov rax, 0x5A5A5A5A5A5A5A5A  ; 'Z' pattern for verification
+    ; Save parameters
+    push rax                    ; LBA sector
+    push rdi                    ; Buffer
+    push rcx                    ; Sector count
 
-.read_loop:
-    cmp rcx, 0
-    je .read_done
+    ; Call disk I/O driver: read_sectors_bios(rax, rdi, rcx)
+    call read_sectors_bios
 
-    ; Fill 512 bytes (64 qwords) with pattern
-    mov r8, 64
+    ; Restore registers
+    pop rcx
+    pop rdi
+    pop rax
 
-.fill_loop:
-    mov qword [rdi], rax
-    add rdi, 8
-    dec r8
-    jnz .fill_loop
-
-    ; Next sector
-    dec rcx
-    jmp .read_loop
-
-.read_done:
     ret
 
 ; ============================================================================

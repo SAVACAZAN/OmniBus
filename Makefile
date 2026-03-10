@@ -73,10 +73,15 @@ $(BUILD_DIR)/startup.o: $(ADA_KERNEL_STARTUP) | $(BUILD_DIR)/.keep
 	@echo "[AS] Assembling kernel startup (Phase 4 + Phase 8 IDT)..."
 	nasm -f elf64 -o $@ $<
 
+# Compile disk I/O driver (Phase 5D: real disk reading)
+$(BUILD_DIR)/disk_io.o: $(ADA_DIR)/disk_io.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling disk I/O driver (Phase 5D)..."
+	nasm -f elf64 -o $@ $<
+
 # Link kernel ELF: assembly via linker script with section placement
-$(BUILD_DIR)/kernel.elf: $(BUILD_DIR)/startup.o $(ADA_KERNEL_LD)
+$(BUILD_DIR)/kernel.elf: $(BUILD_DIR)/startup.o $(BUILD_DIR)/disk_io.o $(ADA_KERNEL_LD)
 	@echo "[LD] Linking kernel ELF with linker script..."
-	ld -T $(ADA_KERNEL_LD) -o $@ $(BUILD_DIR)/startup.o 2>&1 | grep -v "warning:" || true
+	ld -T $(ADA_KERNEL_LD) -o $@ $(BUILD_DIR)/startup.o $(BUILD_DIR)/disk_io.o 2>&1 | grep -v "warning:" || true
 	@echo "  Kernel ELF: $@"
 
 # Convert kernel ELF to flat binary
