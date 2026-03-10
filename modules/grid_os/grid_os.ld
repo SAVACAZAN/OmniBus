@@ -12,23 +12,23 @@ SECTIONS
 {
   . = 0x110000;
 
-  .text ALIGN(0x1000) : {
+  .text : {
     *(.text.init_plugin)
     *(.text*)
     *(.gnu.linkonce.t*)
   }
 
-  .rodata ALIGN(0x100) : {
+  .rodata : {
     *(.rodata*)
     *(.gnu.linkonce.r*)
   }
 
-  .data ALIGN(0x100) : {
+  .data : {
     *(.data*)
     *(.gnu.linkonce.d*)
   }
 
-  .bss ALIGN(0x100) : {
+  .bss : {
     *(.bss*)
     *(COMMON)
   }

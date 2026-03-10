@@ -111,9 +111,13 @@ $(BUILD_DIR)/grid_os_stubs.o: ./modules/grid_os/libc_stubs.asm | $(BUILD_DIR)/.k
 	@echo "[AS] Assembling Grid OS libc stubs..."
 	nasm -f elf64 -o $@ $<
 
-$(BUILD_DIR)/grid_os.elf: $(BUILD_DIR)/grid_os.o $(BUILD_DIR)/grid_os_stubs.o ./modules/grid_os/grid_os.ld
+$(BUILD_DIR)/grid_os_entry.o: ./modules/grid_os/entry.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Grid OS entry wrappers..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/grid_os.elf: $(BUILD_DIR)/grid_os.o $(BUILD_DIR)/grid_os_stubs.o $(BUILD_DIR)/grid_os_entry.o ./modules/grid_os/grid_os.ld
 	@echo "[LD] Linking Grid OS ELF..."
-	ld -T ./modules/grid_os/grid_os.ld -o $@ $(BUILD_DIR)/grid_os.o $(BUILD_DIR)/grid_os_stubs.o 2>&1 | grep -v "warning:" || true
+	ld -T ./modules/grid_os/grid_os.ld -o $@ $(BUILD_DIR)/grid_os.o $(BUILD_DIR)/grid_os_stubs.o $(BUILD_DIR)/grid_os_entry.o 2>&1 | grep -v "warning:" || true
 
 $(BUILD_DIR)/grid_os.bin: $(BUILD_DIR)/grid_os.elf
 	@echo "[OC] Converting Grid OS to binary..."
@@ -169,9 +173,13 @@ $(BUILD_DIR)/blockchain_os_stubs.o: ./modules/blockchain_os/libc_stubs.asm | $(B
 	@echo "[AS] Assembling BlockchainOS libc stubs..."
 	nasm -f elf64 -o $@ $<
 
-$(BUILD_DIR)/blockchain_os.elf: $(BUILD_DIR)/blockchain_os.o $(BUILD_DIR)/blockchain_os_stubs.o ./modules/blockchain_os/blockchain_os.ld
+$(BUILD_DIR)/blockchain_os_entry.o: ./modules/blockchain_os/entry.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling BlockchainOS entry wrappers..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/blockchain_os.elf: $(BUILD_DIR)/blockchain_os.o $(BUILD_DIR)/blockchain_os_stubs.o $(BUILD_DIR)/blockchain_os_entry.o ./modules/blockchain_os/blockchain_os.ld
 	@echo "[LD] Linking BlockchainOS ELF..."
-	ld -T ./modules/blockchain_os/blockchain_os.ld -o $@ $(BUILD_DIR)/blockchain_os.o $(BUILD_DIR)/blockchain_os_stubs.o 2>&1 | grep -v "warning:" || true
+	ld -T ./modules/blockchain_os/blockchain_os.ld -o $@ $(BUILD_DIR)/blockchain_os.o $(BUILD_DIR)/blockchain_os_stubs.o $(BUILD_DIR)/blockchain_os_entry.o 2>&1 | grep -v "warning:" || true
 
 $(BUILD_DIR)/blockchain_os.bin: $(BUILD_DIR)/blockchain_os.elf
 	@echo "[OC] Converting BlockchainOS to binary..."
@@ -189,9 +197,13 @@ $(BUILD_DIR)/neuro_os_stubs.o: ./modules/neuro_os/libc_stubs.asm | $(BUILD_DIR)/
 	@echo "[AS] Assembling Neuro OS libc stubs..."
 	nasm -f elf64 -o $@ $<
 
-$(BUILD_DIR)/neuro_os.elf: $(BUILD_DIR)/neuro_os.o $(BUILD_DIR)/neuro_os_stubs.o ./modules/neuro_os/neuro_os.ld
+$(BUILD_DIR)/neuro_os_entry.o: ./modules/neuro_os/entry.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Neuro OS entry wrappers..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/neuro_os.elf: $(BUILD_DIR)/neuro_os.o $(BUILD_DIR)/neuro_os_stubs.o $(BUILD_DIR)/neuro_os_entry.o ./modules/neuro_os/neuro_os.ld
 	@echo "[LD] Linking Neuro OS ELF..."
-	ld -T ./modules/neuro_os/neuro_os.ld -o $@ $(BUILD_DIR)/neuro_os.o $(BUILD_DIR)/neuro_os_stubs.o 2>&1 | grep -v "warning:" || true
+	ld -T ./modules/neuro_os/neuro_os.ld -o $@ $(BUILD_DIR)/neuro_os.o $(BUILD_DIR)/neuro_os_stubs.o $(BUILD_DIR)/neuro_os_entry.o 2>&1 | grep -v "warning:" || true
 
 $(BUILD_DIR)/neuro_os.bin: $(BUILD_DIR)/neuro_os.elf
 	@echo "[OC] Converting Neuro OS to binary..."
