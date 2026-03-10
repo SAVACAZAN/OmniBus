@@ -36,10 +36,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
@@ -50,6 +50,7 @@ build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_
 	@echo "  Phase 32: Alert System OS (Real-time notifications) ✅"
 	@echo "  Phase 33: Multi-Kernel Federation OS (IPC message routing) ✅"
 	@echo "  Phase 34: Consensus Engine OS (Byzantine fault tolerance) ✅"
+	@echo "  Phase 35: MEV Guard OS (Sandwich/frontrun protection) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -477,6 +478,28 @@ $(BUILD_DIR)/federation_os.bin: $(BUILD_DIR)/federation_os.elf
 	@echo "[OC] Converting Federation OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Federation OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# ============================================================================
+# MEV Guard OS (L20) - Sandwich attack detection & MEV protection
+# ============================================================================
+
+$(BUILD_DIR)/mev_guard_os.o: ./modules/mev_guard_os/mev_guard_os.zig ./modules/mev_guard_os/mev_guard_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling MEV Guard OS to object file..."
+	cd ./modules/mev_guard_os && zig build-obj mev_guard_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/mev_guard_os/mev_guard_os.o ]; then mv ./modules/mev_guard_os/mev_guard_os.o $@; fi
+
+$(BUILD_DIR)/mev_guard_os_stubs.o: ./modules/mev_guard_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling MEV Guard OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/mev_guard_os.elf: $(BUILD_DIR)/mev_guard_os.o $(BUILD_DIR)/mev_guard_os_stubs.o ./modules/mev_guard_os/mev_guard_os.ld
+	@echo "[LD] Linking MEV Guard OS ELF..."
+	ld -T ./modules/mev_guard_os/mev_guard_os.ld -o $@ $(BUILD_DIR)/mev_guard_os.o $(BUILD_DIR)/mev_guard_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/mev_guard_os.bin: $(BUILD_DIR)/mev_guard_os.elf
+	@echo "[OC] Converting MEV Guard OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  MEV Guard OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)

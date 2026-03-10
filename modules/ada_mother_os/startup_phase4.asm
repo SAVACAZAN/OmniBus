@@ -688,6 +688,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; MEV Guard OS .bss @ 0x3B0100, size 0x100 (256 bytes)
+    mov rdi, 0x3B0100
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -745,6 +751,9 @@ ada64_stub_event_loop:
 
     ; Federation OS init_plugin @ 0x3A0000
     call 0x3A0000
+
+    ; MEV Guard OS init_plugin @ 0x3B0000
+    call 0x3B0000
 
     ; === SUCCESS ===
     mov al, '!'
@@ -957,6 +966,14 @@ scheduler_loop:
     jnz .skip_federation_dispatch
     call 0x3A0100                       ; Federation: run_federation_cycle (deliver messages + detect expirations)
 .skip_federation_dispatch:
+
+    ; MEV Guard OS: trigger every 524288 cycles (MEV attack detection & jitter)
+    mov rax, r11
+    mov rbx, 0x7FFFF
+    and rax, rbx
+    jnz .skip_mev_guard_dispatch
+    call 0x3B0100                       ; MEV Guard: run_mev_guard_cycle (sandwich detection + jitter update)
+.skip_mev_guard_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
