@@ -36,10 +36,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
@@ -57,6 +57,9 @@ build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_
 	@echo "  Phase 39: Disaster Recovery OS (Checkpoint/restore) ✅"
 	@echo "  Phase 40: Compliance Reporter OS (Regulatory audits) ✅"
 	@echo "  Phase 41: Liquid Staking OS (Ethereum rewards) ✅"
+	@echo "  Phase 42: Slashing Protection OS (Validator penalties & insurance) ✅"
+	@echo "  Phase 43: Orderflow Auction OS (MEV recapture & encrypted bundles) ✅"
+	@echo "  Phase 44: Circuit Breaker OS (Emergency halt mechanisms) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -585,6 +588,42 @@ $(BUILD_DIR)/liquid_staking_os.elf: $(BUILD_DIR)/liquid_staking_os.o $(BUILD_DIR
 $(BUILD_DIR)/liquid_staking_os.bin: $(BUILD_DIR)/liquid_staking_os.elf
 	objcopy -O binary $< $@
 	@echo "  Liquid Staking OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 42: Slashing Protection OS (0x430000, 64KB)
+$(BUILD_DIR)/slashing_protection_os.o: ./modules/slashing_protection_os/slashing_protection_os.zig ./modules/slashing_protection_os/slashing_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/slashing_protection_os && zig build-obj slashing_protection_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/slashing_protection_os/slashing_protection_os.o ]; then mv ./modules/slashing_protection_os/slashing_protection_os.o $@; fi
+$(BUILD_DIR)/slashing_protection_os_stubs.o: ./modules/slashing_protection_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/slashing_protection_os.elf: $(BUILD_DIR)/slashing_protection_os.o $(BUILD_DIR)/slashing_protection_os_stubs.o ./modules/slashing_protection_os/slashing_protection_os.ld
+	ld -T ./modules/slashing_protection_os/slashing_protection_os.ld -o $@ $(BUILD_DIR)/slashing_protection_os.o $(BUILD_DIR)/slashing_protection_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/slashing_protection_os.bin: $(BUILD_DIR)/slashing_protection_os.elf
+	objcopy -O binary $< $@
+	@echo "  Slashing Protection OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 43: Orderflow Auction OS (0x440000, 64KB)
+$(BUILD_DIR)/orderflow_auction_os.o: ./modules/orderflow_auction_os/orderflow_auction_os.zig ./modules/orderflow_auction_os/auction_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/orderflow_auction_os && zig build-obj orderflow_auction_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/orderflow_auction_os/orderflow_auction_os.o ]; then mv ./modules/orderflow_auction_os/orderflow_auction_os.o $@; fi
+$(BUILD_DIR)/orderflow_auction_os_stubs.o: ./modules/orderflow_auction_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/orderflow_auction_os.elf: $(BUILD_DIR)/orderflow_auction_os.o $(BUILD_DIR)/orderflow_auction_os_stubs.o ./modules/orderflow_auction_os/orderflow_auction_os.ld
+	ld -T ./modules/orderflow_auction_os/orderflow_auction_os.ld -o $@ $(BUILD_DIR)/orderflow_auction_os.o $(BUILD_DIR)/orderflow_auction_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/orderflow_auction_os.bin: $(BUILD_DIR)/orderflow_auction_os.elf
+	objcopy -O binary $< $@
+	@echo "  Orderflow Auction OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 44: Circuit Breaker OS (0x450000, 64KB)
+$(BUILD_DIR)/circuit_breaker_os.o: ./modules/circuit_breaker_os/circuit_breaker_os.zig ./modules/circuit_breaker_os/breaker_types.zig | $(BUILD_DIR)/.keep
+	cd ./modules/circuit_breaker_os && zig build-obj circuit_breaker_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/circuit_breaker_os/circuit_breaker_os.o ]; then mv ./modules/circuit_breaker_os/circuit_breaker_os.o $@; fi
+$(BUILD_DIR)/circuit_breaker_os_stubs.o: ./modules/circuit_breaker_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+$(BUILD_DIR)/circuit_breaker_os.elf: $(BUILD_DIR)/circuit_breaker_os.o $(BUILD_DIR)/circuit_breaker_os_stubs.o ./modules/circuit_breaker_os/circuit_breaker_os.ld
+	ld -T ./modules/circuit_breaker_os/circuit_breaker_os.ld -o $@ $(BUILD_DIR)/circuit_breaker_os.o $(BUILD_DIR)/circuit_breaker_os_stubs.o 2>&1 | grep -v "warning:" || true
+$(BUILD_DIR)/circuit_breaker_os.bin: $(BUILD_DIR)/circuit_breaker_os.elf
+	objcopy -O binary $< $@
+	@echo "  Circuit Breaker OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)

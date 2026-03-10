@@ -773,6 +773,15 @@ ada64_stub_event_loop:
     ; Liquid Staking OS init_plugin @ 0x420000
     call 0x420000
 
+    ; Slashing Protection OS init_plugin @ 0x430000
+    call 0x430000
+
+    ; Orderflow Auction OS init_plugin @ 0x440000
+    call 0x440000
+
+    ; Circuit Breaker OS init_plugin @ 0x450000
+    call 0x450000
+
     ; === SUCCESS ===
     mov al, '!'
     out dx, al
@@ -1040,6 +1049,30 @@ scheduler_loop:
     jnz .skip_staking_dispatch
     call 0x420100                       ; Staking: run_staking_cycle (reward accrual)
 .skip_staking_dispatch:
+
+    ; Slashing Protection OS dispatch: every 524288 cycles (0x80000)
+    mov rax, r11
+    mov rbx, 0x7FFFF
+    and rax, rbx
+    jnz .skip_slashing_dispatch
+    call 0x430100                       ; Slashing: run_slashing_cycle (penalty tracking)
+.skip_slashing_dispatch:
+
+    ; Orderflow Auction OS dispatch: every 65536 cycles (0x10000)
+    mov rax, r11
+    mov rbx, 0xFFFF
+    and rax, rbx
+    jnz .skip_auction_dispatch
+    call 0x440100                       ; Auction: run_auction_cycle (MEV recapture)
+.skip_auction_dispatch:
+
+    ; Circuit Breaker OS dispatch: every 32768 cycles (0x8000)
+    mov rax, r11
+    mov rbx, 0x7FFF
+    and rax, rbx
+    jnz .skip_breaker_dispatch
+    call 0x450100                       ; Breaker: run_breaker_cycle (emergency halt check)
+.skip_breaker_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
