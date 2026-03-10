@@ -429,12 +429,30 @@ ada64_stub_initialize:
     ret
 
 ; ============================================================================
-; 64-bit Ada Event Loop Stub
+; PHASE 9: KERNEL SCHEDULER (Cycle-based module management)
 ; ============================================================================
+
+; Kernel state (placed at 0x100100 to avoid collision with IDT at 0x101000)
+align 64
+kernel_cycle_count:  dq 0     ; Total cycles executed
+kernel_module_flags: dq 0     ; Module state bitmap
+kernel_scheduler_enabled: db 1
+
+; Scheduler constants
+SCHEDULER_CYCLES_PER_BLOCKCHAIN: equ 100   ; Call BlockchainOS every 100 cycles
+SCHEDULER_CYCLES_PER_NEURO: equ 200        ; Call NeuroOS every 200 cycles
+
+; ============================================================================
+; 64-bit Kernel Scheduler Loop (Phase 9)
+; ============================================================================
+
 ada64_stub_event_loop:
     push rax
+    push rbx
     push rdx
     mov dx, 0x3F8
+
+    ; Print "MOTHER_OS_64_OK"
     mov al, 'M'
     out dx, al
     mov al, 'O'
@@ -469,7 +487,30 @@ ada64_stub_event_loop:
     out dx, al
     mov al, 0x0A
     out dx, al
+
+    ; === SCHEDULER LOOP ===
+    ; For now: count cycles, verify modules exist, prepare for IPC
+    lea rax, [rel kernel_cycle_count]
+
+scheduler_loop:
+    ; Increment cycle counter
+    mov rbx, [rax]
+    inc rbx
+    mov [rax], rbx
+
+    ; Module call-out would happen here (future: BlockchainOS, NeuroOS, Grid OS)
+    ; For now, just cycle and loop
+
+    ; Busy loop with periodic status (prevent infinite loop detection)
+    mov rcx, 1000000
+busy_wait:
+    dec rcx
+    jnz busy_wait
+
+    jmp scheduler_loop
+
     pop rdx
+    pop rbx
     pop rax
     cli
 .halt:
