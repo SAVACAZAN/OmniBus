@@ -36,12 +36,12 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS loaded"
-	@echo "  Phase 12: Bank settlement (SWIFT/ACH) enabled"
-	@echo "  Phase 13: MEV protection (order obfuscation) enabled"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report loaded"
+	@echo "  Phase 22: Real module execution (Phase 22 ✅)"
+	@echo "  Phase 23: Report OS (Daily PnL/Sharpe/Drawdown)"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -256,6 +256,25 @@ $(BUILD_DIR)/stealth_os.bin: $(BUILD_DIR)/stealth_os.elf
 	objcopy -O binary $< $@
 	@echo "  Stealth OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
+# Report OS (0x300000, 256KB) — L8: Daily PnL/Sharpe/Drawdown Analytics
+$(BUILD_DIR)/report_os.o: ./modules/report_os/report_os.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Report OS to object file..."
+	cd ./modules/report_os && zig build-obj report_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/report_os/report_os.o ]; then mv ./modules/report_os/report_os.o $@; fi
+
+$(BUILD_DIR)/report_os_stubs.o: ./modules/report_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Report OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/report_os.elf: $(BUILD_DIR)/report_os.o $(BUILD_DIR)/report_os_stubs.o ./modules/report_os/report_os.ld
+	@echo "[LD] Linking Report OS ELF..."
+	ld -T ./modules/report_os/report_os.ld -o $@ $(BUILD_DIR)/report_os.o $(BUILD_DIR)/report_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/report_os.bin: $(BUILD_DIR)/report_os.elf
+	@echo "[OC] Converting Report OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Report OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
 # ============================================================================
 # FALLBACK: OS module stubs (if Zig build fails, use NASM stubs)
 # ============================================================================
@@ -337,6 +356,10 @@ $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stu
 		echo "  [WARN] StealthOS binary not found, attempting Zig build..."; \
 		$(MAKE) $(BUILD_DIR)/stealth_os.bin 2>/dev/null; \
 	fi
+	@if [ ! -f $(BUILD_DIR)/report_os.bin ]; then \
+		echo "  [WARN] Report OS binary not found, attempting Zig build..."; \
+		$(MAKE) $(BUILD_DIR)/report_os.bin 2>/dev/null; \
+	fi
 	@# Determine which binaries to use
 	@GRID_BIN=$$([ -f $(BUILD_DIR)/grid_os.bin ] && echo $(BUILD_DIR)/grid_os.bin || echo $(BUILD_DIR)/grid_stub.bin); \
 	ANALYTICS_BIN=$$([ -f $(BUILD_DIR)/analytics_os.bin ] && echo $(BUILD_DIR)/analytics_os.bin || echo $(BUILD_DIR)/analytics_stub.bin); \
@@ -345,8 +368,9 @@ $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stu
 	NEURO_BIN=$$([ -f $(BUILD_DIR)/neuro_os.bin ] && echo $(BUILD_DIR)/neuro_os.bin || echo /dev/zero); \
 	BANK_BIN=$$([ -f $(BUILD_DIR)/bank_os.bin ] && echo $(BUILD_DIR)/bank_os.bin || echo /dev/zero); \
 	STEALTH_BIN=$$([ -f $(BUILD_DIR)/stealth_os.bin ] && echo $(BUILD_DIR)/stealth_os.bin || echo /dev/zero); \
-	echo "[IMG] Using: Grid=$$(basename $$GRID_BIN) Analytics=$$(basename $$ANALYTICS_BIN) Exec=$$(basename $$EXEC_BIN) Blockchain=$$(basename $$BLOCKCHAIN_BIN) Neuro=$$(basename $$NEURO_BIN) Bank=$$(basename $$BANK_BIN) Stealth=$$(basename $$STEALTH_BIN)"; \
-	dd if=/dev/zero of=$(OUTPUT) bs=512 count=23552 2>/dev/null; \
+	REPORT_BIN=$$([ -f $(BUILD_DIR)/report_os.bin ] && echo $(BUILD_DIR)/report_os.bin || echo /dev/zero); \
+	echo "[IMG] Using: Grid=$$(basename $$GRID_BIN) Analytics=$$(basename $$ANALYTICS_BIN) Exec=$$(basename $$EXEC_BIN) Blockchain=$$(basename $$BLOCKCHAIN_BIN) Neuro=$$(basename $$NEURO_BIN) Bank=$$(basename $$BANK_BIN) Stealth=$$(basename $$STEALTH_BIN) Report=$$(basename $$REPORT_BIN)"; \
+	dd if=/dev/zero of=$(OUTPUT) bs=512 count=25088 2>/dev/null; \
 	dd if=$(BUILD_DIR)/boot.bin of=$(OUTPUT) bs=512 count=1 conv=notrunc 2>/dev/null; \
 	dd if=$(BUILD_DIR)/stage2.bin of=$(OUTPUT) bs=512 seek=1 conv=notrunc 2>/dev/null; \
 	dd if=$(BUILD_DIR)/kernel_stub.bin of=$(OUTPUT) bs=512 seek=2048 conv=notrunc 2>/dev/null; \
@@ -356,7 +380,8 @@ $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stu
 	dd if=$$BLOCKCHAIN_BIN of=$(OUTPUT) bs=512 seek=5632 conv=notrunc 2>/dev/null; \
 	dd if=$$NEURO_BIN of=$(OUTPUT) bs=512 seek=6016 conv=notrunc 2>/dev/null; \
 	dd if=$$BANK_BIN of=$(OUTPUT) bs=512 seek=7040 conv=notrunc 2>/dev/null; \
-	dd if=$$STEALTH_BIN of=$(OUTPUT) bs=512 seek=7424 conv=notrunc 2>/dev/null
+	dd if=$$STEALTH_BIN of=$(OUTPUT) bs=512 seek=7424 conv=notrunc 2>/dev/null; \
+	dd if=$$REPORT_BIN of=$(OUTPUT) bs=512 seek=7808 conv=notrunc 2>/dev/null
 	@echo "  Disk image: $(OUTPUT) ($$(stat -c%s $(OUTPUT)) bytes)"
 	@echo "  Sector layout:"
 	@echo "    Boot:       sector 0-0       (512B)"

@@ -640,6 +640,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; Report OS .bss @ 0x300158, size 0x48 (72 bytes) — placeholder, will update after build
+    mov rdi, 0x300158
+    mov rcx, 0x48 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -667,6 +673,9 @@ ada64_stub_event_loop:
 
     ; StealthOS init_plugin @ 0x2C0000
     call 0x2C0000
+
+    ; Report OS init_plugin @ 0x300000
+    call 0x300000
 
     ; === SUCCESS ===
     mov al, '!'
@@ -806,6 +815,13 @@ scheduler_loop:
     jnz .skip_stealth_dispatch
     call 0x2C0640                       ; Stealth: run_stealth_cycle @ 0x2C0640
 .skip_stealth_dispatch:
+
+    ; Report OS: trigger every 1024 cycles (daily analytics)
+    mov rax, r11
+    test al, 0x3FF
+    jnz .skip_report_dispatch
+    call 0x300000                       ; Report: This will call run_report_cycle after init
+.skip_report_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
