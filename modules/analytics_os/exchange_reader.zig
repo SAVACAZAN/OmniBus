@@ -6,15 +6,18 @@ const types = @import("types.zig");
 const consensus = @import("consensus.zig");
 
 /// Exchange data buffer layout (shared with external feeder)
+/// Extended Phase 22-d: Added LCX support (72 bytes total)
 pub const ExchangeBuffer = struct {
     timestamp: u64,           // 0x140000: Last update time
     btc_price_cents: u64,     // 0x140008: BTC_USD in cents
     btc_volume_sats: u64,     // 0x140010: BTC volume in satoshis
     eth_price_cents: u64,     // 0x140018: ETH_USD in cents
     eth_volume_sats: u64,     // 0x140020: ETH volume in satoshis
-    exchange_flags: u32,      // 0x140028: Kraken(0), Coinbase(1), LCX(2)
+    exchange_flags: u32,      // 0x140028: Kraken(0x01), Coinbase(0x02), LCX(0x04)
     _reserved: u32,           // 0x14002C
     last_tsc: u64,            // 0x140030: TSC of last read
+    lcx_price_cents: u64,     // 0x140038: LCX_USD in cents (Phase 22-d)
+    lcx_volume_sats: u64,     // 0x140040: LCX volume in satoshis
 };
 
 const EXCHANGE_BUFFER_ADDR: usize = 0x140000;
@@ -35,9 +38,7 @@ pub fn readAndInjectPrices() void {
     // === Phase 22-b: Read from external feeder ===
     const timestamp = buf.timestamp;
     const btc_price = buf.btc_price_cents;
-    const btc_volume = buf.btc_volume_sats;
     const eth_price = buf.eth_price_cents;
-    const eth_volume = buf.eth_volume_sats;
     const flags = buf.exchange_flags;
 
     // Validate that buffer has recent data
@@ -52,52 +53,28 @@ pub fn readAndInjectPrices() void {
     }
 
     // === Inject BTC price into consensus (pair 0) ===
-    if ((flags & KRAKEN_VALID) != 0) {
-        const btc_tick = types.Tick{
-            .exchange_id = 0, // Kraken
-            .pair_id = 0,     // BTC_USD
-            .price_cents = btc_price,
-            .bid_cents = btc_price - 50,   // Simplified bid/ask
-            .ask_cents = btc_price + 50,
-            .size_sats = btc_volume,
-            .timestamp = timestamp,
-        };
-        consensus.addTick(0, btc_tick); // Pair 0 = BTC
+    if ((flags & KRAKEN_VALID) != 0 and btc_price > 0) {
+        consensus.submit(0, @intFromEnum(types.SourceId.kraken), btc_price);
     }
 
     // === Inject ETH price into consensus (pair 1) ===
-    if ((flags & KRAKEN_VALID) != 0) {
-        const eth_tick = types.Tick{
-            .exchange_id = 0,  // Kraken
-            .pair_id = 1,      // ETH_USD
-            .price_cents = eth_price,
-            .bid_cents = eth_price - 10,   // Tighter spread for ETH
-            .ask_cents = eth_price + 10,
-            .size_sats = eth_volume,
-            .timestamp = timestamp,
-        };
-        consensus.addTick(1, eth_tick); // Pair 1 = ETH
+    if ((flags & KRAKEN_VALID) != 0 and eth_price > 0) {
+        consensus.submit(1, @intFromEnum(types.SourceId.kraken), eth_price);
     }
 
     // === Coinbase fallback (pair 0 & 1) ===
     if ((flags & COINBASE_VALID) != 0 and (flags & KRAKEN_VALID) == 0) {
-        // Use Coinbase data if Kraken unavailable
-        const btc_tick = types.Tick{
-            .exchange_id = 1,
-            .pair_id = 0,
-            .price_cents = btc_price,
-            .bid_cents = btc_price - 50,
-            .ask_cents = btc_price + 50,
-            .size_sats = btc_volume,
-            .timestamp = timestamp,
-        };
-        consensus.addTick(0, btc_tick);
+        if (btc_price > 0) {
+            consensus.submit(0, @intFromEnum(types.SourceId.coinbase), btc_price);
+        }
     }
 
-    // === LCX integration (for future staking data) ===
+    // === LCX integration (Phase 22-d) ===
     if ((flags & LCX_VALID) != 0) {
-        // LCX typically has EGLD data; reserve for Phase 25
-        _ = eth_price; // Use ETH as proxy for now
+        const lcx_price = buf.lcx_price_cents;
+        if (lcx_price > 0) {
+            consensus.submit(2, @intFromEnum(types.SourceId.lcx), lcx_price);
+        }
     }
 }
 
