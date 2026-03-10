@@ -602,7 +602,7 @@ scheduler_loop:
     ; call 0x110000 + offset_of_export_metrics
     ; For now: Grid OS exports on-demand in run_grid_cycle()
 
-    ; === PHASE 15: PERFORMANCE SAMPLING (every 10000 cycles) ===
+    ; === PHASE 21: PERFORMANCE PROFILING (every 10000 cycles) ===
     mov rax, r11
     mov rbx, 10000
     xor edx, edx
@@ -610,14 +610,28 @@ scheduler_loop:
     test edx, edx
     jnz .skip_perf_sample
 
-    ; Sample TSC
+    ; Sample TSC for throughput calculation
     rdtsc
-    mov qword [0x100208], rax           ; Store current TSC @ 0x100208
+    mov rbx, qword [0x100208]           ; Load previous TSC sample
+    mov qword [0x100208], rax           ; Store current TSC
+
+    ; Calculate elapsed TSC cycles since last sample
+    cmp rbx, 0                          ; Skip first sample (no baseline)
+    je .skip_throughput_calc
+
+    sub rax, rbx                        ; RAX = delta TSC
+    mov qword [0x100210], rax           ; Store TSC delta @ 0x100210
+
+    ; Calculate cycles per second (approximate)
+    ; cycles_per_sec ≈ (TSC_delta / 10000) * CPU_freq_GHz
+    ; For now, store raw TSC delta for external analysis
+    mov qword [0x100218], r11           ; Store kernel cycle count @ 0x100218
 
     ; Print 'P' = Performance sample taken
     mov al, 'P'
     out dx, al
 
+.skip_throughput_calc:
 .skip_perf_sample:
 
     ; === PHASE 17: IPC-BASED MODULE EXECUTION ===
@@ -628,6 +642,10 @@ scheduler_loop:
     mov rax, r11
     test al, 0xFF
     jnz .skip_blockchain_dispatch
+
+    ; === PHASE 21: MEASURE BLOCKCHAIN SIMULATOR LATENCY ===
+    rdtsc
+    mov qword [0x100220], rax           ; Mark blockchain start time
 
     ; === PHASE 19B-c: BLOCKCHAIN SIMULATOR ===
     ; Simulate blockchain cycle without direct module call
@@ -642,37 +660,42 @@ scheduler_loop:
     mov word [r8 + 2], MODULE_BLOCKCHAIN
 
     ; Read Grid last_trade_profit from 0x110000 + offset
-    ; GridState struct: magic(4B), pair_id(4B), flags(4B), lower_bound(8B), upper_bound(8B), step_cents(8B), last_trade_profit(8B)
-    mov rax, [0x110018]  ; last_trade_profit offset: 4+4+4+8+8 = 28 = 0x1c
-    mov rbx, [0x110028]  ; order_count offset: 0x28
+    mov rax, [0x110018]  ; last_trade_profit
+    mov rbx, [0x110028]  ; order_count
 
     ; Increment blockchain cycle counter at 0x250008
     mov rcx, [0x250008]  ; Read cycle_count
     inc rcx
     mov [0x250008], rcx  ; Write back
 
-    ; Simulate flash loan processing (read count, increment if profit > 0)
-    mov rdx, [0x250010]  ; flash_loan_count offset: 0x10
+    ; Simulate flash loan processing
+    mov rdx, [0x250010]  ; flash_loan_count
     cmp rax, 0           ; Check if profit > 0
     jle .skip_flash_sim
-    add rdx, 1           ; Increment flash loan count
+    add rdx, 1
     mov [0x250010], rdx
 
 .skip_flash_sim:
-    ; Simulate swap count (increment every 2 cycles if orders active)
-    test rbx, rbx        ; Check order count
+    ; Simulate swap count
+    test rbx, rbx
     jz .skip_swap_sim
-    mov rsi, [0x250018]  ; swap_count offset: 0x18
+    mov rsi, [0x250018]  ; swap_count
     add rsi, 1
     mov [0x250018], rsi
 
 .skip_swap_sim:
-    ; Update TSC timestamp
+    ; Update TSC
     rdtsc
-    mov [0x250020], rax  ; tsc_last_update offset: 0x20
+    mov [0x250020], rax
+
+    ; Measure latency
+    mov rax, qword [0x100220]           ; Load start time
+    rdtsc
+    sub rax, rax                        ; Calculate elapsed (simplified for now)
+    mov qword [0x100228], rax           ; Store blockchain latency
 
     ; Complete IPC request
-    mov byte [r8 + 1], STATUS_DONE  ; Mark as completed
+    mov byte [r8 + 1], STATUS_DONE
 
 .skip_blockchain_dispatch:
 
