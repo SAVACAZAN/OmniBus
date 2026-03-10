@@ -553,6 +553,13 @@ scheduler_loop:
     inc r11
     mov [r10], r11
 
+    ; === PHASE 12: Grid OS Metrics Export ===
+    ; Grid OS exports trading metrics every cycle to 0x120000
+    ; NeuroOS reads these metrics to evaluate fitness
+    ; Scheduler would normally call Grid OS export_metrics() here:
+    ; call 0x110000 + offset_of_export_metrics
+    ; For now: Grid OS exports on-demand in run_grid_cycle()
+
     ; BlockchainOS: trigger every 256 cycles (cycle_count & 0xFF == 0)
     mov rax, r11
     test al, 0xFF

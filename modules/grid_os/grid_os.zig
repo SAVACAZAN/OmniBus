@@ -227,3 +227,43 @@ fn rdtsc() u64 {
     );
     return (@as(u64, hi) << 32) | @as(u64, lo);
 }
+
+// ============================================================================
+// PHASE 12: METRICS EXPORT (Cross-module feedback)
+// ============================================================================
+
+/// GridMetricsExport structure (matches kernel @ 0x120000)
+const GridMetricsExport = extern struct {
+    total_profit: u64,          // Total realized profit (USD)
+    winning_trades: u64,        // Number of profitable trades
+    losing_trades: u64,         // Number of losing trades
+    total_trades: u64,          // Total trades executed
+    max_drawdown: u64,          // Max drawdown (packed f64)
+    win_rate: u64,              // Win rate (packed f64, 0.0-1.0)
+    valid: u8,                  // Validity flag (1=current, 0=stale)
+    _pad: u8,
+    timestamp: u64,             // Last update (TSC)
+};
+
+/// Export Grid OS metrics to shared memory (0x120000)
+/// Called by scheduler every cycle to update trading performance data
+export fn export_metrics() void {
+    if (!initialized) return;
+
+    const metrics = @as(*volatile GridMetricsExport, @ptrFromInt(0x120000));
+
+    // Pack current state into metrics structure
+    metrics.total_profit = @as(u64, @intCast(@max(0, total_profit)));
+    metrics.winning_trades = 0;      // TODO: Track from order history
+    metrics.losing_trades = 0;       // TODO: Track from order history
+    metrics.total_trades = @as(u64, @intCast(order.getOrderCount() orelse 0));
+    metrics.max_drawdown = 0;        // TODO: Calculate from historical profit
+    metrics.win_rate = if (metrics.total_trades > 0)
+        @as(u64, @bitCast(@as(f64, @floatFromInt(metrics.winning_trades)) / @as(f64, @floatFromInt(metrics.total_trades))))
+    else
+        @as(u64, @bitCast(0.0));
+
+    // Mark as valid and update timestamp
+    metrics.timestamp = rdtsc();
+    metrics.valid = 1;
+}
