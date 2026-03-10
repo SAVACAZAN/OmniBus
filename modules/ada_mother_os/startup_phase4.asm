@@ -643,59 +643,51 @@ scheduler_loop:
     test al, 0xFF
     jnz .skip_blockchain_dispatch
 
-    ; === PHASE 21: MEASURE BLOCKCHAIN SIMULATOR LATENCY ===
+    ; === PHASE 21-2: OPTIMIZED BLOCKCHAIN SIMULATOR ===
+    ; Hot path optimization: reduce memory reads, parallelize checks
+
+    ; Start timing
     rdtsc
-    mov qword [0x100220], rax           ; Mark blockchain start time
+    mov r9, rax                         ; R9 = start time (preserve for latency calc)
 
-    ; === PHASE 19B-c: BLOCKCHAIN SIMULATOR ===
-    ; Simulate blockchain cycle without direct module call
-    ; 1. Read Grid metrics (real data)
-    ; 2. Process flash loan requests (simulate)
-    ; 3. Update blockchain state
-    ; 4. Complete IPC request
+    ; Parallel reads (fetch all blockchain state at once)
+    mov rax, [0x110018]  ; Grid profit (prefetch)
+    mov rbx, [0x110028]  ; Grid order_count
+    mov rcx, [0x250008]  ; Blockchain cycle_count
+    mov rdx, [0x250010]  ; Blockchain flash_loan_count
 
-    ; Set IPC request
-    mov byte [r8 + 0], REQUEST_BLOCKCHAIN_CYCLE
-    mov byte [r8 + 1], STATUS_BUSY
-    mov word [r8 + 2], MODULE_BLOCKCHAIN
+    ; Set IPC request (single write instead of 3)
+    mov [r8 + 0], dword REQUEST_BLOCKCHAIN_CYCLE | (STATUS_BUSY << 8) | (MODULE_BLOCKCHAIN << 16)
 
-    ; Read Grid last_trade_profit from 0x110000 + offset
-    mov rax, [0x110018]  ; last_trade_profit
-    mov rbx, [0x110028]  ; order_count
-
-    ; Increment blockchain cycle counter at 0x250008
-    mov rcx, [0x250008]  ; Read cycle_count
+    ; Increment cycle counter
     inc rcx
-    mov [0x250008], rcx  ; Write back
+    mov [0x250008], rcx
 
-    ; Simulate flash loan processing
-    mov rdx, [0x250010]  ; flash_loan_count
-    cmp rax, 0           ; Check if profit > 0
-    jle .skip_flash_sim
-    add rdx, 1
-    mov [0x250010], rdx
+    ; Process loans if profit > 0 (single compare)
+    cmp rax, 0
+    jle .blockchain_skip_loans
+    inc rdx                             ; One instruction instead of mov+add
 
-.skip_flash_sim:
-    ; Simulate swap count
-    test rbx, rbx
-    jz .skip_swap_sim
+.blockchain_skip_loans:
+    ; Simulate swaps if orders active
     mov rsi, [0x250018]  ; swap_count
-    add rsi, 1
-    mov [0x250018], rsi
+    test rbx, rbx
+    jz .blockchain_skip_swaps
+    inc rsi
 
-.skip_swap_sim:
-    ; Update TSC
-    rdtsc
-    mov [0x250020], rax
+.blockchain_skip_swaps:
+    ; Write back updated counters (grouped write)
+    mov [0x250010], rdx  ; flash_loan_count
+    mov [0x250018], rsi  ; swap_count
 
-    ; Measure latency
-    mov rax, qword [0x100220]           ; Load start time
+    ; Update TSC and complete IPC
     rdtsc
-    sub rax, rax                        ; Calculate elapsed (simplified for now)
+    mov [0x250020], rax  ; tsc_last_update
+    mov byte [r8 + 1], STATUS_DONE  ; Complete IPC
+
+    ; Measure actual latency
+    sub rax, r9                         ; RAX = elapsed CPU cycles (FIXED)
     mov qword [0x100228], rax           ; Store blockchain latency
-
-    ; Complete IPC request
-    mov byte [r8 + 1], STATUS_DONE
 
 .skip_blockchain_dispatch:
 
@@ -727,62 +719,62 @@ scheduler_loop:
     inc rcx
     mov [0x2D0008], rcx
 
-    ; Simulate population size tracking
+    ; === PHASE 21-2: OPTIMIZED NEURO SIMULATOR ===
+    ; Simulate population size tracking with bounds checking
     mov rdx, [0x2D0010]  ; population_size
     cmp rax, 0           ; Check if fitness > 0
-    jle .skip_pop_grow
-    add rdx, 1           ; Grow population if fitness improves
+    jle .neuro_skip_grow
+    inc rdx               ; Grow (single instruction)
     cmp rdx, 256
-    jle .skip_pop_cap
-    mov rdx, 256         ; Cap at 256
-.skip_pop_cap:
-    mov [0x2D0010], rdx
+    jle .neuro_write_state
+    mov rdx, 256          ; Cap
 
-.skip_pop_grow:
-    ; Write optimization parameters to export buffer (0x120040)
-    ; These are the evolved parameters that Grid OS will use next cycle
-    mov rax, rdx         ; population_size
-    mov [0x120040], rax  ; Export as optimization parameter
+.neuro_write_state:
+    ; Write NeuroOS state and export parameters (optimized writes)
+    mov [0x2D0010], rdx   ; Update population_size
+    mov [0x120040], rdx   ; Export to Grid (no intermediate move)
+    mov [0x120048], rcx   ; Export generation
 
-    ; Write generation number
-    mov [0x120048], rcx
-
-    ; Mark NeuroOS parameters as valid
-    mov byte [0x120050], 0x01
-
-    ; Update TSC
+    ; Update TSC once
     rdtsc
-    mov [0x2D0018], rax  ; tsc_last_update
+    mov [0x2D0018], rax   ; tsc_last_update
 
-    ; Complete IPC request
+    ; Complete IPC and mark valid in single write
     mov byte [r8 + 1], STATUS_DONE
+    mov byte [0x120050], 0x01  ; Mark parameters valid
+    jmp .neuro_done
+
+.neuro_skip_grow:
+    ; Even without growth, export current state
+    mov qword [0x2D0010], rdx
+    mov qword [0x120040], rdx
+    mov qword [0x120048], rcx
+    mov byte [0x120050], 0x01
+    mov byte [r8 + 1], STATUS_DONE
+
+.neuro_done:
 
 .skip_neuro_dispatch:
 
-    ; === PHASE 19B-b: GRID OS PASSTHROUGH ===
+    ; === PHASE 21-2: OPTIMIZED GRID PASSTHROUGH ===
     ; Grid OS: Read real metrics every 128 cycles
     mov rax, r11
     test al, 0x7F
     jnz .skip_grid_metrics
 
-    ; Grid OS is at 0x110000 - read its metrics directly
-    ; GridState structure: [magic:4][pair_id:4][last_profit:8][level_count:4][order_count:4]...
+    ; === Parallel memory reads (prefetch all at once) ===
+    mov rax, [0x110100]  ; Grid profit metric
+    mov rbx, [0x110120]  ; Grid order count (RBX for grouping)
 
-    ; Read last_profit from Grid OS (offset ~32 bytes from base)
-    mov rax, [0x110100]  ; Estimated offset for profit metric
-    mov [0x120000], rax  ; Write to export buffer (total_profit)
+    ; Write to export buffer (optimized: no intermediate moves)
+    mov [0x120000], rax  ; total_profit
+    mov [0x120020], rbx  ; total_trades proxy
 
-    ; Read order count from Grid OS
-    mov eax, [0x110120]  ; Estimated offset for order_count
-    mov [0x120020], rax  ; Write to export buffer (total_trades proxy)
-
-    ; Mark metrics as valid (set valid flag)
-    mov byte [0x120040], 0x01  ; Metrics valid flag
-
-    ; Update IPC: Grid OS metrics ready
+    ; Update IPC state and mark valid (combined operations)
     mov byte [r8 + 0], REQUEST_NONE
     mov byte [r8 + 1], STATUS_DONE
     mov qword [r8 + 8], 0  ; Return value = success
+    mov byte [0x120040], 0x01  ; Metrics valid flag
 
 .skip_grid_metrics:
 
