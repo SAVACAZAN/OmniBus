@@ -257,7 +257,7 @@ $(BUILD_DIR)/stealth_os.bin: $(BUILD_DIR)/stealth_os.elf
 	@echo "  Stealth OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # Report OS (0x300000, 256KB) — L8: Daily PnL/Sharpe/Drawdown Analytics
-$(BUILD_DIR)/report_os.o: ./modules/report_os/report_os.zig | $(BUILD_DIR)/.keep
+$(BUILD_DIR)/report_os.o: ./modules/report_os/report_os.zig ./modules/report_os/report_os_types.zig ./modules/report_os/omni_struct.zig | $(BUILD_DIR)/.keep
 	@echo "[ZIG] Compiling Report OS to object file..."
 	cd ./modules/report_os && zig build-obj report_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
 	@if [ -f ./modules/report_os/report_os.o ]; then mv ./modules/report_os/report_os.o $@; fi

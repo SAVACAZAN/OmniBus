@@ -646,6 +646,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; OmniStruct @ 0x400000, size 0x2200 (8704 bytes) - central nervous system
+    mov rdi, 0x400000
+    mov rcx, 0x2200 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -816,11 +822,11 @@ scheduler_loop:
     call 0x2C0640                       ; Stealth: run_stealth_cycle @ 0x2C0640
 .skip_stealth_dispatch:
 
-    ; Report OS: trigger every 1024 cycles (daily analytics)
+    ; Report OS: trigger every 1024 cycles (central aggregator + OmniStruct updates)
     mov rax, r11
     test al, 0x3FF
     jnz .skip_report_dispatch
-    call 0x300000                       ; Report: This will call run_report_cycle after init
+    call 0x300080                       ; Report: run_report_cycle (aggregates all Tier 1 states → OmniStruct)
 .skip_report_dispatch:
 
     ; Busy loop (prevent QEMU timeout)

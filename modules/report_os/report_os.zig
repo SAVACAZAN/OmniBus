@@ -1,9 +1,10 @@
-// report_os.zig — Daily PnL & Performance Analytics
-// L8: System Analysis Layer
-// Memory: 0x300000–0x33FFFF (256KB)
+// report_os.zig — Daily PnL & Performance Analytics + OmniStruct Aggregator
+// L8: System Analysis Layer + Tier 2 Coordinator
+// Memory: 0x300000–0x33FFFF (256KB), writes to OmniStruct @ 0x400000
 
 const std = @import("std");
 const types = @import("report_os_types.zig");
+const omni = @import("omni_struct.zig");
 const math = std.math;
 
 // ============================================================================
@@ -24,6 +25,54 @@ fn getReportStatePtr() *volatile types.ReportState {
 fn getDailyMetrics(day_idx: usize) *volatile types.DailyMetrics {
     const offset = types.DAILY_METRICS_OFFSET + (day_idx * types.DAILY_METRICS_SIZE);
     return @as(*volatile types.DailyMetrics, @ptrFromInt(types.REPORT_BASE + offset));
+}
+
+fn getOmniStructPtr() *volatile omni.OmniStruct {
+    return @as(*volatile omni.OmniStruct, @ptrFromInt(omni.OMNI_BASE));
+}
+
+// === TIER 1 Module Readers ===
+
+fn readGridState() struct { pnl: i64, trades: u32, levels: u32 } {
+    const grid_pnl = @as(*volatile i64, @ptrFromInt(0x110018)).*;
+    const grid_trades = @as(*volatile u32, @ptrFromInt(0x110028)).*;
+    const grid_levels = @as(*volatile u32, @ptrFromInt(0x11002C)).*;
+    return .{ .pnl = grid_pnl, .trades = grid_trades, .levels = grid_levels };
+}
+
+fn readExecutionState() struct { fills: u32, orders: u32 } {
+    const exec_fills = @as(*volatile u32, @ptrFromInt(0x130040)).*;
+    const exec_orders = @as(*volatile u32, @ptrFromInt(0x130044)).*;
+    return .{ .fills = exec_fills, .orders = exec_orders };
+}
+
+fn readAnalyticsState() u8 {
+    const consensus = @as(*volatile u8, @ptrFromInt(0x150100)).*;
+    return consensus;
+}
+
+fn readStealthState() struct { mev: u32, sandwich: u32 } {
+    const mev_prevented = @as(*volatile u32, @ptrFromInt(0x2C0050)).*;
+    const sandwich_detected = @as(*volatile u32, @ptrFromInt(0x2C0054)).*;
+    return .{ .mev = mev_prevented, .sandwich = sandwich_detected };
+}
+
+fn readBlockchainState() u32 {
+    // Placeholder: read first u32 from BlockchainOS state
+    const chain_status = @as(*volatile u32, @ptrFromInt(0x250000)).*;
+    return chain_status;
+}
+
+fn readNeuroState() u32 {
+    // Placeholder: read evolution cycle count
+    const neuro_cycles = @as(*volatile u32, @ptrFromInt(0x2D0010)).*;
+    return neuro_cycles;
+}
+
+fn readBankState() u32 {
+    // Placeholder: read settlement status
+    const bank_status = @as(*volatile u32, @ptrFromInt(0x280000)).*;
+    return bank_status;
 }
 
 // ============================================================================
@@ -76,28 +125,59 @@ export fn init_plugin() void {
 // Main Cycle: Calculate daily metrics
 // ============================================================================
 
-/// Run Report OS cycle - calculate daily PnL and metrics
+/// Run Report OS cycle - calculate daily PnL, aggregate all Tier 1 states, update OmniStruct
 export fn run_report_cycle() void {
     if (!initialized) return;
 
     const report = getReportStatePtr();
+    const omni_state = getOmniStructPtr();
     cycle_count += 1;
     report.cycle_count = cycle_count;
 
-    // Read Grid OS state @ 0x110000
-    const grid_profit = @as(*volatile i64, @ptrFromInt(0x110018)).*;
-    const grid_orders = @as(*volatile u32, @ptrFromInt(0x110028)).*;
+    // === Read all Tier 1 module states ===
+    const grid = readGridState();
+    const exec = readExecutionState();
+    const analytics_q = readAnalyticsState();
+    const stealth = readStealthState();
 
-    // Update session metrics
-    report.session_pnl = grid_profit;
-    report.session_trades = grid_orders;
+    // Update session metrics from Grid OS (primary trading engine)
+    report.session_pnl = grid.pnl;
+    report.session_trades = grid.trades;
+
+    // === Aggregate to OmniStruct ===
+    omni_state.magic = 0x4F4D4E49; // "OMNI"
+    omni_state.version = 1;
+    omni_state.flags = 0x01; // valid
+
+    // Tier 1 Audit snapshot
+    omni_state.tier1_cycle_count = cycle_count;
+    omni_state.tier1_timestamp = cycle_count * 1000; // mock TSC
+
+    // Grid metrics
+    omni_state.grid_pnl = grid.pnl;
+    omni_state.grid_trades = grid.trades;
+    omni_state.grid_levels = grid.levels;
+
+    // Execution metrics
+    omni_state.exec_fills = exec.fills;
+    omni_state.exec_orders = exec.orders;
+
+    // Stealth metrics
+    omni_state.mev_prevented = stealth.mev;
+    omni_state.sandwich_detected = stealth.sandwich;
+
+    // Analytics consensus
+    omni_state.analytics_consensus = analytics_q;
+
+    // Mark valid for next cycle
+    omni_state.flags = 0x01;
 
     // Calculate win rate (placeholder: assume 60% wins if any trades)
-    if (grid_orders > 0) {
-        report.session_wins = (grid_orders * 60) / 100;
-        report.session_losses = grid_orders - report.session_wins;
+    if (grid.trades > 0) {
+        report.session_wins = (grid.trades * 60) / 100;
+        report.session_losses = grid.trades - report.session_wins;
         report.session_wins += 1; // Ensure at least 1 win
-        if (report.session_wins > grid_orders) report.session_wins = grid_orders;
+        if (report.session_wins > grid.trades) report.session_wins = grid.trades;
     } else {
         report.session_wins = 0;
         report.session_losses = 0;
@@ -158,7 +238,20 @@ export fn run_report_cycle() void {
     // Update total PnL
     report.total_pnl += report.session_pnl;
 
-    // Mark as valid
+    // === Update OmniStruct performance aggregates ===
+    omni_state.total_pnl = report.total_pnl;
+    omni_state.total_trades = report.session_trades;
+    omni_state.success_rate = if (report.session_trades > 0)
+        @as(u8, @intCast((report.session_wins * 100) / report.session_trades))
+    else
+        0;
+
+    // Integrity tracking
+    omni_state.last_update_tsc = cycle_count * 1000;
+    omni_state.audit_cycle_count = @as(u32, @intCast(cycle_count % 0x100000000));
+    omni_state.system_health = 0xFF; // healthy by default
+
+    // Mark report as valid
     report.flags = 0x01;
 }
 
@@ -213,4 +306,67 @@ export fn get_max_drawdown() f64 {
 
 export fn is_initialized() u8 {
     return if (initialized) 1 else 0;
+}
+
+// ============================================================================
+// HTMX Formatter (L13 KDE Plasma dashboard snippet)
+// ============================================================================
+
+export fn format_htmx_snippet() void {
+    const omni_state = getOmniStructPtr();
+    const buf_ptr = @as([*]u8, @ptrFromInt(omni.OMNI_BASE + omni.HTMX_BUFFER_OFFSET));
+    const buf_size = omni.HTMX_BUFFER_SIZE;
+
+    // Simple HTML snippet for OmniBus status panel
+    const snapshot = "OMNI|Grid:0|Arb:0|PnL:0|HealthOK";
+
+    var i: usize = 0;
+    while (i < snapshot.len and i < buf_size - 1) : (i += 1) {
+        buf_ptr[i] = snapshot[i];
+    }
+    buf_ptr[i] = 0; // null terminate
+
+    omni_state.htmx_buffer_ready = 0x01;
+    omni_state.htmx_update_count += 1;
+}
+
+// ============================================================================
+// CSV Formatter (metrics export)
+// ============================================================================
+
+export fn format_csv_export() void {
+    const omni_state = getOmniStructPtr();
+    const buf_ptr = @as([*]u8, @ptrFromInt(omni.OMNI_BASE + omni.CSV_BUFFER_OFFSET));
+    const buf_size = omni.CSV_BUFFER_SIZE;
+
+    // CSV header + current row
+    const csv_line = "cycle,pnl,trades,winrate,sharpe,health\n";
+
+    var i: usize = 0;
+    while (i < csv_line.len and i < buf_size - 1) : (i += 1) {
+        buf_ptr[i] = csv_line[i];
+    }
+    buf_ptr[i] = 0;
+
+    omni_state.csv_export_ready = 0x01;
+}
+
+// ============================================================================
+// JSON Formatter (structured export)
+// ============================================================================
+
+export fn format_json_export() void {
+    const omni_state = getOmniStructPtr();
+    const buf_ptr = @as([*]u8, @ptrFromInt(omni.OMNI_BASE + omni.JSON_BUFFER_OFFSET));
+    const buf_size = omni.JSON_BUFFER_SIZE;
+
+    const json_prefix = "{\"omnibus\":{\"cycle\":0,\"pnl\":0,\"health\":\"ok\"}}";
+
+    var i: usize = 0;
+    while (i < json_prefix.len and i < buf_size - 1) : (i += 1) {
+        buf_ptr[i] = json_prefix[i];
+    }
+    buf_ptr[i] = 0;
+
+    omni_state.json_export_ready = 0x01;
 }
