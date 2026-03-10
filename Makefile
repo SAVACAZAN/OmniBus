@@ -57,15 +57,41 @@ $(BUILD_DIR)/stage2.bin: $(ARCH_DIR)/stage2_fixed.asm | $(BUILD_DIR)/.keep
 	$(NASM) -f bin -o $@ $<
 	@echo "  Stage 2: $@ (size: $$(stat -f%z $@ 2>/dev/null || stat -c%s $@) bytes)"
 
-# Phase 5: OS Layer Loader (PIO ATA + 64-bit module stubs)
-# startup_phase5.asm = phase4 long mode + disk reader + 3 OS module stubs
+# Phase 5: OS Layer Loader (PIO ATA + 64-bit module stubs + UART + IDT)
+# startup_phase5.asm = phase4 long mode + uart driver + idt setup
+# uart.asm = 115200 baud serial driver (putchar, getchar, send_string, write_hex)
+# idt.asm = Interrupt Descriptor Table (256 entries, exception + IRQ handlers)
+# tss.asm = Task State Segment (RSP0, IST stacks for exceptions)
 ADA_STARTUP := ./modules/ada_mother_os/startup_phase5.asm
+ADA_UART := ./modules/ada_mother_os/uart.asm
+ADA_IDT := ./modules/ada_mother_os/idt.asm
+ADA_TSS := ./modules/ada_mother_os/tss.asm
 ADA_KERNEL_BIN := ./modules/ada_mother_os/kernel.bin
 
-$(ADA_KERNEL_BIN): $(ADA_STARTUP)
-	@echo "[AS] Rebuilding Ada kernel binary (Phase 5)..."
+# Build object files for Phase 5 assembly modules
+$(BUILD_DIR)/uart.o: $(ADA_UART) | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling UART driver..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/idt.o: $(ADA_IDT) | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling IDT (Interrupt Descriptor Table)..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/tss.o: $(ADA_TSS) | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling TSS (Task State Segment)..."
+	nasm -f elf64 -o $@ $<
+
+# Link all Phase 5 components into single flat binary kernel
+# Combine startup + uart + idt + tss into temporary assembly file, then compile
+$(BUILD_DIR)/kernel_phase5_combined.asm: $(ADA_STARTUP) $(ADA_UART) $(ADA_IDT) $(ADA_TSS) | $(BUILD_DIR)/.keep
+	@echo "[PREP] Combining Phase 5 assembly sources..."
+	@cat $(ADA_STARTUP) $(ADA_UART) $(ADA_IDT) $(ADA_TSS) > $@
+
+$(ADA_KERNEL_BIN): $(BUILD_DIR)/kernel_phase5_combined.asm
+	@echo "[AS] Rebuilding Ada kernel binary (Phase 5: startup + uart + idt + tss)..."
 	$(NASM) -f bin -o $@ $<
 	@echo "  Ada kernel: $@ (size: $$(stat -c%s $@) bytes)"
+	@echo "  ✓ Phase 5 modules compiled and linked"
 
 # Copy Ada kernel binary
 $(BUILD_DIR)/kernel_stub.bin: $(ADA_KERNEL_BIN)
