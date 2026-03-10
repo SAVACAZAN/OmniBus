@@ -11,6 +11,7 @@ const order = @import("order.zig");
 const feed_reader = @import("feed_reader.zig");
 const scanner = @import("scanner.zig");
 const rebalance = @import("rebalance.zig");
+const multi_exchange = @import("multi_exchange.zig");
 
 // ============================================================================
 // Module State
@@ -150,7 +151,39 @@ export fn run_grid_cycle() void {
             _ = pending_idx;
         }
 
-        // Detect arbitrage opportunities
+        // === PHASE 10: MULTI-EXCHANGE ARBITRAGE ===
+        // Detect opportunities across Kraken ↔ Coinbase ↔ LCX simultaneously
+        const min_spread_bps = 50; // 0.5% minimum spread to execute
+        const opportunities = multi_exchange.scanAllPairs(min_spread_bps);
+
+        // Check BTC opportunities
+        if (opportunities.btc_opportunity) |btc_opp| {
+            const profit = multi_exchange.calculateProfit(&btc_opp, btc_opp.volume_available, 30); // 0.3% fees
+            if (profit > 0) {
+                total_profit += profit;
+                cycle_count += 1; // Count successful multi-exchange executions
+            }
+        }
+
+        // Check ETH opportunities
+        if (opportunities.eth_opportunity) |eth_opp| {
+            const profit = multi_exchange.calculateProfit(&eth_opp, eth_opp.volume_available, 30);
+            if (profit > 0) {
+                total_profit += profit;
+                cycle_count += 1;
+            }
+        }
+
+        // Check LCX opportunities
+        if (opportunities.lcx_opportunity) |lcx_opp| {
+            const profit = multi_exchange.calculateProfit(&lcx_opp, lcx_opp.volume_available, 30);
+            if (profit > 0) {
+                total_profit += profit;
+                cycle_count += 1;
+            }
+        }
+
+        // === LEGACY: TWO-EXCHANGE DETECTION ===
         if (bid_ask.bid > 0 and bid_ask.ask > 0) {
             const profit_bps = scanner.detectTwoExchange(0, 0, bid_ask.ask, 1, bid_ask.bid);
             if (profit_bps >= types.MIN_PROFIT_BPS) {
