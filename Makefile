@@ -724,8 +724,12 @@ $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stu
 	BANK_BIN=$$([ -f $(BUILD_DIR)/bank_os.bin ] && echo $(BUILD_DIR)/bank_os.bin || echo /dev/zero); \
 	STEALTH_BIN=$$([ -f $(BUILD_DIR)/stealth_os.bin ] && echo $(BUILD_DIR)/stealth_os.bin || echo /dev/zero); \
 	REPORT_BIN=$$([ -f $(BUILD_DIR)/report_os.bin ] && echo $(BUILD_DIR)/report_os.bin || echo /dev/zero); \
-	echo "[IMG] Using: Grid=$$(basename $$GRID_BIN) Analytics=$$(basename $$ANALYTICS_BIN) Exec=$$(basename $$EXEC_BIN) Blockchain=$$(basename $$BLOCKCHAIN_BIN) Neuro=$$(basename $$NEURO_BIN) Bank=$$(basename $$BANK_BIN) Stealth=$$(basename $$STEALTH_BIN) Report=$$(basename $$REPORT_BIN)"; \
-	dd if=/dev/zero of=$(OUTPUT) bs=512 count=25088 2>/dev/null; \
+	SEL4_BIN=$$([ -f $(BUILD_DIR)/sel4_microkernel.bin ] && echo $(BUILD_DIR)/sel4_microkernel.bin || echo /dev/zero); \
+	CV_BIN=$$([ -f $(BUILD_DIR)/cross_validator_os.bin ] && echo $(BUILD_DIR)/cross_validator_os.bin || echo /dev/zero); \
+	PC_BIN=$$([ -f $(BUILD_DIR)/proof_checker.bin ] && echo $(BUILD_DIR)/proof_checker.bin || echo /dev/zero); \
+	CT_BIN=$$([ -f $(BUILD_DIR)/convergence_test_os.bin ] && echo $(BUILD_DIR)/convergence_test_os.bin || echo /dev/zero); \
+	echo "[IMG] Using: Grid=$$(basename $$GRID_BIN) Analytics=$$(basename $$ANALYTICS_BIN) Exec=$$(basename $$EXEC_BIN) Blockchain=$$(basename $$BLOCKCHAIN_BIN) Neuro=$$(basename $$NEURO_BIN) Bank=$$(basename $$BANK_BIN) Stealth=$$(basename $$STEALTH_BIN) Report=$$(basename $$REPORT_BIN) seL4=$$(basename $$SEL4_BIN) CrossVal=$$(basename $$CV_BIN) ProofChk=$$(basename $$PC_BIN) ConvTest=$$(basename $$CT_BIN)"; \
+	dd if=/dev/zero of=$(OUTPUT) bs=512 count=30000 2>/dev/null; \
 	dd if=$(BUILD_DIR)/boot.bin of=$(OUTPUT) bs=512 count=1 conv=notrunc 2>/dev/null; \
 	dd if=$(BUILD_DIR)/stage2.bin of=$(OUTPUT) bs=512 seek=1 conv=notrunc 2>/dev/null; \
 	dd if=$(BUILD_DIR)/kernel_stub.bin of=$(OUTPUT) bs=512 seek=2048 conv=notrunc 2>/dev/null; \
@@ -736,19 +740,28 @@ $(OUTPUT): $(BUILD_DIR)/boot.bin $(BUILD_DIR)/stage2.bin $(BUILD_DIR)/kernel_stu
 	dd if=$$NEURO_BIN of=$(OUTPUT) bs=512 seek=6016 conv=notrunc 2>/dev/null; \
 	dd if=$$BANK_BIN of=$(OUTPUT) bs=512 seek=7040 conv=notrunc 2>/dev/null; \
 	dd if=$$STEALTH_BIN of=$(OUTPUT) bs=512 seek=7424 conv=notrunc 2>/dev/null; \
-	dd if=$$REPORT_BIN of=$(OUTPUT) bs=512 seek=7808 conv=notrunc 2>/dev/null
+	dd if=$$REPORT_BIN of=$(OUTPUT) bs=512 seek=7808 conv=notrunc 2>/dev/null; \
+	dd if=$$SEL4_BIN of=$(OUTPUT) bs=512 seek=7824 conv=notrunc 2>/dev/null; \
+	dd if=$$CV_BIN of=$(OUTPUT) bs=512 seek=7840 conv=notrunc 2>/dev/null; \
+	dd if=$$PC_BIN of=$(OUTPUT) bs=512 seek=7856 conv=notrunc 2>/dev/null; \
+	dd if=$$CT_BIN of=$(OUTPUT) bs=512 seek=7872 conv=notrunc 2>/dev/null
 	@echo "  Disk image: $(OUTPUT) ($$(stat -c%s $(OUTPUT)) bytes)"
 	@echo "  Sector layout:"
-	@echo "    Boot:       sector 0-0       (512B)"
-	@echo "    Stage2:     sector 1-1       (512B)"
-	@echo "    Kernel:     sector 2048-2176 (128KB kernel)"
-	@echo "    Grid OS:    sector 4096-4351 (256 sectors, 128KB @ 0x110000)"
-	@echo "    Analytics:  sector 4352-5375 (1024 sectors, 512KB @ 0x150000)"
-	@echo "    Exec OS:    sector 5376-5631 (256 sectors, 128KB @ 0x130000)"
-	@echo "    BlockchainOS: sector 5632-6015 (384 sectors, 192KB @ 0x250000)"
-	@echo "    NeuroOS:    sector 6016-7039 (1024 sectors, 512KB @ 0x2D0000)"
-	@echo "    BankOS:     sector 7040-7423 (384 sectors, 192KB @ 0x280000)"
-	@echo "    StealthOS:  sector 7424-7807 (384 sectors, 192KB @ 0x2C0000)"
+	@echo "    Boot:           sector 0-0       (512B)"
+	@echo "    Stage2:         sector 1-1       (512B)"
+	@echo "    Kernel:         sector 2048-2176 (128KB kernel)"
+	@echo "    Grid OS:        sector 4096-4351 (256 sectors, 128KB @ 0x110000)"
+	@echo "    Analytics:      sector 4352-5375 (1024 sectors, 512KB @ 0x150000)"
+	@echo "    Exec OS:        sector 5376-5631 (256 sectors, 128KB @ 0x130000)"
+	@echo "    BlockchainOS:   sector 5632-6015 (384 sectors, 192KB @ 0x250000)"
+	@echo "    NeuroOS:        sector 6016-7039 (1024 sectors, 512KB @ 0x2D0000)"
+	@echo "    BankOS:         sector 7040-7423 (384 sectors, 192KB @ 0x280000)"
+	@echo "    StealthOS:      sector 7424-7807 (384 sectors, 192KB @ 0x2C0000)"
+	@echo "    Report OS:      sector 7808-7823 (16 sectors @ 0x3A0000)"
+	@echo "    seL4 µkernel:   sector 7824-7839 (16 sectors @ 0x4A0000)"
+	@echo "    Cross-Validator: sector 7840-7855 (16 sectors @ 0x4B0000)"
+	@echo "    Proof Checker:  sector 7856-7871 (16 sectors @ 0x4C0000)"
+	@echo "    Convergence Test: sector 7872-7887 (16 sectors @ 0x4D0000)"
 
 # ============================================================================
 # RUN: Execute in QEMU

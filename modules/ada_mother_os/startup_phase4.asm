@@ -332,6 +332,46 @@ long_mode_entry:
     mov rcx, 1024
     call load_sectors_pio
 
+    ; UART '4' = Phase 50a: seL4 Microkernel load starting
+    mov al, '4'
+    out dx, al
+
+    ; Load seL4 Microkernel from sectors 7824+ (16 sectors = 8KB) → 0x4A0000
+    mov rax, 7824
+    mov rdi, 0x4A0000
+    mov rcx, 16
+    call load_sectors_pio
+
+    ; UART '5' = Phase 50b: Cross-Validator load starting
+    mov al, '5'
+    out dx, al
+
+    ; Load Cross-Validator from sectors 7840+ (16 sectors = 8KB) → 0x4B0000
+    mov rax, 7840
+    mov rdi, 0x4B0000
+    mov rcx, 16
+    call load_sectors_pio
+
+    ; UART '6' = Phase 50c: Proof Checker load starting
+    mov al, '6'
+    out dx, al
+
+    ; Load Proof Checker from sectors 7856+ (16 sectors = 8KB) → 0x4C0000
+    mov rax, 7856
+    mov rdi, 0x4C0000
+    mov rcx, 16
+    call load_sectors_pio
+
+    ; UART '7' = Phase 50d: Convergence Test load starting
+    mov al, '7'
+    out dx, al
+
+    ; Load Convergence Test from sectors 7872+ (16 sectors = 8KB) → 0x4D0000
+    mov rax, 7872
+    mov rdi, 0x4D0000
+    mov rcx, 16
+    call load_sectors_pio
+
     ; UART 'S' = All sectors loaded successfully
     mov al, 'S'
     out dx, al
