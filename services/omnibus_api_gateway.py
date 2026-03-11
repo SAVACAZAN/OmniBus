@@ -388,6 +388,14 @@ async def serve_dashboard():
         return dashboard_path
     return JSONResponse({"error": "Dashboard not found"}, status_code=404)
 
+@app.get("/dashboard_v2_ws.html", response_class=FileResponse)
+async def serve_dashboard_v2_ws():
+    """Serve WebSocket real-time dashboard"""
+    dashboard_path = os.path.join(os.path.dirname(__file__), "..", "web", "dashboard_v2_ws.html")
+    if os.path.exists(dashboard_path):
+        return dashboard_path
+    return JSONResponse({"error": "Dashboard v2 (WebSocket) not found"}, status_code=404)
+
 # ============================================================================
 # Health Check
 # ============================================================================
