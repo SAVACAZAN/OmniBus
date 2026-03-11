@@ -33,10 +33,10 @@ from profiler_reader import read_profiler_summary, read_module_profile
 # ============================================================================
 
 API_VERSION = "1.0.0"
-OMNIBUS_HOST = "127.0.0.1"
-OMNIBUS_PORT = 9000  # OmniBus IPC port
-REDIS_HOST = "localhost"  # Local Redis connection
-REDIS_PORT = 6379
+OMNIBUS_HOST = os.getenv("OMNIBUS_HOST", "127.0.0.1")
+OMNIBUS_PORT = int(os.getenv("OMNIBUS_PORT", "9000"))
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 MAX_CONNECTIONS_PER_USER = 5
 RATE_LIMIT_REQUESTS_PER_SECOND = 100
 

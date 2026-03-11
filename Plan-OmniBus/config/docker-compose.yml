@@ -19,11 +19,11 @@ services:
   # API Gateway (Single instance for development)
   api-gateway:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: ../../
+      dockerfile: Plan-OmniBus/config/Dockerfile
     container_name: omnibus-api-gateway
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -33,7 +33,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ../services:/app
+      - ../../services:/app
     command: python -m uvicorn omnibus_api_gateway:app --host 0.0.0.0 --port 8000 --reload
 
   # Nginx Load Balancer (for testing horizontal scaling)

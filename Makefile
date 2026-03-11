@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker/DomainResolver loaded"
@@ -1228,3 +1228,153 @@ $(BUILD_DIR)/gcp_os.bin: $(BUILD_DIR)/gcp_os.elf
 	@echo "[OC] Converting GCPOS to binary..."
 	objcopy -O binary $< $@
 	@echo "  GCPOS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# ============================================================================
+# PHASE 52: SECURITY GOVERNANCE LAYER (7 modules)
+# ============================================================================
+
+# L15: SAVAos (0x380000, 15KB) — SDK author identity validation
+$(BUILD_DIR)/savaos.o: ./modules/security/savaos.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling SAVAos to object file..."
+	cd ./modules/security && zig build-obj savaos.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/security/savaos.o ]; then mv ./modules/security/savaos.o $@; fi
+
+$(BUILD_DIR)/savaos_stubs.o: ./modules/security/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling SAVAos libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/savaos.elf: $(BUILD_DIR)/savaos.o $(BUILD_DIR)/savaos_stubs.o ./modules/security/savaos.ld
+	@echo "[LD] Linking SAVAos ELF..."
+	ld -T ./modules/security/savaos.ld -o $@ $(BUILD_DIR)/savaos.o $(BUILD_DIR)/savaos_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/savaos.bin: $(BUILD_DIR)/savaos.elf
+	@echo "[OC] Converting SAVAos to binary..."
+	objcopy -O binary $< $@
+	@echo "  SAVAos binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# L16: CAZANos (0x383C00, 18KB) — Subsystem instantiation
+$(BUILD_DIR)/cazanos.o: ./modules/security/cazanos.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling CAZANos to object file..."
+	cd ./modules/security && zig build-obj cazanos.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/security/cazanos.o ]; then mv ./modules/security/cazanos.o $@; fi
+
+$(BUILD_DIR)/cazanos_stubs.o: ./modules/security/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling CAZANos libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/cazanos.elf: $(BUILD_DIR)/cazanos.o $(BUILD_DIR)/cazanos_stubs.o ./modules/security/cazanos.ld
+	@echo "[LD] Linking CAZANos ELF..."
+	ld -T ./modules/security/cazanos.ld -o $@ $(BUILD_DIR)/cazanos.o $(BUILD_DIR)/cazanos_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/cazanos.bin: $(BUILD_DIR)/cazanos.elf
+	@echo "[OC] Converting CAZANos to binary..."
+	objcopy -O binary $< $@
+	@echo "  CAZANos binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# L17: SAVACAZANos (0x388000, 21KB) — Unified permissions
+$(BUILD_DIR)/savacazanos.o: ./modules/security/savacazanos.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling SAVACAZANos to object file..."
+	cd ./modules/security && zig build-obj savacazanos.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/security/savacazanos.o ]; then mv ./modules/security/savacazanos.o $@; fi
+
+$(BUILD_DIR)/savacazanos_stubs.o: ./modules/security/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling SAVACAZANos libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/savacazanos.elf: $(BUILD_DIR)/savacazanos.o $(BUILD_DIR)/savacazanos_stubs.o ./modules/security/savacazanos.ld
+	@echo "[LD] Linking SAVACAZANos ELF..."
+	ld -T ./modules/security/savacazanos.ld -o $@ $(BUILD_DIR)/savacazanos.o $(BUILD_DIR)/savacazanos_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/savacazanos.bin: $(BUILD_DIR)/savacazanos.elf
+	@echo "[OC] Converting SAVACAZANos to binary..."
+	objcopy -O binary $< $@
+	@echo "  SAVACAZANos binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# L18: Vortex Bridge (0x3A0000, 30KB) — Message routing
+$(BUILD_DIR)/vortex_bridge.o: ./modules/security/vortex_bridge.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Vortex Bridge to object file..."
+	cd ./modules/security && zig build-obj vortex_bridge.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/security/vortex_bridge.o ]; then mv ./modules/security/vortex_bridge.o $@; fi
+
+$(BUILD_DIR)/vortex_stubs.o: ./modules/security/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Vortex stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/vortex_bridge.elf: $(BUILD_DIR)/vortex_bridge.o $(BUILD_DIR)/vortex_stubs.o ./modules/security/vortex_bridge.ld
+	@echo "[LD] Linking Vortex Bridge ELF..."
+	ld -T ./modules/security/vortex_bridge.ld -o $@ $(BUILD_DIR)/vortex_bridge.o $(BUILD_DIR)/vortex_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/vortex_bridge.bin: $(BUILD_DIR)/vortex_bridge.elf
+	@echo "[OC] Converting Vortex Bridge to binary..."
+	objcopy -O binary $< $@
+	@echo "  Vortex Bridge binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# L19: Triage System (0x3A7800, 21KB) — Alert priority queue
+$(BUILD_DIR)/triage_system.o: ./modules/security/triage_system.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Triage System to object file..."
+	cd ./modules/security && zig build-obj triage_system.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/security/triage_system.o ]; then mv ./modules/security/triage_system.o $@; fi
+
+$(BUILD_DIR)/triage_stubs.o: ./modules/security/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Triage stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/triage_system.elf: $(BUILD_DIR)/triage_system.o $(BUILD_DIR)/triage_stubs.o ./modules/security/triage_system.ld
+	@echo "[LD] Linking Triage System ELF..."
+	ld -T ./modules/security/triage_system.ld -o $@ $(BUILD_DIR)/triage_system.o $(BUILD_DIR)/triage_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/triage_system.bin: $(BUILD_DIR)/triage_system.elf
+	@echo "[OC] Converting Triage System to binary..."
+	objcopy -O binary $< $@
+	@echo "  Triage System binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# L20: Consensus Core (0x3AD000, 36KB) — Quorum voting
+$(BUILD_DIR)/consensus_core.o: ./modules/security/consensus_core.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Consensus Core to object file..."
+	cd ./modules/security && zig build-obj consensus_core.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/security/consensus_core.o ]; then mv ./modules/security/consensus_core.o $@; fi
+
+$(BUILD_DIR)/consensus_stubs.o: ./modules/security/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Consensus stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/consensus_core.elf: $(BUILD_DIR)/consensus_core.o $(BUILD_DIR)/consensus_stubs.o ./modules/security/consensus_core.ld
+	@echo "[LD] Linking Consensus Core ELF..."
+	ld -T ./modules/security/consensus_core.ld -o $@ $(BUILD_DIR)/consensus_core.o $(BUILD_DIR)/consensus_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/consensus_core.bin: $(BUILD_DIR)/consensus_core.elf
+	@echo "[OC] Converting Consensus Core to binary..."
+	objcopy -O binary $< $@
+	@echo "  Consensus Core binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# L21: Zen.OS (0x3B7800, 18KB) — State checkpoint
+$(BUILD_DIR)/zen_os.o: ./modules/security/zen_os.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Zen.OS to object file..."
+	cd ./modules/security && zig build-obj zen_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/security/zen_os.o ]; then mv ./modules/security/zen_os.o $@; fi
+
+$(BUILD_DIR)/zen_stubs.o: ./modules/security/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Zen.OS stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/zen_os.elf: $(BUILD_DIR)/zen_os.o $(BUILD_DIR)/zen_stubs.o ./modules/security/zen_os.ld
+	@echo "[LD] Linking Zen.OS ELF..."
+	ld -T ./modules/security/zen_os.ld -o $@ $(BUILD_DIR)/zen_os.o $(BUILD_DIR)/zen_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/zen_os.bin: $(BUILD_DIR)/zen_os.elf
+	@echo "[OC] Converting Zen.OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Zen.OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+	@echo ""
+	@echo "✓ PHASE 52: SECURITY GOVERNANCE LAYER COMPLETE"
+	@echo "  L15: SAVAos (Identity validation) @ 0x380000"
+	@echo "  L16: CAZANos (Subsystem spawn) @ 0x383C00"
+	@echo "  L17: SAVACAZANos (Unified permissions) @ 0x388000"
+	@echo "  L18: Vortex Bridge (Message routing) @ 0x3A0000"
+	@echo "  L19: Triage System (Alert queue) @ 0x3A7800"
+	@echo "  L20: Consensus Core (5/7 voting) @ 0x3AD000"
+	@echo "  L21: Zen.OS (State checkpoint) @ 0x3B7800"
+	@echo "  Total: 159KB, 0x380000–0x3BAFFF (Plugin segment)"
+	@echo "  HAP Protocol: ∅ ∞ ∃! ≅ activated"
+	@echo ""
+

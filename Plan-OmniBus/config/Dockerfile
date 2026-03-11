@@ -13,8 +13,8 @@ COPY services/requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
-COPY services/omnibus_api_gateway.py .
+# Copy all application files
+COPY services/*.py .
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
