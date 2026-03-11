@@ -26,6 +26,7 @@ import httpx
 from orderbook_fetcher import OrderbookFetcher
 from parallel_tick_aggregator import get_aggregator, init_aggregator
 from kernel_memory_reader import read_ohlcv, read_market_matrix
+from profiler_reader import read_profiler_summary, read_module_profile
 
 # ============================================================================
 # Configuration
@@ -410,6 +411,14 @@ async def serve_market_profile_dashboard():
     if os.path.exists(dashboard_path):
         return dashboard_path
     return JSONResponse({"error": "Market profile dashboard not found"}, status_code=404)
+
+@app.get("/profiler.html", response_class=FileResponse)
+async def serve_profiler_dashboard():
+    """Serve performance profiler dashboard (Phase 47)"""
+    dashboard_path = os.path.join(os.path.dirname(__file__), "..", "web", "profiler_dashboard.html")
+    if os.path.exists(dashboard_path):
+        return dashboard_path
+    return JSONResponse({"error": "Profiler dashboard not found"}, status_code=404)
 
 # ============================================================================
 # Health Check
@@ -1023,6 +1032,52 @@ async def get_market_matrix():
             "status": "error",
             "matrix_base": "0x169000"
         }
+
+# ============================================================================
+# Performance Profiler Endpoints (Phase 47)
+# ============================================================================
+
+@app.get("/api/profiler/summary")
+async def get_profiler_summary():
+    """Get comprehensive profiler summary with module latencies"""
+    try:
+        return read_profiler_summary()
+    except Exception as e:
+        logger.warning(f"Failed to read profiler: {e}")
+        return {
+            "error": str(e),
+            "status": "error",
+            "profiler_base": "0x3E0000"
+        }
+
+@app.get("/api/profiler/module/{module_id}")
+async def get_module_profile_endpoint(module_id: int):
+    """Get profile for specific module (0-32)"""
+    try:
+        return read_module_profile(module_id)
+    except Exception as e:
+        logger.warning(f"Failed to read module {module_id} profile: {e}")
+        return {
+            "error": str(e),
+            "module_id": module_id,
+            "status": "error"
+        }
+
+@app.get("/api/profiler/modules/{limit}")
+async def get_hottest_modules(limit: int = 10):
+    """Get modules with highest max latency"""
+    try:
+        from profiler_reader import get_profiler_reader
+        reader = get_profiler_reader()
+        hottest = reader.get_hottest_modules(limit)
+        return {
+            "status": "ok",
+            "count": len(hottest),
+            "modules": hottest
+        }
+    except Exception as e:
+        logger.warning(f"Failed to get hottest modules: {e}")
+        return {"error": str(e), "status": "error"}
 
 # ============================================================================
 # Main
