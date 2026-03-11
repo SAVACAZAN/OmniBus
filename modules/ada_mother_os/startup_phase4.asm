@@ -712,6 +712,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; Convergence Test OS .bss @ 0x4D0100, size 0x100 (256 bytes)
+    mov rdi, 0x4D0100
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -820,6 +826,9 @@ ada64_stub_event_loop:
 
     ; Proof Checker OS init_plugin @ 0x4C0100 (T1-T4 security theorems)
     call 0x4C0100
+
+    ; Convergence Test OS init_plugin @ 0x4D0100 (dual-kernel convergence verification)
+    call 0x4D0100
 
     ; === SUCCESS ===
     mov al, '!'
@@ -1165,6 +1174,13 @@ scheduler_loop:
     jnz .skip_proof_dispatch
     call 0x4C0200                       ; ProofChecker: run_proof_check_cycle
 .skip_proof_dispatch:
+
+    ; Convergence Test OS dispatch: every 32768 cycles (0x7FFF) — convergence tracking & divergence detection
+    mov rax, r11
+    and rax, 0x7FFF
+    jnz .skip_convergence_dispatch
+    call 0x4D0200                       ; ConvergenceTest: run_convergence_cycle
+.skip_convergence_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
