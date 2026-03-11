@@ -631,6 +631,26 @@ async def metrics():
         "timestamp": time.time(),
     }
 
+@app.get("/api/users")
+async def get_connected_users():
+    """Get list of connected users with IP addresses and session count"""
+    users_list = []
+
+    for user_id, ip_set in user_ips.items():
+        for ip in ip_set:
+            connection_count = len(active_connections.get(user_id, []))
+            users_list.append({
+                "user_id": user_id,
+                "ip_address": ip,
+                "sessions": connection_count,
+            })
+
+    return {
+        "total_unique_users": len(user_ips),
+        "total_connections": sum(len(c) for c in active_connections.values()),
+        "users": users_list,
+    }
+
 # ============================================================================
 # Main
 # ============================================================================
