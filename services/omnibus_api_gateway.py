@@ -478,7 +478,8 @@ def read_real_prices():
         # Offset 0x40: lcx_volume (Q, 8 bytes)
 
         # Unpack: timestamp, btc_cents, btc_vol, eth_cents, eth_vol, flags, reserved, tsc, lcx_cents, lcx_vol
-        unpacked = struct.unpack('<QQQQQIIQQ', data)  # All 72 bytes
+        # Format: 5Q (40) + 2I (8) + 3Q (24) = 72 bytes total  (10 format codes)
+        unpacked = struct.unpack('<QQQQQIIQQQ', data[:72])  # 5Q + 2I + 3Q = 72 bytes
 
         btc_cents = unpacked[1]  # Index 1 = BTC price in cents
         eth_cents = unpacked[3]  # Index 3 = ETH price in cents
