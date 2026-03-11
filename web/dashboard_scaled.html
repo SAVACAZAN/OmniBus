@@ -208,6 +208,29 @@
         </div>
     </div>
 
+    <!-- Connected Users -->
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold mb-4">Connected Users</h2>
+        <div style="background-color: var(--surface); border: 1px solid #334155; border-radius: 8px; overflow: hidden;">
+            <table class="w-full">
+                <thead style="background-color: #1e293b; border-bottom: 1px solid #334155;">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-gray-300">User ID</th>
+                        <th class="px-4 py-3 text-left text-gray-300">IP Address</th>
+                        <th class="px-4 py-3 text-left text-gray-300">OS</th>
+                        <th class="px-4 py-3 text-left text-gray-300">Browser</th>
+                        <th class="px-4 py-3 text-left text-gray-300">Sessions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-body">
+                    <tr>
+                        <td class="px-4 py-3 text-gray-400" colspan="5">Loading connected users...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- User Statistics -->
     <div class="grid grid-cols-3 gap-4 mb-6">
         <div class="metric-card">
@@ -431,6 +454,11 @@ class DashboardManager {
 
                 console.log(`Real metrics: active_users=${data.active_users}, connections=${data.active_connections}`);
 
+                // Fetch connected users with IP, OS, browser
+                const usersResponse = await fetch('/api/users');
+                const usersData = await usersResponse.json();
+                this.updateConnectedUsers(usersData.users);
+
                 // These would be populated from real backend data
                 document.getElementById('api-throughput').textContent = '7426 req/s';
                 document.getElementById('redis-memory').textContent = '300.8 MB';
@@ -440,6 +468,50 @@ class DashboardManager {
                 console.error('Failed to fetch metrics:', e);
             }
         }, 2000);
+    }
+
+    updateConnectedUsers(users) {
+        const tbody = document.getElementById('users-body');
+
+        if (!users || users.length === 0) {
+            tbody.innerHTML = '<tr><td class="px-4 py-3 text-gray-400" colspan="5">No connected users</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = users.map(user => `
+            <tr style="border-bottom: 1px solid #334155;">
+                <td class="px-4 py-3 text-gray-300">${user.user_id}</td>
+                <td class="px-4 py-3 text-gray-300 font-mono text-sm">${user.ip_address}</td>
+                <td class="px-4 py-3">${this.getOSIcon(user.os)} ${user.os}</td>
+                <td class="px-4 py-3">${this.getBrowserIcon(user.browser)} ${user.browser}</td>
+                <td class="px-4 py-3 text-center">${user.sessions}</td>
+            </tr>
+        `).join('');
+    }
+
+    getOSIcon(os) {
+        const icons = {
+            'Windows': '🪟',
+            'macOS': '🍎',
+            'Linux': '🐧',
+            'iOS': '🍎',
+            'Android': '🤖',
+            'Unknown': '❓'
+        };
+        return icons[os] || '❓';
+    }
+
+    getBrowserIcon(browser) {
+        const icons = {
+            'Chrome': '🟢',
+            'Firefox': '🦊',
+            'Safari': '🧭',
+            'Edge': '💙',
+            'Opera': '🎭',
+            'IE': '🔵',
+            'Unknown': '❓'
+        };
+        return icons[browser] || '❓';
     }
 
     updateConnectionStatus(status) {

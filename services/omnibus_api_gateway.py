@@ -285,6 +285,50 @@ omnibus_client: Optional[OmniBusClient] = None
 rate_limiter: Optional[RateLimiter] = None
 active_connections: Dict[str, List[WebSocket]] = {}  # user_id -> list of WebSockets
 user_ips: Dict[str, set] = {}  # user_id -> set of IPs (for dedup)
+user_info: Dict[str, Dict] = {}  # user_id -> {ip, os, browser, user_agent}
+
+def parse_user_agent(user_agent: str) -> Dict[str, str]:
+    """Parse User-Agent string to extract OS and browser"""
+    if not user_agent:
+        return {"os": "Unknown", "browser": "Unknown", "user_agent": ""}
+
+    ua = user_agent.lower()
+    browser = "Unknown"
+    os = "Unknown"
+
+    # Detect OS
+    if "windows" in ua:
+        os = "Windows"
+    elif "mac" in ua:
+        os = "macOS"
+    elif "linux" in ua:
+        os = "Linux"
+    elif "iphone" in ua or "ipad" in ua:
+        os = "iOS"
+    elif "android" in ua:
+        os = "Android"
+    elif "x11" in ua:
+        os = "Unix"
+
+    # Detect Browser
+    if "chrome" in ua and "edg" not in ua:
+        browser = "Chrome"
+    elif "firefox" in ua:
+        browser = "Firefox"
+    elif "safari" in ua and "chrome" not in ua:
+        browser = "Safari"
+    elif "edg" in ua:
+        browser = "Edge"
+    elif "opera" in ua or "opr/" in ua:
+        browser = "Opera"
+    elif "msie" in ua or "trident" in ua:
+        browser = "IE"
+
+    return {
+        "os": os,
+        "browser": browser,
+        "user_agent": user_agent[:100],  # First 100 chars
+    }
 
 # ============================================================================
 # Startup/Shutdown
@@ -517,6 +561,20 @@ async def websocket_prices(
         user_ips[user_id] = set()
     user_ips[user_id].add(client_ip)
 
+    # Capture User-Agent for OS and browser detection
+    user_agent = websocket.headers.get("user-agent", "Unknown")
+    ua_info = parse_user_agent(user_agent)
+
+    # Store user info (IP, OS, Browser)
+    if user_id not in user_info:
+        user_info[user_id] = {}
+    user_info[user_id].update({
+        "ip": client_ip,
+        "os": ua_info["os"],
+        "browser": ua_info["browser"],
+        "user_agent": ua_info["user_agent"],
+    })
+
     # Track connection (REAL count - no mock)
     if user_id not in active_connections:
         active_connections[user_id] = []
@@ -524,7 +582,7 @@ async def websocket_prices(
     if redis_state:
         await redis_state.increment_connection_count(user_id)
 
-    logger.info(f"WebSocket connect: user={user_id} ip={client_ip} (unique_ips={len(user_ips)}, total_connections={sum(len(c) for c in active_connections.values())})")
+    logger.info(f"WebSocket connect: user={user_id} ip={client_ip} os={ua_info['os']} browser={ua_info['browser']}")
 
     try:
         while True:
@@ -633,17 +691,20 @@ async def metrics():
 
 @app.get("/api/users")
 async def get_connected_users():
-    """Get list of connected users with IP addresses and session count"""
+    """Get list of connected users with IP, OS, browser, and session count"""
     users_list = []
 
-    for user_id, ip_set in user_ips.items():
-        for ip in ip_set:
-            connection_count = len(active_connections.get(user_id, []))
-            users_list.append({
-                "user_id": user_id,
-                "ip_address": ip,
-                "sessions": connection_count,
-            })
+    for user_id in user_ips.keys():
+        connection_count = len(active_connections.get(user_id, []))
+        info = user_info.get(user_id, {})
+
+        users_list.append({
+            "user_id": user_id,
+            "ip_address": info.get("ip", "unknown"),
+            "os": info.get("os", "Unknown"),
+            "browser": info.get("browser", "Unknown"),
+            "sessions": connection_count,
+        })
 
     return {
         "total_unique_users": len(user_ips),
