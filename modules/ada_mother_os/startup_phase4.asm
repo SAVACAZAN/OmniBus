@@ -1308,6 +1308,41 @@ scheduler_loop:
     call 0x5E0100                       ; ReplayOS: run_replay_cycle @ 0x5E0100
 .skip_replay_dispatch:
 
+    ; MicrosoftOS (Azure) dispatch: every 131072 cycles (0x1FFFF) — Cloud provider integration
+    mov rax, r11
+    and rax, 0x1FFFF
+    jnz .skip_microsoft_dispatch
+    call 0x5F0100                       ; MicrosoftOS: run_microsoft_cycle @ 0x5F0100
+.skip_microsoft_dispatch:
+
+    ; OracleOS (OCI) dispatch: every 131072 cycles (0x1FFFF) — Cloud provider integration
+    mov rax, r11
+    and rax, 0x1FFFF
+    jnz .skip_oracle_dispatch
+    call 0x600100                       ; OracleOS: run_oracle_cycle @ 0x600100
+.skip_oracle_dispatch:
+
+    ; AWSOS dispatch: every 131072 cycles (0x1FFFF) — Cloud provider integration
+    mov rax, r11
+    and rax, 0x1FFFF
+    jnz .skip_aws_dispatch
+    call 0x610100                       ; AWSOS: run_aws_cycle @ 0x610100
+.skip_aws_dispatch:
+
+    ; VmwareOS dispatch: every 131072 cycles (0x1FFFF) — Cloud provider integration
+    mov rax, r11
+    and rax, 0x1FFFF
+    jnz .skip_vmware_dispatch
+    call 0x620100                       ; VmwareOS: run_vmware_cycle @ 0x620100
+.skip_vmware_dispatch:
+
+    ; GCPOS dispatch: every 131072 cycles (0x1FFFF) — Cloud provider integration
+    mov rax, r11
+    and rax, 0x1FFFF
+    jnz .skip_gcp_dispatch
+    call 0x630100                       ; GCPOS: run_gcp_cycle @ 0x630100
+.skip_gcp_dispatch:
+
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
 busy_wait:

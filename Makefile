@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker/DomainResolver loaded"
@@ -66,6 +66,7 @@ build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_
 	@echo "  Phase 50d: Convergence Test OS (L25 — 1000+ cycles, v2.0 ready) ✅"
 	@echo "  Phase 51: Domain Resolver OS (L26 — ENS, .anyone, ArNS support) ✅"
 	@echo "  Phase 60: Event-Driven Transaction Replay OS (L27 — Forward/backward replay + saga compensation) ✅"
+	@echo "  Phase 61: Multi-Cloud Provider Integration (L28-L32 — Azure/OCI/AWS/VMWare/GCP) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -1130,3 +1131,100 @@ $(BUILD_DIR)/replay_os.bin: $(BUILD_DIR)/replay_os.elf
 	@echo "[OC] Converting ReplayOS to binary..."
 	objcopy -O binary $< $@
 	@echo "  ReplayOS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 61: Cloud Adapter Modules (Multi-cloud provider integration)
+
+# MicrosoftOS (0x5F0000, 64KB) — Azure cloud integration
+$(BUILD_DIR)/microsoft_os.o: ./modules/cloud_adapters/microsoft_os.zig ./modules/cloud_adapters/cloud_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling MicrosoftOS to object file..."
+	cd ./modules/cloud_adapters && zig build-obj microsoft_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/cloud_adapters/microsoft_os.o ]; then mv ./modules/cloud_adapters/microsoft_os.o $@; fi
+
+$(BUILD_DIR)/microsoft_stubs.o: ./modules/cloud_adapters/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling MicrosoftOS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/microsoft_os.elf: $(BUILD_DIR)/microsoft_os.o $(BUILD_DIR)/microsoft_stubs.o ./modules/cloud_adapters/microsoft_os.ld
+	@echo "[LD] Linking MicrosoftOS ELF..."
+	ld -T ./modules/cloud_adapters/microsoft_os.ld -o $@ $(BUILD_DIR)/microsoft_os.o $(BUILD_DIR)/microsoft_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/microsoft_os.bin: $(BUILD_DIR)/microsoft_os.elf
+	@echo "[OC] Converting MicrosoftOS to binary..."
+	objcopy -O binary $< $@
+	@echo "  MicrosoftOS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# OracleOS (0x600000, 64KB) — Oracle Cloud Infrastructure integration
+$(BUILD_DIR)/oracle_os.o: ./modules/cloud_adapters/oracle_os.zig ./modules/cloud_adapters/cloud_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling OracleOS to object file..."
+	cd ./modules/cloud_adapters && zig build-obj oracle_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/cloud_adapters/oracle_os.o ]; then mv ./modules/cloud_adapters/oracle_os.o $@; fi
+
+$(BUILD_DIR)/oracle_stubs.o: ./modules/cloud_adapters/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling OracleOS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/oracle_os.elf: $(BUILD_DIR)/oracle_os.o $(BUILD_DIR)/oracle_stubs.o ./modules/cloud_adapters/oracle_os.ld
+	@echo "[LD] Linking OracleOS ELF..."
+	ld -T ./modules/cloud_adapters/oracle_os.ld -o $@ $(BUILD_DIR)/oracle_os.o $(BUILD_DIR)/oracle_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/oracle_os.bin: $(BUILD_DIR)/oracle_os.elf
+	@echo "[OC] Converting OracleOS to binary..."
+	objcopy -O binary $< $@
+	@echo "  OracleOS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# AWSOS (0x610000, 64KB) — Amazon Web Services integration
+$(BUILD_DIR)/aws_os.o: ./modules/cloud_adapters/aws_os.zig ./modules/cloud_adapters/cloud_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling AWSOS to object file..."
+	cd ./modules/cloud_adapters && zig build-obj aws_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/cloud_adapters/aws_os.o ]; then mv ./modules/cloud_adapters/aws_os.o $@; fi
+
+$(BUILD_DIR)/aws_stubs.o: ./modules/cloud_adapters/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling AWSOS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/aws_os.elf: $(BUILD_DIR)/aws_os.o $(BUILD_DIR)/aws_stubs.o ./modules/cloud_adapters/aws_os.ld
+	@echo "[LD] Linking AWSOS ELF..."
+	ld -T ./modules/cloud_adapters/aws_os.ld -o $@ $(BUILD_DIR)/aws_os.o $(BUILD_DIR)/aws_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/aws_os.bin: $(BUILD_DIR)/aws_os.elf
+	@echo "[OC] Converting AWSOS to binary..."
+	objcopy -O binary $< $@
+	@echo "  AWSOS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# VmwareOS (0x620000, 64KB) — VMWare Cloud integration
+$(BUILD_DIR)/vmware_os.o: ./modules/cloud_adapters/vmware_os.zig ./modules/cloud_adapters/cloud_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling VmwareOS to object file..."
+	cd ./modules/cloud_adapters && zig build-obj vmware_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/cloud_adapters/vmware_os.o ]; then mv ./modules/cloud_adapters/vmware_os.o $@; fi
+
+$(BUILD_DIR)/vmware_stubs.o: ./modules/cloud_adapters/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling VmwareOS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/vmware_os.elf: $(BUILD_DIR)/vmware_os.o $(BUILD_DIR)/vmware_stubs.o ./modules/cloud_adapters/vmware_os.ld
+	@echo "[LD] Linking VmwareOS ELF..."
+	ld -T ./modules/cloud_adapters/vmware_os.ld -o $@ $(BUILD_DIR)/vmware_os.o $(BUILD_DIR)/vmware_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/vmware_os.bin: $(BUILD_DIR)/vmware_os.elf
+	@echo "[OC] Converting VmwareOS to binary..."
+	objcopy -O binary $< $@
+	@echo "  VmwareOS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# GCPOS (0x630000, 64KB) — Google Cloud Platform integration
+$(BUILD_DIR)/gcp_os.o: ./modules/cloud_adapters/gcp_os.zig ./modules/cloud_adapters/cloud_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling GCPOS to object file..."
+	cd ./modules/cloud_adapters && zig build-obj gcp_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/cloud_adapters/gcp_os.o ]; then mv ./modules/cloud_adapters/gcp_os.o $@; fi
+
+$(BUILD_DIR)/gcp_stubs.o: ./modules/cloud_adapters/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling GCPOS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/gcp_os.elf: $(BUILD_DIR)/gcp_os.o $(BUILD_DIR)/gcp_stubs.o ./modules/cloud_adapters/gcp_os.ld
+	@echo "[LD] Linking GCPOS ELF..."
+	ld -T ./modules/cloud_adapters/gcp_os.ld -o $@ $(BUILD_DIR)/gcp_os.o $(BUILD_DIR)/gcp_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/gcp_os.bin: $(BUILD_DIR)/gcp_os.elf
+	@echo "[OC] Converting GCPOS to binary..."
+	objcopy -O binary $< $@
+	@echo "  GCPOS binary: $@ (size: $$(stat -c%s $@) bytes)"
