@@ -451,51 +451,90 @@ async def get_price(
 # WebSocket Endpoints
 # ============================================================================
 
+def read_real_prices():
+    """Read real prices from feeder buffer"""
+    try:
+        buffer_path = "/tmp/omnibus_all_prices.bin"
+        if not os.path.exists(buffer_path):
+            return None
+
+        with open(buffer_path, "rb") as f:
+            data = f.read(72)  # Read first 72 bytes (single exchange buffer)
+
+        if len(data) < 40:
+            return None
+
+        import struct
+        # Unpack: timestamp, btc_cents, btc_vol, eth_cents, eth_vol, flags, reserved, tsc, lcx_cents, lcx_vol
+        values = struct.unpack('<QQQQQIIQ', data[:48])  # First 48 bytes
+
+        btc_cents = values[1]
+        eth_cents = values[3]
+
+        return {
+            "BTC": btc_cents / 100.0 if btc_cents > 0 else None,
+            "ETH": eth_cents / 100.0 if eth_cents > 0 else None,
+        }
+    except Exception as e:
+        logger.warning(f"Failed to read real prices: {e}")
+        return None
+
 @app.websocket("/ws/prices/{exchange}")
 async def websocket_prices(
     websocket: WebSocket,
     exchange: str,
     token: str = None,
 ):
-    """WebSocket for real-time price updates"""
+    """WebSocket for REAL-TIME price updates (Kraken/Coinbase/LCX live data only)"""
     await websocket.accept()
 
     user_id = token[:16] if token else "anonymous"
 
-    # Track connection
+    # Track connection (REAL count - no mock)
     if user_id not in active_connections:
         active_connections[user_id] = []
     active_connections[user_id].append(websocket)
-    await redis_state.increment_connection_count(user_id)
+    if redis_state:
+        await redis_state.increment_connection_count(user_id)
 
     try:
         while True:
-            # Simulate receiving price updates
-            # In production: receive from OmniBus price feed
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.2)  # 200ms update cycle
 
-            # Send mock price updates
-            price_update = {
-                "type": "price_update",
-                "exchange": exchange,
-                "asset": "BTC",
-                "bid": 71600.0 + (int(time.time()) % 100),
-                "ask": 71610.0 + (int(time.time()) % 100),
-                "timestamp": time.time(),
-            }
+            # Read REAL prices from feeder — NO MOCK FALLBACK
+            prices = read_real_prices()
+            if not prices:
+                continue  # Skip if no real data available
 
-            try:
-                await websocket.send_json(price_update)
-            except Exception as e:
-                logger.error(f"Failed to send price update: {e}")
-                break
+            # Send ONLY REAL prices — no mock values
+            for asset in ["BTC", "ETH"]:
+                price = prices.get(asset)
+                if price is None:
+                    continue  # Skip assets without real data
+
+                price_update = {
+                    "type": "price_update",
+                    "exchange": exchange.lower(),
+                    "asset": asset,
+                    "bid": price,
+                    "ask": price,
+                    "timestamp": time.time(),
+                }
+
+                try:
+                    await websocket.send_json(price_update)
+                except Exception as e:
+                    logger.error(f"Failed to send price update: {e}")
+                    break
 
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
     finally:
         # Cleanup
-        active_connections[user_id].remove(websocket)
-        await redis_state.decrement_connection_count(user_id)
+        if user_id in active_connections and websocket in active_connections[user_id]:
+            active_connections[user_id].remove(websocket)
+        if redis_state:
+            await redis_state.decrement_connection_count(user_id)
 
 @app.websocket("/ws/orders/{user_id}")
 async def websocket_orders(
