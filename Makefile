@@ -36,10 +36,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
@@ -60,6 +60,8 @@ build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_
 	@echo "  Phase 42: Slashing Protection OS (Validator penalties & insurance) ✅"
 	@echo "  Phase 43: Orderflow Auction OS (MEV recapture & encrypted bundles) ✅"
 	@echo "  Phase 44: Circuit Breaker OS (Emergency halt mechanisms) ✅"
+	@echo "  Phase 50a: seL4 Microkernel OS (L22 — Capability-based formal validation) ✅"
+	@echo "  Phase 50b: Cross-Validator OS (L23 — Ada/seL4 divergence detection) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -852,3 +854,41 @@ $(BUILD_DIR)/pqc_gate_os.elf: $(BUILD_DIR)/pqc_gate_os.o $(BUILD_DIR)/pqc_gate_o
 $(BUILD_DIR)/pqc_gate_os.bin: $(BUILD_DIR)/pqc_gate_os.elf
 	objcopy -O binary $< $@
 	@echo "  PQC-GATE OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# seL4 Microkernel OS (0x4A0000, 64KB, L22)
+$(BUILD_DIR)/sel4_microkernel.o: ./modules/sel4_microkernel/sel4_microkernel.zig ./modules/sel4_microkernel/sel4_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling seL4 Microkernel OS to object file..."
+	cd ./modules/sel4_microkernel && zig build-obj sel4_microkernel.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/sel4_microkernel/sel4_microkernel.o ]; then mv ./modules/sel4_microkernel/sel4_microkernel.o $@; fi
+
+$(BUILD_DIR)/sel4_microkernel_stubs.o: ./modules/sel4_microkernel/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling seL4 Microkernel OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/sel4_microkernel.elf: $(BUILD_DIR)/sel4_microkernel.o $(BUILD_DIR)/sel4_microkernel_stubs.o ./modules/sel4_microkernel/sel4_microkernel.ld
+	@echo "[LD] Linking seL4 Microkernel OS ELF..."
+	ld -T ./modules/sel4_microkernel/sel4_microkernel.ld -o $@ $(BUILD_DIR)/sel4_microkernel.o $(BUILD_DIR)/sel4_microkernel_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/sel4_microkernel.bin: $(BUILD_DIR)/sel4_microkernel.elf
+	@echo "[OC] Converting seL4 Microkernel OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  seL4 Microkernel OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Cross-Validator OS (0x4B0000, 64KB, L23)
+$(BUILD_DIR)/cross_validator_os.o: ./modules/cross_validator_os/cross_validator_os.zig ./modules/cross_validator_os/cross_validator_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Cross-Validator OS to object file..."
+	cd ./modules/cross_validator_os && zig build-obj cross_validator_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/cross_validator_os/cross_validator_os.o ]; then mv ./modules/cross_validator_os/cross_validator_os.o $@; fi
+
+$(BUILD_DIR)/cross_validator_os_stubs.o: ./modules/cross_validator_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Cross-Validator OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/cross_validator_os.elf: $(BUILD_DIR)/cross_validator_os.o $(BUILD_DIR)/cross_validator_os_stubs.o ./modules/cross_validator_os/cross_validator_os.ld
+	@echo "[LD] Linking Cross-Validator OS ELF..."
+	ld -T ./modules/cross_validator_os/cross_validator_os.ld -o $@ $(BUILD_DIR)/cross_validator_os.o $(BUILD_DIR)/cross_validator_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/cross_validator_os.bin: $(BUILD_DIR)/cross_validator_os.elf
+	@echo "[OC] Converting Cross-Validator OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Cross-Validator OS binary: $@ (size: $$(stat -c%s $@) bytes)"

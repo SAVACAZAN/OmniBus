@@ -694,6 +694,18 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; seL4 Microkernel OS .bss @ 0x4A0100, size 0x100 (256 bytes)
+    mov rdi, 0x4A0100
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
+    ; Cross-Validator OS .bss @ 0x4B0100, size 0x100 (256 bytes)
+    mov rdi, 0x4B0100
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -793,6 +805,12 @@ ada64_stub_event_loop:
 
     ; PQC-GATE OS init_plugin @ 0x490000 (NIST ML-DSA, SLH-DSA, FN-DSA)
     call 0x490000
+
+    ; seL4 Microkernel OS init_plugin @ 0x4A0100 (Capability-based formal validation)
+    call 0x4A0100
+
+    ; Cross-Validator OS init_plugin @ 0x4B0100 (Ada/seL4 divergence detection)
+    call 0x4B0100
 
     ; === SUCCESS ===
     mov al, '!'
@@ -1117,6 +1135,20 @@ scheduler_loop:
     jnz .skip_pqc_dispatch
     call 0x490100                       ; PQC: run_pqc_cycle (signature verification)
 .skip_pqc_dispatch:
+
+    ; seL4 Microkernel OS dispatch: every 131072 cycles (0x1FFFF) — capability validation
+    mov rax, r11
+    and rax, 0x1FFFF
+    jnz .skip_sel4_dispatch
+    call 0x4A0200                       ; seL4: run_sel4_cycle
+.skip_sel4_dispatch:
+
+    ; Cross-Validator OS dispatch: every 262144 cycles (0x3FFFF) — Ada/seL4 divergence check
+    mov rax, r11
+    and rax, 0x3FFFF
+    jnz .skip_crossval_dispatch
+    call 0x4B0200                       ; CrossValidator: run_validator_cycle
+.skip_crossval_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
