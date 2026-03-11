@@ -23,6 +23,17 @@ var cycle_count: u64 = 0;
 var total_profit: i64 = 0;
 
 // ============================================================================
+// Performance Profiling (Phase 46)
+// ============================================================================
+
+var profiler_enabled: bool = false;
+var total_cycle_time: u64 = 0;
+var scan_time: u64 = 0;
+var price_read_time: u64 = 0;
+var rebalance_time: u64 = 0;
+var opportunity_process_time: u64 = 0;
+
+// ============================================================================
 // GridState Helper
 // ============================================================================
 
@@ -109,6 +120,8 @@ export fn run_grid_cycle() void {
     const auth = @as(*volatile u8, @ptrFromInt(types.KERNEL_AUTH)).*;
     if (auth != 0x70) return;
 
+    const cycle_start_tsc = rdtsc();
+
     // === PHASE 20: READ NEURO PARAMETERS (Throttled) ===
     // Get evolved parameters from NeuroOS (feedback loop)
     // OPTIMIZATION: Only re-read every 64 cycles (parameter changes rarely)
@@ -122,7 +135,9 @@ export fn run_grid_cycle() void {
     // OPTIMIZATION: Detect opportunities once per cycle BEFORE main loop
     // This replaces 64 × 9 volatile reads with just 9 reads per cycle
     const min_spread_bps = 50; // 0.5% minimum spread to execute
+    const scan_start_tsc = rdtsc();
     const opportunities = multi_exchange.scanAllPairs(min_spread_bps);
+    scan_time +|= rdtsc() - scan_start_tsc;
 
     // Bounded loop: process max 64 operations per cycle for determinism
     var processed: u32 = 0;
@@ -130,7 +145,9 @@ export fn run_grid_cycle() void {
 
     while (processed < max_per_cycle) : (processed += 1) {
         // Read current price from Analytics OS
+        const price_start_tsc = rdtsc();
         const price = feed_reader.readPrice(0) orelse break; // Pair 0: BTC_USD
+        price_read_time +|= rdtsc() - price_start_tsc;
 
         // Update grid state TSC
         const grid_state = getGridStatePtr();
@@ -143,6 +160,7 @@ export fn run_grid_cycle() void {
         const bid_ask = feed_reader.readBidAsk(0) orelse break;
         if (rebalance.shouldRebalance(price, grid_state.lower_bound, grid_state.upper_bound)) {
             // Shift grid and regenerate levels with evolved parameters
+            const rebal_start_tsc = rdtsc();
             const new_count = rebalance.rebalanceGrid(
                 price,
                 grid_state.lower_bound,
@@ -150,6 +168,7 @@ export fn run_grid_cycle() void {
                 evolved_step,  // Use evolved step instead of fixed
                 100_000_000, // 1 BTC per level
             );
+            rebalance_time +|= rdtsc() - rebal_start_tsc;
 
             grid_state.level_count = new_count;
         }
@@ -164,6 +183,8 @@ export fn run_grid_cycle() void {
 
         // === PROCESS CACHED OPPORTUNITIES ===
         // Use opportunities detected before loop (hoisted from inner loop)
+        const opp_start_tsc = rdtsc();
+
         // Check BTC opportunities
         if (opportunities.btc_opportunity) |btc_opp| {
             const profit = multi_exchange.calculateProfit(&btc_opp, btc_opp.volume_available, 30); // 0.3% fees
@@ -191,6 +212,8 @@ export fn run_grid_cycle() void {
             }
         }
 
+        opportunity_process_time +|= rdtsc() - opp_start_tsc;
+
         // === LEGACY: TWO-EXCHANGE DETECTION ===
         if (bid_ask.bid > 0 and bid_ask.ask > 0) {
             const profit_bps = scanner.detectTwoExchange(0, 0, bid_ask.ask, 1, bid_ask.bid);
@@ -201,6 +224,7 @@ export fn run_grid_cycle() void {
         }
     }
 
+    total_cycle_time +|= rdtsc() - cycle_start_tsc;
     cycle_count += 1;
 }
 
@@ -261,6 +285,33 @@ export fn get_level_count() u32 {
 /// Get total pending opportunities
 export fn get_opportunity_count() u32 {
     return scanner.countPending();
+}
+
+/// Get profiling data (Phase 46)
+pub const GridProfilingData = extern struct {
+    total_cycle_time: u64,
+    scan_time: u64,
+    price_read_time: u64,
+    rebalance_time: u64,
+    opportunity_process_time: u64,
+};
+
+export fn get_profiling_data() GridProfilingData {
+    return .{
+        .total_cycle_time = total_cycle_time,
+        .scan_time = scan_time,
+        .price_read_time = price_read_time,
+        .rebalance_time = rebalance_time,
+        .opportunity_process_time = opportunity_process_time,
+    };
+}
+
+export fn reset_profiling() void {
+    total_cycle_time = 0;
+    scan_time = 0;
+    price_read_time = 0;
+    rebalance_time = 0;
+    opportunity_process_time = 0;
 }
 
 // ============================================================================
