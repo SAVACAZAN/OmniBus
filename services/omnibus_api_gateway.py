@@ -452,31 +452,49 @@ async def get_price(
 # ============================================================================
 
 def read_real_prices():
-    """Read real prices from feeder buffer"""
+    """Read REAL prices from Kraken/Coinbase/LCX feeder buffer"""
     try:
         buffer_path = "/tmp/omnibus_all_prices.bin"
         if not os.path.exists(buffer_path):
             return None
 
         with open(buffer_path, "rb") as f:
-            data = f.read(72)  # Read first 72 bytes (single exchange buffer)
+            data = f.read(72)  # Read 72-byte single exchange buffer
 
         if len(data) < 40:
             return None
 
         import struct
-        # Unpack: timestamp, btc_cents, btc_vol, eth_cents, eth_vol, flags, reserved, tsc, lcx_cents, lcx_vol
-        values = struct.unpack('<QQQQQIIQ', data[:48])  # First 48 bytes
+        # Buffer layout (little-endian, 72 bytes total):
+        # Offset 0x00: timestamp (Q, 8 bytes)
+        # Offset 0x08: btc_price_cents (Q, 8 bytes) ← BTC in cents
+        # Offset 0x10: btc_volume (Q, 8 bytes)
+        # Offset 0x18: eth_price_cents (Q, 8 bytes) ← ETH in cents
+        # Offset 0x20: eth_volume (Q, 8 bytes)
+        # Offset 0x28: flags (I, 4 bytes)
+        # Offset 0x2C: reserved (I, 4 bytes)
+        # Offset 0x30: last_tsc (Q, 8 bytes)
+        # Offset 0x38: lcx_cents (Q, 8 bytes)
+        # Offset 0x40: lcx_volume (Q, 8 bytes)
 
-        btc_cents = values[1]
-        eth_cents = values[3]
+        # Unpack: timestamp, btc_cents, btc_vol, eth_cents, eth_vol, flags, reserved, tsc, lcx_cents, lcx_vol
+        unpacked = struct.unpack('<QQQQQIIQQ', data)  # All 72 bytes
+
+        btc_cents = unpacked[1]  # Index 1 = BTC price in cents
+        eth_cents = unpacked[3]  # Index 3 = ETH price in cents
+
+        btc_price = btc_cents / 100.0 if btc_cents > 0 else None
+        eth_price = eth_cents / 100.0 if eth_cents > 0 else None
+
+        if btc_price:
+            logger.debug(f"Real prices: BTC=${btc_price:.2f}, ETH=${eth_price:.2f}")
 
         return {
-            "BTC": btc_cents / 100.0 if btc_cents > 0 else None,
-            "ETH": eth_cents / 100.0 if eth_cents > 0 else None,
+            "BTC": btc_price,
+            "ETH": eth_price,
         }
     except Exception as e:
-        logger.warning(f"Failed to read real prices: {e}")
+        logger.error(f"Failed to read real prices: {e}")
         return None
 
 @app.websocket("/ws/prices/{exchange}")
