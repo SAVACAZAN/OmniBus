@@ -25,6 +25,7 @@ import httpx
 
 from orderbook_fetcher import OrderbookFetcher
 from parallel_tick_aggregator import get_aggregator, init_aggregator
+from kernel_memory_reader import read_ohlcv, read_market_matrix
 
 # ============================================================================
 # Configuration
@@ -879,100 +880,55 @@ async def get_connected_users():
 
 @app.get("/api/ohlcv/btc")
 async def get_ohlcv_btc():
-    """Get BTC OHLCV candles from market matrix (30 one-minute buckets)"""
-    return {
-        "pair": "BTC/USD",
-        "timeframe": "1m",
-        "candles": [
-            {
-                "bucket": i,
-                "open": 0,  # In production: read from market matrix @ 0x169000
-                "high": 0,
-                "low": 0,
-                "close": 0,
-                "volume": 0,
-            } for i in range(30)
-        ],
-        "status": "ready",
-        "exchange": "omnibus_aggregated"
-    }
+    """Get BTC OHLCV candles from kernel memory (0x169000)"""
+    try:
+        data = read_ohlcv("BTC/USD")
+        return {
+            **data,
+            "status": "live" if data.get("total_volume", 0) > 0 else "initializing"
+        }
+    except Exception as e:
+        logger.warning(f"Failed to read BTC OHLCV: {e}")
+        return {"error": str(e), "pair": "BTC/USD", "candles": []}
 
 @app.get("/api/ohlcv/eth")
 async def get_ohlcv_eth():
-    """Get ETH OHLCV candles from market matrix"""
-    return {
-        "pair": "ETH/USD",
-        "timeframe": "1m",
-        "candles": [
-            {
-                "bucket": i,
-                "open": 0,
-                "high": 0,
-                "low": 0,
-                "close": 0,
-                "volume": 0,
-            } for i in range(30)
-        ],
-        "status": "ready",
-        "exchange": "omnibus_aggregated"
-    }
+    """Get ETH OHLCV candles from kernel memory (0x169000)"""
+    try:
+        data = read_ohlcv("ETH/USD")
+        return {
+            **data,
+            "status": "live" if data.get("total_volume", 0) > 0 else "initializing"
+        }
+    except Exception as e:
+        logger.warning(f"Failed to read ETH OHLCV: {e}")
+        return {"error": str(e), "pair": "ETH/USD", "candles": []}
 
 @app.get("/api/ohlcv/lcx")
 async def get_ohlcv_lcx():
-    """Get LCX OHLCV candles from market matrix"""
-    return {
-        "pair": "LCX/USD",
-        "timeframe": "1m",
-        "candles": [
-            {
-                "bucket": i,
-                "open": 0,
-                "high": 0,
-                "low": 0,
-                "close": 0,
-                "volume": 0,
-            } for i in range(30)
-        ],
-        "status": "ready",
-        "exchange": "omnibus_aggregated"
-    }
+    """Get LCX OHLCV candles from kernel memory (0x169000)"""
+    try:
+        data = read_ohlcv("LCX/USD")
+        return {
+            **data,
+            "status": "live" if data.get("total_volume", 0) > 0 else "initializing"
+        }
+    except Exception as e:
+        logger.warning(f"Failed to read LCX OHLCV: {e}")
+        return {"error": str(e), "pair": "LCX/USD", "candles": []}
 
 @app.get("/api/market-matrix")
 async def get_market_matrix():
-    """Get full market matrix stats (volume per exchange, per pair)"""
-    return {
-        "status": "operational",
-        "matrix_base": "0x169000",
-        "pairs": {
-            "BTC/USD": {
-                "total_volume": 0,
-                "candles_generated": 30,
-                "exchanges": {
-                    "kraken": {"volume": 0, "ticks": 0},
-                    "coinbase": {"volume": 0, "ticks": 0},
-                    "lcx": {"volume": 0, "ticks": 0},
-                }
-            },
-            "ETH/USD": {
-                "total_volume": 0,
-                "candles_generated": 30,
-                "exchanges": {
-                    "kraken": {"volume": 0, "ticks": 0},
-                    "coinbase": {"volume": 0, "ticks": 0},
-                    "lcx": {"volume": 0, "ticks": 0},
-                }
-            },
-            "LCX/USD": {
-                "total_volume": 0,
-                "candles_generated": 30,
-                "exchanges": {
-                    "kraken": {"volume": 0, "ticks": 0},
-                    "coinbase": {"volume": 0, "ticks": 0},
-                    "lcx": {"volume": 0, "ticks": 0},
-                }
-            }
+    """Get full market matrix stats from kernel memory (0x169000)"""
+    try:
+        return read_market_matrix()
+    except Exception as e:
+        logger.warning(f"Failed to read market matrix: {e}")
+        return {
+            "error": str(e),
+            "status": "error",
+            "matrix_base": "0x169000"
         }
-    }
 
 # ============================================================================
 # Main
