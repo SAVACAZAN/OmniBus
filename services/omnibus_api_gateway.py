@@ -15,10 +15,12 @@ from dataclasses import dataclass, asdict
 
 from fastapi import FastAPI, WebSocket, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 import redis.asyncio as redis
 from pydantic import BaseModel
+import os
 
 # ============================================================================
 # Configuration
@@ -27,7 +29,7 @@ from pydantic import BaseModel
 API_VERSION = "1.0.0"
 OMNIBUS_HOST = "127.0.0.1"
 OMNIBUS_PORT = 9000  # OmniBus IPC port
-REDIS_HOST = "redis"  # Docker service name
+REDIS_HOST = "localhost"  # Local Redis connection
 REDIS_PORT = 6379
 MAX_CONNECTIONS_PER_USER = 5
 RATE_LIMIT_REQUESTS_PER_SECOND = 100
@@ -272,6 +274,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files if directory exists
+static_dir = os.path.join(os.path.dirname(__file__), "..", "web", "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 # Global state
 redis_state: Optional[RedisStateManager] = None
 omnibus_client: Optional[OmniBusClient] = None
@@ -319,6 +326,18 @@ async def verify_api_key(x_api_key: str = Header(...)) -> str:
         raise HTTPException(status_code=401, detail="Missing API key")
     # In production: validate against database
     return x_api_key
+
+# ============================================================================
+# Dashboard & Static Routes
+# ============================================================================
+
+@app.get("/", response_class=FileResponse)
+async def serve_dashboard():
+    """Serve dashboard HTML"""
+    dashboard_path = os.path.join(os.path.dirname(__file__), "..", "web", "dashboard_scaled.html")
+    if os.path.exists(dashboard_path):
+        return dashboard_path
+    return JSONResponse({"error": "Dashboard not found"}, status_code=404)
 
 # ============================================================================
 # Health Check
@@ -543,6 +562,5 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=8000,
-        workers=4,
         log_level="info",
     )
