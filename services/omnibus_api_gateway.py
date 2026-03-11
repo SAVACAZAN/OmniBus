@@ -673,6 +673,100 @@ async def websocket_prices(
         if redis_state:
             await redis_state.decrement_connection_count(user_id)
 
+@app.websocket("/ws/ohlcv/{pair}")
+async def websocket_ohlcv(
+    websocket: WebSocket,
+    pair: str,
+):
+    """
+    WebSocket for real-time OHLCV candle stream
+    Pushes candles as they're generated in kernel market matrix
+    Pair: 'btc', 'eth', 'lcx', or 'all'
+    """
+    await websocket.accept()
+
+    pair = pair.lower()
+    if pair not in ['btc', 'eth', 'lcx', 'all']:
+        await websocket.send_json({"error": f"Invalid pair: {pair}"})
+        return
+
+    pair_map = {
+        'btc': 'BTC/USD',
+        'eth': 'ETH/USD',
+        'lcx': 'LCX/USD',
+    }
+
+    client_ip = websocket.client[0] if websocket.client else "unknown"
+    logger.info(f"✓ WebSocket OHLCV stream: pair={pair} client={client_ip}")
+
+    try:
+        last_volumes = {}  # Track last candle volumes to detect updates
+        error_count = 0
+
+        while True:
+            try:
+                # Read OHLCV from kernel memory
+                if pair == 'all':
+                    ohlcv_updates = {}
+                    for p, pair_name in pair_map.items():
+                        data = read_ohlcv(pair_name)
+                        if data.get('candles'):
+                            ohlcv_updates[p] = data
+                else:
+                    pair_name = pair_map.get(pair, f"{pair.upper()}/USD")
+                    ohlcv_updates = {pair: read_ohlcv(pair_name)}
+
+                # Check for new/updated candles
+                for p, data in ohlcv_updates.items():
+                    if data.get('candles'):
+                        latest_candle = data['candles'][-1]
+                        candle_key = f"{p}_{latest_candle['bucket']}"
+                        current_volume = latest_candle.get('volume', 0)
+                        last_volume = last_volumes.get(candle_key, 0)
+
+                        # Only send if candle updated (volume changed)
+                        if current_volume > last_volume:
+                            last_volumes[candle_key] = current_volume
+
+                            # Send candle update
+                            candle_msg = {
+                                "type": "candle",
+                                "pair": pair_name if pair != 'all' else p.upper(),
+                                "timeframe": "1m",
+                                "candle": {
+                                    "bucket": latest_candle['bucket'],
+                                    "open": latest_candle['open'],
+                                    "high": latest_candle['high'],
+                                    "low": latest_candle['low'],
+                                    "close": latest_candle['close'],
+                                    "volume": current_volume,
+                                },
+                                "total_volume": data.get('total_volume', 0),
+                                "timestamp": time.time(),
+                            }
+
+                            try:
+                                await websocket.send_json(candle_msg)
+                                error_count = 0
+                            except Exception as e:
+                                logger.warning(f"Failed to send candle: {e}")
+                                error_count += 1
+                                if error_count > 5:
+                                    logger.error("Too many send errors, closing connection")
+                                    break
+
+                # Poll interval: 100ms (10 candles/sec update frequency)
+                await asyncio.sleep(0.1)
+
+            except Exception as e:
+                logger.warning(f"OHLCV stream error: {e}")
+                await asyncio.sleep(0.5)
+
+    except Exception as e:
+        logger.debug(f"OHLCV WebSocket closed: {e}")
+    finally:
+        logger.info(f"OHLCV WebSocket closed for pair={pair}")
+
 @app.websocket("/ws/orders/{user_id}")
 async def websocket_orders(
     websocket: WebSocket,

@@ -221,22 +221,84 @@
     </div>
 
     <script>
+        const WS_BASE = 'ws://localhost:8000';
         const API_BASE = 'http://localhost:8000';
         let ohlcvData = {
-            btc: { candles: [] },
-            eth: { candles: [] },
-            lcx: { candles: [] }
+            btc: { candles: new Array(30).fill(null), total_volume: 0 },
+            eth: { candles: new Array(30).fill(null), total_volume: 0 },
+            lcx: { candles: new Array(30).fill(null), total_volume: 0 }
         };
+        let wsConnections = {};
+        let updateTimestamp = {};
 
         // Initialize
-        async function init() {
-            updateStatus('Loading market data...', false);
-            await fetchOHLCV();
-            setInterval(fetchOHLCV, 1000);
+        function init() {
+            updateStatus('Connecting to OHLCV real-time stream...', false);
+
+            // Connect to WebSocket streams for each pair
+            connectWebSocketStream('btc');
+            connectWebSocketStream('eth');
+            connectWebSocketStream('lcx');
+
+            // Fetch initial data via REST
+            fetchInitialOHLCV();
         }
 
-        // Fetch OHLCV from API
-        async function fetchOHLCV() {
+        // Connect to WebSocket OHLCV stream
+        function connectWebSocketStream(pair) {
+            try {
+                const ws = new WebSocket(`${WS_BASE}/ws/ohlcv/${pair}`);
+
+                ws.onopen = () => {
+                    console.log(`✓ WebSocket connected: ${pair}`);
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        if (msg.type === 'candle') {
+                            const pairKey = msg.pair.split('/')[0].toLowerCase();
+                            const bucket = msg.candle.bucket;
+
+                            // Ensure array exists
+                            if (!ohlcvData[pairKey].candles) {
+                                ohlcvData[pairKey].candles = new Array(30).fill(null);
+                            }
+
+                            // Update candle at bucket
+                            ohlcvData[pairKey].candles[bucket] = msg.candle;
+                            ohlcvData[pairKey].total_volume = msg.total_volume;
+                            updateTimestamp[pairKey] = msg.timestamp;
+
+                            // Re-render on update
+                            renderPanels();
+                            updateStatus('Connected: Real-time OHLCV stream active', true);
+                        }
+                    } catch (e) {
+                        console.warn(`Failed to parse WebSocket message: ${e}`);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    console.error(`WebSocket error (${pair}):`, error);
+                    updateStatus(`WebSocket error: ${pair}`, false);
+                };
+
+                ws.onclose = () => {
+                    console.log(`WebSocket closed: ${pair} - reconnecting...`);
+                    // Attempt reconnect after 2 seconds
+                    setTimeout(() => connectWebSocketStream(pair), 2000);
+                };
+
+                wsConnections[pair] = ws;
+            } catch (e) {
+                console.error(`Failed to connect WebSocket (${pair}):`, e);
+                updateStatus(`Connection failed: ${e.message}`, false);
+            }
+        }
+
+        // Fetch initial OHLCV data via REST
+        async function fetchInitialOHLCV() {
             try {
                 const [btc, eth, lcx] = await Promise.all([
                     fetch(`${API_BASE}/api/ohlcv/btc`).then(r => r.json()),
@@ -244,14 +306,22 @@
                     fetch(`${API_BASE}/api/ohlcv/lcx`).then(r => r.json()),
                 ]);
 
-                ohlcvData.btc = btc;
-                ohlcvData.eth = eth;
-                ohlcvData.lcx = lcx;
+                if (btc.candles) {
+                    ohlcvData.btc = btc;
+                    updateTimestamp.btc = Date.now();
+                }
+                if (eth.candles) {
+                    ohlcvData.eth = eth;
+                    updateTimestamp.eth = Date.now();
+                }
+                if (lcx.candles) {
+                    ohlcvData.lcx = lcx;
+                    updateTimestamp.lcx = Date.now();
+                }
 
                 renderPanels();
-                updateStatus('Connected: Market Profile Active', true);
             } catch (e) {
-                updateStatus(`Error: ${e.message}`, false);
+                console.warn(`REST API error during init: ${e.message}`);
             }
         }
 
