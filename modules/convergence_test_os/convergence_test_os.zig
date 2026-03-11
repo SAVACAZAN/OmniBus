@@ -73,8 +73,8 @@ export fn run_convergence_cycle() void {
         const cv_div_ptr: *volatile u32 = @ptrFromInt(0x4B001C);
         state.saved_divergence_count = cv_div_ptr.*;
 
-        // Inject a fault: write 0 to seL4 isolation_verified flag @ 0x4A0041
-        const sel4_isolation_ptr: *volatile u8 = @ptrFromInt(0x4A0041);
+        // Inject a fault: write 0 to seL4 isolation_verified flag @ 0x4A0029 (offset 41)
+        const sel4_isolation_ptr: *volatile u8 = @ptrFromInt(0x4A0029);
         sel4_isolation_ptr.* = 0x00;
     }
 
@@ -90,7 +90,7 @@ export fn run_convergence_cycle() void {
             state.test_phase = 2; // recovery
 
             // Restore seL4 isolation_verified = 1 (recover)
-            const sel4_isolation_ptr: *volatile u8 = @ptrFromInt(0x4A0041);
+            const sel4_isolation_ptr: *volatile u8 = @ptrFromInt(0x4A0029);
             sel4_isolation_ptr.* = 0x01;
         }
 
@@ -100,7 +100,7 @@ export fn run_convergence_cycle() void {
             state.test_phase = 2;
 
             // Restore anyway
-            const sel4_isolation_ptr: *volatile u8 = @ptrFromInt(0x4A0041);
+            const sel4_isolation_ptr: *volatile u8 = @ptrFromInt(0x4A0029);
             sel4_isolation_ptr.* = 0x01;
         }
     }
