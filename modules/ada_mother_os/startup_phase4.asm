@@ -372,6 +372,36 @@ long_mode_entry:
     mov rcx, 16
     call load_sectors_pio
 
+    ; UART 'U' = Phase 52: Multi-Node Federation OS load starting
+    mov al, 'U'
+    out dx, al
+
+    ; Load Multi-Node Federation OS from sectors 7904+ (128 sectors = 64KB) → 0x4F0000
+    mov rax, 7904
+    mov rdi, 0x4F0000
+    mov rcx, 128
+    call load_sectors_pio
+
+    ; UART 'P' = Phase 53: Async IPC OS load starting
+    mov al, 'P'
+    out dx, al
+
+    ; Load Async IPC OS from sectors 8032+ (128 sectors = 64KB) → 0x500000
+    mov rax, 8032
+    mov rdi, 0x500000
+    mov rcx, 128
+    call load_sectors_pio
+
+    ; UART 'T' = Phase 54: Persistent State OS load starting
+    mov al, 'T'
+    out dx, al
+
+    ; Load Persistent State OS from sectors 8160+ (128 sectors = 64KB) → 0x510000
+    mov rax, 8160
+    mov rdi, 0x510000
+    mov rcx, 128
+    call load_sectors_pio
+
     ; UART 'S' = All sectors loaded successfully
     mov al, 'S'
     out dx, al
@@ -1221,6 +1251,27 @@ scheduler_loop:
     jnz .skip_convergence_dispatch
     call 0x4D0200                       ; ConvergenceTest: run_convergence_cycle
 .skip_convergence_dispatch:
+
+    ; Async IPC OS dispatch: every 256 cycles (0xFF) — non-blocking inter-process communication
+    mov rax, r11
+    and rax, 0xFF
+    jnz .skip_async_ipc_dispatch
+    call 0x500100                       ; AsyncIPC: run_ipc_cycle @ 0x500100
+.skip_async_ipc_dispatch:
+
+    ; Multi-Node Federation OS dispatch: every 512 cycles (0x1FF) — cluster heartbeat & quorum detection
+    mov rax, r11
+    and rax, 0x1FF
+    jnz .skip_mnf_dispatch
+    call 0x4F0100                       ; MNFederation: run_federation_cycle @ 0x4F0100
+.skip_mnf_dispatch:
+
+    ; Persistent State OS dispatch: every 262144 cycles (0x3FFFF) — checkpoint/restore & fault tolerance
+    mov rax, r11
+    and rax, 0x3FFFF
+    jnz .skip_pstate_dispatch
+    call 0x510100                       ; PersistentState: run_checkpoint_cycle @ 0x510100
+.skip_pstate_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
