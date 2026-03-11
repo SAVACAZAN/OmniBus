@@ -283,7 +283,8 @@ if os.path.exists(static_dir):
 redis_state: Optional[RedisStateManager] = None
 omnibus_client: Optional[OmniBusClient] = None
 rate_limiter: Optional[RateLimiter] = None
-active_connections: Dict[str, List[WebSocket]] = {}
+active_connections: Dict[str, List[WebSocket]] = {}  # user_id -> list of WebSockets
+user_ips: Dict[str, set] = {}  # user_id -> set of IPs (for dedup)
 
 # ============================================================================
 # Startup/Shutdown
@@ -507,7 +508,14 @@ async def websocket_prices(
     """WebSocket for REAL-TIME price updates (Kraken/Coinbase/LCX live data only)"""
     await websocket.accept()
 
-    user_id = token[:16] if token else "anonymous"
+    # Get client IP for unique user tracking
+    client_ip = websocket.client[0] if websocket.client else "unknown"
+    user_id = token[:16] if token else f"anon_{client_ip}"
+
+    # Track unique users by IP
+    if user_id not in user_ips:
+        user_ips[user_id] = set()
+    user_ips[user_id].add(client_ip)
 
     # Track connection (REAL count - no mock)
     if user_id not in active_connections:
@@ -515,6 +523,8 @@ async def websocket_prices(
     active_connections[user_id].append(websocket)
     if redis_state:
         await redis_state.increment_connection_count(user_id)
+
+    logger.info(f"WebSocket connect: user={user_id} ip={client_ip} (unique_ips={len(user_ips)}, total_connections={sum(len(c) for c in active_connections.values())})")
 
     try:
         while True:
@@ -602,12 +612,22 @@ async def websocket_orders(
 
 @app.get("/metrics")
 async def metrics():
-    """Prometheus-compatible metrics"""
+    """Prometheus-compatible metrics with unique user deduplication by IP"""
     total_connections = sum(len(conns) for conns in active_connections.values())
 
+    # Count unique users by deduplicating IPs across all user_ids
+    # (1 person with 5 browser tabs = 1 unique user, not 5)
+    unique_ips = set()
+    for ip_set in user_ips.values():
+        unique_ips.update(ip_set)
+
+    active_users = len(unique_ips)
+
+    logger.debug(f"Metrics: {active_users} unique users ({len(unique_ips)} unique IPs), {total_connections} total connections")
+
     return {
-        "active_connections": total_connections,
-        "active_users": len(active_connections),
+        "active_connections": total_connections,  # Total WebSocket connections/sessions
+        "active_users": active_users,             # Unique users by IP address
         "timestamp": time.time(),
     }
 
