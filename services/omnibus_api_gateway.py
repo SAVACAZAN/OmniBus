@@ -592,6 +592,10 @@ async def websocket_prices(
         while True:
             await asyncio.sleep(0.2)  # 200ms update cycle
 
+            # Check if connection is still open
+            if websocket.client_state.value != 0:  # 0 = CONNECTING, 1 = CONNECTED
+                break
+
             # Read REAL prices from feeder — NO MOCK FALLBACK
             prices = read_real_prices()
             if not prices:
@@ -615,11 +619,11 @@ async def websocket_prices(
                 try:
                     await websocket.send_json(price_update)
                 except Exception as e:
-                    logger.error(f"Failed to send price update: {e}")
-                    break
+                    # Connection closed, exit loop cleanly
+                    return
 
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
+        logger.debug(f"WebSocket closed: {e}")
     finally:
         # Cleanup
         if user_id in active_connections and websocket in active_connections[user_id]:
@@ -643,6 +647,10 @@ async def websocket_orders(
 
     try:
         while True:
+            # Check if connection is still open
+            if websocket.client_state.value != 0:
+                break
+
             # Check for order updates
             orders = await redis_state.get_user_orders(user_id, limit=10)
 

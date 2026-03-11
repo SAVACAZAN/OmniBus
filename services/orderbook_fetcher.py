@@ -110,38 +110,61 @@ class OrderbookFetcher:
     def format_orderbook_display(self, orderbook_data: Dict) -> Dict:
         """Format orderbook for frontend display"""
         formatted = {'pair': orderbook_data.get('pair')}
-        
+
         for exchange in ['kraken', 'coinbase', 'lcx']:
             data = orderbook_data.get(exchange)
             if data:
-                # Format bids and asks with price and size
-                bids = []
-                asks = []
-                
-                for price, size in (data.get('bids', [])[:10] if isinstance(data.get('bids', [])[0], (list, tuple)) else []):
-                    bids.append({
-                        'price': float(price),
-                        'size': float(size),
-                        'total': float(price) * float(size)
-                    })
-                
-                for price, size in (data.get('asks', [])[:10] if isinstance(data.get('asks', [])[0], (list, tuple)) else []):
-                    asks.append({
-                        'price': float(price),
-                        'size': float(size),
-                        'total': float(price) * float(size)
-                    })
-                
-                formatted[exchange] = {
-                    'bids': bids,
-                    'asks': asks,
-                    'spread': None
-                }
-                
-                if bids and asks:
-                    best_bid = bids[0]['price']
-                    best_ask = asks[0]['price']
-                    spread = ((best_ask - best_bid) / best_bid) * 10000  # in bps
-                    formatted[exchange]['spread'] = round(spread, 2)
-        
+                try:
+                    # Format bids and asks with price and size
+                    bids = []
+                    asks = []
+
+                    # Process bids safely
+                    bid_list = data.get('bids', [])
+                    if bid_list and len(bid_list) > 0:
+                        for bid_entry in bid_list[:10]:
+                            try:
+                                if isinstance(bid_entry, (list, tuple)) and len(bid_entry) >= 2:
+                                    price, size = float(bid_entry[0]), float(bid_entry[1])
+                                    bids.append({
+                                        'price': price,
+                                        'size': size,
+                                        'total': price * size
+                                    })
+                            except (ValueError, TypeError, IndexError):
+                                continue
+
+                    # Process asks safely
+                    ask_list = data.get('asks', [])
+                    if ask_list and len(ask_list) > 0:
+                        for ask_entry in ask_list[:10]:
+                            try:
+                                if isinstance(ask_entry, (list, tuple)) and len(ask_entry) >= 2:
+                                    price, size = float(ask_entry[0]), float(ask_entry[1])
+                                    asks.append({
+                                        'price': price,
+                                        'size': size,
+                                        'total': price * size
+                                    })
+                            except (ValueError, TypeError, IndexError):
+                                continue
+
+                    formatted[exchange] = {
+                        'bids': bids,
+                        'asks': asks,
+                        'spread': None
+                    }
+
+                    if bids and asks:
+                        best_bid = bids[0]['price']
+                        best_ask = asks[0]['price']
+                        if best_bid > 0:
+                            spread = ((best_ask - best_bid) / best_bid) * 10000  # in bps
+                            formatted[exchange]['spread'] = round(spread, 2)
+                except Exception as e:
+                    logger.error(f"Error formatting {exchange} orderbook: {e}")
+                    formatted[exchange] = {'bids': [], 'asks': [], 'spread': None}
+            else:
+                formatted[exchange] = {'bids': [], 'asks': [], 'spread': None}
+
         return formatted
