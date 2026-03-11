@@ -1287,6 +1287,13 @@ scheduler_loop:
     call 0x5B0100                       ; DatabaseOS: run_database_cycle @ 0x5B0100
 .skip_database_dispatch:
 
+    ; CassandraOS dispatch: every 16384 cycles (0x3FFF) — multi-DC ring topology
+    mov rax, r11
+    and rax, 0x3FFF
+    jnz .skip_cassandra_dispatch
+    call 0x5C0100                       ; CassandraOS: run_cassandra_cycle @ 0x5C0100
+.skip_cassandra_dispatch:
+
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
 busy_wait:
