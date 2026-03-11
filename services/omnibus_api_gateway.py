@@ -13,7 +13,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
 
-from fastapi import FastAPI, WebSocket, HTTPException, Header, Depends
+from fastapi import FastAPI, WebSocket, HTTPException, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -286,6 +286,7 @@ rate_limiter: Optional[RateLimiter] = None
 active_connections: Dict[str, List[WebSocket]] = {}  # user_id -> list of WebSockets
 user_ips: Dict[str, set] = {}  # user_id -> set of IPs (for dedup)
 user_info: Dict[str, Dict] = {}  # user_id -> {ip, os, browser, user_agent}
+page_visitors: List[Dict] = []  # List of all page visitors with full hardware fingerprint
 
 def parse_user_agent(user_agent: str) -> Dict[str, str]:
     """Parse User-Agent string to extract OS and browser"""
@@ -663,6 +664,58 @@ async def websocket_orders(
         # Cleanup
         if user_id in active_connections:
             active_connections[user_id].remove(websocket)
+
+# ============================================================================
+# Page View Tracking Endpoint
+# ============================================================================
+
+@app.post("/page_view")
+async def track_page_view(body: dict, request_obj: Request):
+    """Track page view with hardware fingerprint from visitor"""
+    try:
+        # Get client IP from request
+        client_ip = request_obj.client[0] if request_obj.client else "unknown"
+
+        # Store visitor data with full hardware fingerprint
+        visitor = {
+            "user_id": body.get("user_id"),
+            "ip": client_ip,
+            "cpu_cores": body.get("cpu_cores"),
+            "device_memory": body.get("device_memory"),
+            "gpu": body.get("gpu"),
+            "screen_resolution": body.get("screen_resolution"),
+            "screen_dpi": body.get("screen_dpi"),
+            "screen_color_depth": body.get("screen_color_depth"),
+            "os": body.get("os"),
+            "browser": body.get("browser"),
+            "browser_version": body.get("browser_version"),
+            "language": body.get("language"),
+            "timezone": body.get("timezone"),
+            "canvas_fingerprint": body.get("canvas_fingerprint"),
+            "webgl_fingerprint": body.get("webgl_fingerprint"),
+            "timestamp": body.get("timestamp"),
+            "visit_time": time.time(),
+        }
+
+        # Keep last 1000 visitors (rolling log)
+        page_visitors.append(visitor)
+        if len(page_visitors) > 1000:
+            page_visitors.pop(0)
+
+        logger.info(f"Page view: {client_ip} {body.get('os')} {body.get('browser')} CPU cores={body.get('cpu_cores')}")
+
+        return {"status": "tracked", "visitor_count": len(page_visitors)}
+    except Exception as e:
+        logger.error(f"Failed to track page view: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/visitors")
+async def get_page_visitors(limit: int = 50):
+    """Get recent page visitors with hardware fingerprint"""
+    return {
+        "total_visitors": len(page_visitors),
+        "recent_visitors": page_visitors[-limit:] if page_visitors else [],
+    }
 
 # ============================================================================
 # Metrics Endpoint

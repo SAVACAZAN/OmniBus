@@ -255,7 +255,8 @@ class DashboardManager {
     constructor() {
         this.wsPrice = null;
         this.wsOrders = null;
-        this.userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        // Persistent user ID (same across page reloads)
+        this.userId = localStorage.getItem('user_id') || this.generateUserId();
         this.apiKey = localStorage.getItem('api_key') || this.generateApiKey();
         this.ordersBuffer = [];
         this.priceBuffer = {};
@@ -268,14 +269,131 @@ class DashboardManager {
         this.init();
     }
 
+    generateUserId() {
+        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('user_id', userId);
+        return userId;
+    }
+
     generateApiKey() {
         const key = this.userId + '_' + Math.random().toString(36).substr(2, 16);
         localStorage.setItem('api_key', key);
         return key;
     }
 
+    collectHardwareInfo() {
+        """Collect comprehensive hardware/system fingerprint"""
+        return {
+            // Network
+            "ip": "auto",  // Server will get from request header
+
+            // Hardware
+            "cpu_cores": navigator.hardwareConcurrency || "unknown",
+            "device_memory": navigator.deviceMemory || "unknown",
+            "gpu": this.getGPUInfo(),
+            "screen_resolution": `${window.screen.width}x${window.screen.height}`,
+            "screen_dpi": window.devicePixelRatio,
+            "screen_color_depth": window.screen.colorDepth,
+
+            // Software
+            "os": this.detectOS(),
+            "browser": this.detectBrowser(),
+            "browser_version": navigator.appVersion,
+            "language": navigator.language,
+            "timezone": Intl.DateTimeFormat().resolvedOptions().timeZone,
+            "user_agent": navigator.userAgent,
+
+            // Fingerprinting
+            "canvas_fingerprint": this.getCanvasFingerprint(),
+            "webgl_fingerprint": this.getWebGLInfo(),
+        };
+    }
+
+    getGPUInfo() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            return `${vendor} / ${renderer}`;
+        } catch (e) {
+            return "unknown";
+        }
+    }
+
+    getCanvasFingerprint() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 50;
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('OmniBus Fingerprint', 2, 2);
+            return canvas.toDataURL().substring(0, 50);
+        } catch (e) {
+            return "unknown";
+        }
+    }
+
+    getWebGLInfo() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            return {
+                "vendor": gl.getParameter(gl.VENDOR),
+                "renderer": gl.getParameter(gl.RENDERER),
+                "version": gl.getParameter(gl.VERSION)
+            };
+        } catch (e) {
+            return "unknown";
+        }
+    }
+
+    detectOS() {
+        const ua = navigator.userAgent;
+        if (ua.includes('Windows')) return 'Windows';
+        if (ua.includes('Mac')) return 'macOS';
+        if (ua.includes('Linux')) return 'Linux';
+        if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+        if (ua.includes('Android')) return 'Android';
+        return 'Unknown';
+    }
+
+    detectBrowser() {
+        const ua = navigator.userAgent;
+        if (ua.includes('Chrome') && !ua.includes('Edge')) return 'Chrome';
+        if (ua.includes('Firefox')) return 'Firefox';
+        if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+        if (ua.includes('Edge')) return 'Edge';
+        return 'Unknown';
+    }
+
+    async trackPageView() {
+        """Send page view with hardware fingerprint to backend"""
+        try {
+            const hardwareInfo = this.collectHardwareInfo();
+            const response = await fetch('/page_view', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.userId,
+                    ...hardwareInfo,
+                    timestamp: new Date().toISOString()
+                })
+            });
+            console.log('Page view tracked:', hardwareInfo);
+        } catch (e) {
+            console.error('Failed to track page view:', e);
+        }
+    }
+
     async init() {
         console.log('Initializing OmniBus Dashboard Manager');
+
+        // Track page view with hardware fingerprint
+        this.trackPageView();
 
         // Connect WebSocket for prices
         this.connectPriceWebSocket();
