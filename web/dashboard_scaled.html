@@ -131,6 +131,7 @@
         <button id="tab-trading" class="tab-button active px-4 py-2 border-b-2 border-blue-500 text-primary font-bold">📈 Live Trading</button>
         <button id="tab-analytics" class="tab-button px-4 py-2 border-b-2 border-transparent text-gray-400 hover:text-gray-300">📊 Analytics</button>
         <button id="tab-visitors" class="tab-button px-4 py-2 border-b-2 border-transparent text-gray-400 hover:text-gray-300">👥 Visitors</button>
+        <button id="tab-orderbook" class="tab-button px-4 py-2 border-b-2 border-transparent text-gray-400 hover:text-gray-300">📚 Orderbooks</button>
     </div>
 
     <!-- TAB 1: LIVE TRADING -->
@@ -286,6 +287,137 @@
     </div>
     </div> <!-- END TAB 3: VISITORS -->
 
+    <!-- TAB 4: ORDERBOOKS -->
+    <div id="content-orderbook" class="tab-content" style="display:none;">
+    <h2 class="text-2xl font-bold mb-4">Live Orderbooks</h2>
+
+    <!-- Pair Selector -->
+    <div class="mb-6">
+        <label class="text-gray-300 block mb-2">Select Trading Pair:</label>
+        <div class="flex gap-3">
+            <button class="pair-selector px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 active" data-pair="BTC/USD">BTC/USD</button>
+            <button class="pair-selector px-4 py-2 bg-gray-700 text-gray-300 rounded hover:bg-gray-600" data-pair="BTC/USDC">BTC/USDC</button>
+        </div>
+    </div>
+
+    <!-- Orderbook Cards Grid -->
+    <div class="grid grid-cols-3 gap-4" id="orderbook-container">
+        <!-- Kraken -->
+        <div class="metric-card">
+            <h3 class="text-lg font-bold text-primary mb-3">🔹 Kraken</h3>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <!-- Bids -->
+                <div class="mb-4">
+                    <h4 class="text-green-400 text-sm font-bold mb-2">Bids 📈</h4>
+                    <table class="w-full text-xs text-gray-300">
+                        <thead>
+                            <tr class="border-b border-gray-600">
+                                <th class="text-left">Price</th>
+                                <th class="text-right">Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kraken-bids">
+                            <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Asks -->
+                <div class="mb-2">
+                    <h4 class="text-red-400 text-sm font-bold mb-2">Asks 📉</h4>
+                    <table class="w-full text-xs text-gray-300">
+                        <thead>
+                            <tr class="border-b border-gray-600">
+                                <th class="text-left">Price</th>
+                                <th class="text-right">Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kraken-asks">
+                            <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-xs text-gray-500 mt-2">Spread: <span id="kraken-spread">-</span> bps</div>
+            </div>
+        </div>
+
+        <!-- Coinbase -->
+        <div class="metric-card">
+            <h3 class="text-lg font-bold text-primary mb-3">🔷 Coinbase</h3>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <!-- Bids -->
+                <div class="mb-4">
+                    <h4 class="text-green-400 text-sm font-bold mb-2">Bids 📈</h4>
+                    <table class="w-full text-xs text-gray-300">
+                        <thead>
+                            <tr class="border-b border-gray-600">
+                                <th class="text-left">Price</th>
+                                <th class="text-right">Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coinbase-bids">
+                            <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Asks -->
+                <div class="mb-2">
+                    <h4 class="text-red-400 text-sm font-bold mb-2">Asks 📉</h4>
+                    <table class="w-full text-xs text-gray-300">
+                        <thead>
+                            <tr class="border-b border-gray-600">
+                                <th class="text-left">Price</th>
+                                <th class="text-right">Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coinbase-asks">
+                            <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-xs text-gray-500 mt-2">Spread: <span id="coinbase-spread">-</span> bps</div>
+            </div>
+        </div>
+
+        <!-- LCX -->
+        <div class="metric-card">
+            <h3 class="text-lg font-bold text-primary mb-3">🔶 LCX</h3>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <!-- Bids -->
+                <div class="mb-4">
+                    <h4 class="text-green-400 text-sm font-bold mb-2">Bids 📈</h4>
+                    <table class="w-full text-xs text-gray-300">
+                        <thead>
+                            <tr class="border-b border-gray-600">
+                                <th class="text-left">Price</th>
+                                <th class="text-right">Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lcx-bids">
+                            <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Asks -->
+                <div class="mb-2">
+                    <h4 class="text-red-400 text-sm font-bold mb-2">Asks 📉</h4>
+                    <table class="w-full text-xs text-gray-300">
+                        <thead>
+                            <tr class="border-b border-gray-600">
+                                <th class="text-left">Price</th>
+                                <th class="text-right">Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lcx-asks">
+                            <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-xs text-gray-500 mt-2">Spread: <span id="lcx-spread">-</span> bps</div>
+            </div>
+        </div>
+    </div>
+    </div> <!-- END TAB 4: ORDERBOOKS -->
+
 </div>
 
 <!-- WebSocket Connection Manager -->
@@ -304,6 +436,8 @@ class DashboardManager {
             apiThroughput: 0,
             avgLatency: 0,
         };
+        this.currentPair = 'BTC/USD';
+        this.orderbookRefreshInterval = null;
 
         this.init();
     }
@@ -352,7 +486,87 @@ class DashboardManager {
                 if (tabName === 'visitors') {
                     this.loadVisitors();
                 }
+
+                // Load orderbooks if Orderbook tab clicked
+                if (tabName === 'orderbook') {
+                    this.loadOrderbooks();
+                }
             });
+        });
+
+        // Setup pair selector buttons
+        const pairSelectors = document.querySelectorAll('.pair-selector');
+        pairSelectors.forEach(button => {
+            button.addEventListener('click', () => {
+                pairSelectors.forEach(btn => {
+                    btn.classList.remove('active', 'bg-blue-600');
+                    btn.classList.add('bg-gray-700', 'text-gray-300');
+                });
+                button.classList.add('active', 'bg-blue-600');
+                button.classList.remove('bg-gray-700', 'text-gray-300');
+                button.classList.add('text-white');
+                this.currentPair = button.getAttribute('data-pair');
+                this.loadOrderbooks();
+            });
+        });
+    }
+
+    async loadOrderbooks() {
+        // Fetch and display orderbooks from all exchanges
+        const pair = this.currentPair || 'BTC/USD';
+        try {
+            const response = await fetch(`/api/orderbook?pair=${encodeURIComponent(pair)}`);
+            const data = await response.json();
+            this.updateOrderbookDisplay(data);
+            // Auto-refresh every 3 seconds
+            if (this.orderbookRefreshInterval) clearInterval(this.orderbookRefreshInterval);
+            this.orderbookRefreshInterval = setInterval(() => this.loadOrderbooks(), 3000);
+        } catch (e) {
+            console.error('Failed to load orderbooks:', e);
+        }
+    }
+
+    updateOrderbookDisplay(data) {
+        // Update orderbook tables for all exchanges
+        const exchanges = ['kraken', 'coinbase', 'lcx'];
+
+        exchanges.forEach(exchange => {
+            const obData = data[exchange];
+
+            if (obData) {
+                // Update bids
+                const bidsBody = document.getElementById(`${exchange}-bids`);
+                if (bidsBody && obData.bids && obData.bids.length > 0) {
+                    bidsBody.innerHTML = obData.bids.slice(0, 10).map(bid => `
+                        <tr style="border-bottom: 1px solid #334155;">
+                            <td class="px-2 py-1">$${bid.price.toFixed(2)}</td>
+                            <td class="px-2 py-1 text-right">${bid.size.toFixed(4)}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Update asks
+                const asksBody = document.getElementById(`${exchange}-asks`);
+                if (asksBody && obData.asks && obData.asks.length > 0) {
+                    asksBody.innerHTML = obData.asks.slice(0, 10).map(ask => `
+                        <tr style="border-bottom: 1px solid #334155;">
+                            <td class="px-2 py-1">$${ask.price.toFixed(2)}</td>
+                            <td class="px-2 py-1 text-right">${ask.size.toFixed(4)}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Update spread
+                const spreadElem = document.getElementById(`${exchange}-spread`);
+                if (spreadElem) {
+                    spreadElem.textContent = obData.spread !== null ? `${obData.spread.toFixed(2)}` : 'N/A';
+                }
+            } else {
+                // Clear if no data
+                document.getElementById(`${exchange}-bids`).innerHTML = '<tr><td colspan="2" class="text-gray-500 text-center py-2">No data</td></tr>';
+                document.getElementById(`${exchange}-asks`).innerHTML = '<tr><td colspan="2" class="text-gray-500 text-center py-2">No data</td></tr>';
+                document.getElementById(`${exchange}-spread`).textContent = '-';
+            }
         });
     }
 

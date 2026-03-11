@@ -21,6 +21,9 @@ import uvicorn
 import redis.asyncio as redis
 from pydantic import BaseModel
 import os
+import httpx
+
+from orderbook_fetcher import OrderbookFetcher
 
 # ============================================================================
 # Configuration
@@ -716,6 +719,50 @@ async def get_page_visitors(limit: int = 50):
         "total_visitors": len(page_visitors),
         "recent_visitors": page_visitors[-limit:] if page_visitors else [],
     }
+
+# ============================================================================
+# Orderbook Endpoint
+# ============================================================================
+
+orderbook_fetcher = OrderbookFetcher()
+orderbook_cache = {}
+last_orderbook_fetch = {}
+
+@app.get("/api/orderbook")
+async def get_orderbook(pair: str):
+    """Get real-time orderbook from Kraken, Coinbase, and LCX
+
+    Query parameter: pair (e.g., BTC/USD, BTC/USDC)
+    """
+    pair = pair.upper()
+
+    # Check cache (5 second TTL)
+    if pair in orderbook_cache:
+        cache_entry = orderbook_cache[pair]
+        if time.time() - cache_entry['timestamp'] < 5:
+            return cache_entry['data']
+
+    # Fetch fresh orderbooks
+    try:
+        orderbooks = await orderbook_fetcher.fetch_all_orderbooks(pair)
+        formatted = orderbook_fetcher.format_orderbook_display(orderbooks)
+
+        # Cache result
+        orderbook_cache[pair] = {
+            'data': formatted,
+            'timestamp': time.time()
+        }
+
+        return formatted
+    except Exception as e:
+        logger.error(f"Orderbook fetch failed: {e}")
+        return {
+            "error": str(e),
+            "pair": pair,
+            "kraken": None,
+            "coinbase": None,
+            "lcx": None
+        }
 
 # ============================================================================
 # Metrics Endpoint
