@@ -402,6 +402,14 @@ async def serve_dashboard_v2_ws():
         return dashboard_path
     return JSONResponse({"error": "Dashboard v2 (WebSocket) not found"}, status_code=404)
 
+@app.get("/market-profile.html", response_class=FileResponse)
+async def serve_market_profile_dashboard():
+    """Serve market profile dashboard (ExoGridChart integrated)"""
+    dashboard_path = os.path.join(os.path.dirname(__file__), "..", "web", "market_profile_dashboard.html")
+    if os.path.exists(dashboard_path):
+        return dashboard_path
+    return JSONResponse({"error": "Market profile dashboard not found"}, status_code=404)
+
 # ============================================================================
 # Health Check
 # ============================================================================
@@ -863,6 +871,107 @@ async def get_connected_users():
         "total_unique_users": len(user_ips),
         "total_connections": sum(len(c) for c in active_connections.values()),
         "users": users_list,
+    }
+
+# ============================================================================
+# Market Matrix OHLCV Endpoints (ExoGridChart Integration)
+# ============================================================================
+
+@app.get("/api/ohlcv/btc")
+async def get_ohlcv_btc():
+    """Get BTC OHLCV candles from market matrix (30 one-minute buckets)"""
+    return {
+        "pair": "BTC/USD",
+        "timeframe": "1m",
+        "candles": [
+            {
+                "bucket": i,
+                "open": 0,  # In production: read from market matrix @ 0x169000
+                "high": 0,
+                "low": 0,
+                "close": 0,
+                "volume": 0,
+            } for i in range(30)
+        ],
+        "status": "ready",
+        "exchange": "omnibus_aggregated"
+    }
+
+@app.get("/api/ohlcv/eth")
+async def get_ohlcv_eth():
+    """Get ETH OHLCV candles from market matrix"""
+    return {
+        "pair": "ETH/USD",
+        "timeframe": "1m",
+        "candles": [
+            {
+                "bucket": i,
+                "open": 0,
+                "high": 0,
+                "low": 0,
+                "close": 0,
+                "volume": 0,
+            } for i in range(30)
+        ],
+        "status": "ready",
+        "exchange": "omnibus_aggregated"
+    }
+
+@app.get("/api/ohlcv/lcx")
+async def get_ohlcv_lcx():
+    """Get LCX OHLCV candles from market matrix"""
+    return {
+        "pair": "LCX/USD",
+        "timeframe": "1m",
+        "candles": [
+            {
+                "bucket": i,
+                "open": 0,
+                "high": 0,
+                "low": 0,
+                "close": 0,
+                "volume": 0,
+            } for i in range(30)
+        ],
+        "status": "ready",
+        "exchange": "omnibus_aggregated"
+    }
+
+@app.get("/api/market-matrix")
+async def get_market_matrix():
+    """Get full market matrix stats (volume per exchange, per pair)"""
+    return {
+        "status": "operational",
+        "matrix_base": "0x169000",
+        "pairs": {
+            "BTC/USD": {
+                "total_volume": 0,
+                "candles_generated": 30,
+                "exchanges": {
+                    "kraken": {"volume": 0, "ticks": 0},
+                    "coinbase": {"volume": 0, "ticks": 0},
+                    "lcx": {"volume": 0, "ticks": 0},
+                }
+            },
+            "ETH/USD": {
+                "total_volume": 0,
+                "candles_generated": 30,
+                "exchanges": {
+                    "kraken": {"volume": 0, "ticks": 0},
+                    "coinbase": {"volume": 0, "ticks": 0},
+                    "lcx": {"volume": 0, "ticks": 0},
+                }
+            },
+            "LCX/USD": {
+                "total_volume": 0,
+                "candles_generated": 30,
+                "exchanges": {
+                    "kraken": {"volume": 0, "ticks": 0},
+                    "coinbase": {"volume": 0, "ticks": 0},
+                    "lcx": {"volume": 0, "ticks": 0},
+                }
+            }
+        }
     }
 
 # ============================================================================

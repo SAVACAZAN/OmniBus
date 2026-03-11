@@ -330,3 +330,23 @@ export fn fetch_ticker_flags(pair_id: u16) u8 {
     const slot = @as(*volatile types.PriceFeedSlot, @ptrFromInt(types.WORKING_BASE + pair_id * 128));
     return slot.flags;
 }
+
+
+// ============================================================================
+// MARKET MATRIX / OHLCV EXPORTS (ExoGridChart compatibility)
+// ============================================================================
+
+/// Get per-pair market volume
+export fn get_market_volume(pair_id: u16) u64 {
+    return market_matrix.get_matrix_stats(pair_id);
+}
+
+/// Get per-exchange volume (for analytics dashboard)
+export fn get_exchange_volume(exchange_id: u8, pair_id: u16) u64 {
+    return market_matrix.get_exchange_volume(exchange_id, pair_id);
+}
+
+/// Signal to advance to next time bucket (called every 60 seconds)
+export fn advance_time_bucket() void {
+    market_matrix.advanceTimeBucket();
+}
