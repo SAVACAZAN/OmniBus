@@ -126,6 +126,15 @@
         </div>
     </div>
 
+    <!-- Tab Navigation -->
+    <div class="mb-6 border-b border-gray-600 flex gap-4">
+        <button id="tab-trading" class="tab-button active px-4 py-2 border-b-2 border-blue-500 text-primary font-bold">📈 Live Trading</button>
+        <button id="tab-analytics" class="tab-button px-4 py-2 border-b-2 border-transparent text-gray-400 hover:text-gray-300">📊 Analytics</button>
+        <button id="tab-visitors" class="tab-button px-4 py-2 border-b-2 border-transparent text-gray-400 hover:text-gray-300">👥 Visitors</button>
+    </div>
+
+    <!-- TAB 1: LIVE TRADING -->
+    <div id="content-trading" class="tab-content active">
     <div class="grid grid-cols-4 gap-4 mb-6">
         <!-- Real-time Prices Section -->
         <div class="col-span-2">
@@ -207,6 +216,10 @@
             <div class="text-gray-400">Monitoring for arbitrage opportunities...</div>
         </div>
     </div>
+    </div> <!-- END TAB 1: LIVE TRADING -->
+
+    <!-- TAB 2: ANALYTICS -->
+    <div id="content-analytics" class="tab-content" style="display:none;">
 
     <!-- Connected Users -->
     <div class="mb-6">
@@ -246,6 +259,32 @@
             <div class="metric-value" id="cache-hit-rate">0%</div>
         </div>
     </div>
+    </div> <!-- END TAB 2: ANALYTICS -->
+
+    <!-- TAB 3: VISITORS -->
+    <div id="content-visitors" class="tab-content" style="display:none;">
+    <h2 class="text-2xl font-bold mb-4">Recent Page Visitors</h2>
+    <div style="background-color: var(--surface); border: 1px solid #334155; border-radius: 8px; overflow: hidden;">
+        <table class="w-full text-sm">
+            <thead style="background-color: #1e293b; border-bottom: 1px solid #334155;">
+                <tr>
+                    <th class="px-4 py-3 text-left text-gray-300">IP</th>
+                    <th class="px-4 py-3 text-left text-gray-300">OS</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Browser</th>
+                    <th class="px-4 py-3 text-left text-gray-300">CPU Cores</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Memory</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Resolution</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Time</th>
+                </tr>
+            </thead>
+            <tbody id="visitors-body">
+                <tr>
+                    <td class="px-4 py-3 text-gray-400" colspan="7">Loading visitors...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </div> <!-- END TAB 3: VISITORS -->
 
 </div>
 
@@ -279,6 +318,77 @@ class DashboardManager {
         const key = this.userId + '_' + Math.random().toString(36).substr(2, 16);
         localStorage.setItem('api_key', key);
         return key;
+    }
+
+    setupTabSwitching() {
+        """Setup tab click handlers for navigation"""
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tabName = button.id.replace('tab-', '');
+
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active', 'border-blue-500');
+                    btn.classList.add('border-transparent');
+                });
+                tabContents.forEach(content => {
+                    content.style.display = 'none';
+                    content.classList.remove('active');
+                });
+
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active', 'border-blue-500');
+                button.classList.remove('border-transparent');
+                const content = document.getElementById(`content-${tabName}`);
+                if (content) {
+                    content.style.display = 'block';
+                    content.classList.add('active');
+                }
+
+                // Fetch visitors if Visitors tab clicked
+                if (tabName === 'visitors') {
+                    this.loadVisitors();
+                }
+            });
+        });
+    }
+
+    async loadVisitors() {
+        """Fetch and display recent page visitors"""
+        try {
+            const response = await fetch('/api/visitors?limit=50');
+            const data = await response.json();
+            this.updateVisitorsTable(data.recent_visitors || []);
+        } catch (e) {
+            console.error('Failed to load visitors:', e);
+        }
+    }
+
+    updateVisitorsTable(visitors) {
+        """Display visitors in table"""
+        const tbody = document.getElementById('visitors-body');
+        if (!visitors || visitors.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-3 text-gray-400">No recent visitors</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = visitors.map(v => {
+            const time = v.timestamp ? new Date(v.timestamp).toLocaleTimeString() : 'N/A';
+            return `
+                <tr style="border-bottom: 1px solid #334155;">
+                    <td class="px-4 py-3 font-mono text-xs">${v.ip}</td>
+                    <td class="px-4 py-3">${this.getOSIcon(v.os)} ${v.os}</td>
+                    <td class="px-4 py-3">${this.getBrowserIcon(v.browser)} ${v.browser}</td>
+                    <td class="px-4 py-3">${v.cpu_cores || 'N/A'}</td>
+                    <td class="px-4 py-3">${v.device_memory || 'N/A'}</td>
+                    <td class="px-4 py-3 text-xs">${v.screen_resolution || 'N/A'}</td>
+                    <td class="px-4 py-3 text-xs">${time}</td>
+                </tr>
+            `;
+        }).join('');
     }
 
     collectHardwareInfo() {
@@ -391,6 +501,9 @@ class DashboardManager {
 
     async init() {
         console.log('Initializing OmniBus Dashboard Manager');
+
+        // Setup tab switching
+        this.setupTabSwitching();
 
         // Track page view with hardware fingerprint
         this.trackPageView();
