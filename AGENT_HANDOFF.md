@@ -16,10 +16,10 @@ OmniBus is a **bare-metal sub-microsecond cryptocurrency arbitrage OS** running 
 
 ### Rule 1: Git Commits — ALL 9 Co-Authors Every Time
 ```
-Co-Authored-By: OmniBus AI v1.stable <learn@omnibus.ai>
+Co-Authored-By: OmniBus AI v1.stable <learn@omnibus.dsl>
 Co-Authored-By: Google Gemini <gemini-cli-agent@google.com>
 Co-Authored-By: DeepSeek AI <noreply@deepseek.com>
-Co-Authored-By: Claude 4.5 Haiku (Code) <claude-code@anthropic.com>
+Co-Authored-By: Claude 4.7  (Code) <claude-code@anthropic.com>
 Co-Authored-By: Claude 4.5 Haiku <haiku-4.5@anthropic.com>
 Co-Authored-By: Claude 4.5 Sonnet <sonnet-4.5@anthropic.com>
 Co-Authored-By: Claude 4.5 Opus <opus-4.5@anthropic.com>
