@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker/DomainResolver loaded"
@@ -965,3 +965,104 @@ $(BUILD_DIR)/domain_resolver_os.bin: $(BUILD_DIR)/domain_resolver_os.elf
 	@echo "[OC] Converting Domain Resolver OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Domain Resolver OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 52: Multi-Node Federation OS (0x4F0000, 64KB, L27)
+$(BUILD_DIR)/multi_node_federation_os.o: ./modules/multi_node_federation_os/multi_node_federation_os.zig ./modules/multi_node_federation_os/multi_node_federation_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Multi-Node Federation OS to object file..."
+	cd ./modules/multi_node_federation_os && zig build-obj multi_node_federation_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/multi_node_federation_os/multi_node_federation_os.o ]; then mv ./modules/multi_node_federation_os/multi_node_federation_os.o $@; fi
+
+$(BUILD_DIR)/multi_node_federation_stubs.o: ./modules/multi_node_federation_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Multi-Node Federation OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/multi_node_federation_os.elf: $(BUILD_DIR)/multi_node_federation_os.o $(BUILD_DIR)/multi_node_federation_stubs.o ./modules/multi_node_federation_os/multi_node_federation_os.ld
+	@echo "[LD] Linking Multi-Node Federation OS ELF..."
+	ld -T ./modules/multi_node_federation_os/multi_node_federation_os.ld -o $@ $(BUILD_DIR)/multi_node_federation_os.o $(BUILD_DIR)/multi_node_federation_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/multi_node_federation_os.bin: $(BUILD_DIR)/multi_node_federation_os.elf
+	@echo "[OC] Converting Multi-Node Federation OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Multi-Node Federation OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 53: Async IPC OS (0x500000, 64KB, L28)
+$(BUILD_DIR)/async_ipc_os.o: ./modules/async_ipc_os/async_ipc_os.zig ./modules/async_ipc_os/async_ipc_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Async IPC OS to object file..."
+	cd ./modules/async_ipc_os && zig build-obj async_ipc_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/async_ipc_os/async_ipc_os.o ]; then mv ./modules/async_ipc_os/async_ipc_os.o $@; fi
+
+$(BUILD_DIR)/async_ipc_stubs.o: ./modules/async_ipc_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Async IPC OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/async_ipc_os.elf: $(BUILD_DIR)/async_ipc_os.o $(BUILD_DIR)/async_ipc_stubs.o ./modules/async_ipc_os/async_ipc_os.ld
+	@echo "[LD] Linking Async IPC OS ELF..."
+	ld -T ./modules/async_ipc_os/async_ipc_os.ld -o $@ $(BUILD_DIR)/async_ipc_os.o $(BUILD_DIR)/async_ipc_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/async_ipc_os.bin: $(BUILD_DIR)/async_ipc_os.elf
+	@echo "[OC] Converting Async IPC OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Async IPC OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 54: Persistent State OS (0x510000, 64KB, L29)
+$(BUILD_DIR)/persistent_state_os.o: ./modules/persistent_state_os/persistent_state_os.zig ./modules/persistent_state_os/persistent_state_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Persistent State OS to object file..."
+	cd ./modules/persistent_state_os && zig build-obj persistent_state_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/persistent_state_os/persistent_state_os.o ]; then mv ./modules/persistent_state_os/persistent_state_os.o $@; fi
+
+$(BUILD_DIR)/persistent_state_stubs.o: ./modules/persistent_state_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Persistent State OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/persistent_state_os.elf: $(BUILD_DIR)/persistent_state_os.o $(BUILD_DIR)/persistent_state_stubs.o ./modules/persistent_state_os/persistent_state_os.ld
+	@echo "[LD] Linking Persistent State OS ELF..."
+	ld -T ./modules/persistent_state_os/persistent_state_os.ld -o $@ $(BUILD_DIR)/persistent_state_os.o $(BUILD_DIR)/persistent_state_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/persistent_state_os.bin: $(BUILD_DIR)/persistent_state_os.elf
+	@echo "[OC] Converting Persistent State OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Persistent State OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# ============================================================================
+# Phase 57: LoggingOS (Structured Logging Hub)
+# ============================================================================
+
+$(BUILD_DIR)/logging_os.o: ./modules/logging_os/logging_os.zig ./modules/logging_os/logging_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZG] Compiling LoggingOS..."
+	cd ./modules/logging_os && zig build-obj logging_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/logging_os/logging_os.o ]; then mv ./modules/logging_os/logging_os.o $@; fi
+
+$(BUILD_DIR)/logging_stubs.o: ./modules/logging_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling LoggingOS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/logging_os.elf: $(BUILD_DIR)/logging_os.o $(BUILD_DIR)/logging_stubs.o ./modules/logging_os/logging_os.ld
+	@echo "[LD] Linking LoggingOS ELF..."
+	ld -T ./modules/logging_os/logging_os.ld -o $@ $(BUILD_DIR)/logging_os.o $(BUILD_DIR)/logging_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/logging_os.bin: $(BUILD_DIR)/logging_os.elf
+	@echo "[OC] Converting LoggingOS to binary..."
+	objcopy -O binary $< $@
+	@echo "  LoggingOS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# ============================================================================
+# Phase 58: DatabaseOS (Distributed Trade Journal)
+# ============================================================================
+
+$(BUILD_DIR)/database_os.o: ./modules/database_os/database_os.zig ./modules/database_os/database_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZG] Compiling DatabaseOS..."
+	cd ./modules/database_os && zig build-obj database_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/database_os/database_os.o ]; then mv ./modules/database_os/database_os.o $@; fi
+
+$(BUILD_DIR)/database_stubs.o: ./modules/database_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling DatabaseOS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/database_os.elf: $(BUILD_DIR)/database_os.o $(BUILD_DIR)/database_stubs.o ./modules/database_os/database_os.ld
+	@echo "[LD] Linking DatabaseOS ELF..."
+	ld -T ./modules/database_os/database_os.ld -o $@ $(BUILD_DIR)/database_os.o $(BUILD_DIR)/database_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/database_os.bin: $(BUILD_DIR)/database_os.elf
+	@echo "[OC] Converting DatabaseOS to binary..."
+	objcopy -O binary $< $@
+	@echo "  DatabaseOS binary: $@ (size: $$(stat -c%s $@) bytes)"

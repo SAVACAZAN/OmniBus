@@ -1273,6 +1273,20 @@ scheduler_loop:
     call 0x510100                       ; PersistentState: run_checkpoint_cycle @ 0x510100
 .skip_pstate_dispatch:
 
+    ; LoggingOS dispatch: every 1024 cycles (0x3FF) — structured logging + telemetry
+    mov rax, r11
+    and rax, 0x3FF
+    jnz .skip_logging_dispatch
+    call 0x5A0100                       ; LoggingOS: run_logging_cycle @ 0x5A0100
+.skip_logging_dispatch:
+
+    ; DatabaseOS dispatch: every 8192 cycles (0x1FFF) — trade journal persistence
+    mov rax, r11
+    and rax, 0x1FFF
+    jnz .skip_database_dispatch
+    call 0x5B0100                       ; DatabaseOS: run_database_cycle @ 0x5B0100
+.skip_database_dispatch:
+
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
 busy_wait:
