@@ -1294,6 +1294,13 @@ scheduler_loop:
     call 0x5C0100                       ; CassandraOS: run_cassandra_cycle @ 0x5C0100
 .skip_cassandra_dispatch:
 
+    ; MetricsOS dispatch: every 32768 cycles (0x7FFF) — Prometheus + Elasticsearch
+    mov rax, r11
+    and rax, 0x7FFF
+    jnz .skip_metrics_dispatch
+    call 0x5D0100                       ; MetricsOS: run_metrics_cycle @ 0x5D0100
+.skip_metrics_dispatch:
+
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
 busy_wait:
