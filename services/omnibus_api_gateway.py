@@ -24,6 +24,7 @@ import os
 import httpx
 
 from orderbook_fetcher import OrderbookFetcher
+from parallel_tick_aggregator import get_aggregator, init_aggregator
 
 # ============================================================================
 # Configuration
@@ -345,6 +346,11 @@ async def startup_event():
 
     logger.info("Starting OmniBus API Gateway")
 
+    # Initialize parallel tick aggregator (ExoGridChart-style)
+    logger.info("Initializing parallel exchange collectors...")
+    init_aggregator()
+    logger.info("✓ Parallel tick aggregator started")
+
     # Connect to Redis
     redis_state = RedisStateManager(f"redis://{REDIS_HOST}:{REDIS_PORT}")
     await redis_state.connect()
@@ -356,7 +362,7 @@ async def startup_event():
     # Initialize rate limiter
     rate_limiter = RateLimiter(redis_state, RATE_LIMIT_REQUESTS_PER_SECOND)
 
-    logger.info("API Gateway startup complete")
+    logger.info("✓ API Gateway startup complete (tick-driven architecture)")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -561,7 +567,11 @@ async def websocket_prices(
     exchange: str,
     token: str = None,
 ):
-    """WebSocket for REAL-TIME price updates (Kraken/Coinbase/LCX live data only)"""
+    """
+    WebSocket for TICK-DRIVEN price updates (ExoGridChart-style)
+    Emits per-tick updates from parallel exchange collectors
+    No 200ms batching — immediate on order book change
+    """
     await websocket.accept()
 
     # Get client IP for unique user tracking
@@ -594,38 +604,56 @@ async def websocket_prices(
     if redis_state:
         await redis_state.increment_connection_count(user_id)
 
-    logger.info(f"WebSocket connect: user={user_id} ip={client_ip} os={ua_info['os']} browser={ua_info['browser']}")
+    logger.info(f"✓ WebSocket tick-stream: user={user_id} exchange={exchange}")
 
     try:
+        aggregator = get_aggregator()
+        tick_count = 0
+        empty_polls = 0
+
+        logger.info(f"[{user_id}] Starting tick stream for {exchange} (agg queue size: {aggregator.tick_queue.qsize()})")
+
         while True:
-            await asyncio.sleep(0.2)  # 200ms update cycle
+            # Get next tick from parallel aggregator (non-blocking, 50ms timeout)
+            tick = aggregator.get_next_tick(timeout=0.05)
 
-            # Read REAL prices from feeder — NO MOCK FALLBACK
-            prices = read_real_prices()
-            if not prices:
-                continue  # Skip if no real data available
+            if tick:
+                empty_polls = 0  # Reset counter on success
 
-            # Send ONLY REAL prices — no mock values
-            for asset in ["BTC", "ETH"]:
-                price = prices.get(asset)
-                if price is None:
-                    continue  # Skip assets without real data
+                # Filter by requested exchange (or send all if 'all')
+                if exchange.lower() == 'all' or tick.exchange == exchange.lower():
+                    tick_count += 1
 
-                price_update = {
-                    "type": "price_update",
-                    "exchange": exchange.lower(),
-                    "asset": asset,
-                    "bid": price,
-                    "ask": price,
-                    "timestamp": time.time(),
-                }
+                    # Format tick for WebSocket
+                    tick_msg = {
+                        "type": "tick",
+                        "exchange": tick.exchange,
+                        "pair": tick.pair,
+                        "bid": round(tick.bid, 2),
+                        "ask": round(tick.ask, 2),
+                        "mid": round(tick.to_dict()['mid'], 2),
+                        "spread_bps": round(tick.to_dict()['spread_bps'], 2),
+                        "timestamp": tick.timestamp,
+                        "tick_id": tick.tick_id,
+                    }
 
-                try:
-                    await websocket.send_json(price_update)
-                except Exception as e:
-                    # Connection closed, exit loop cleanly
-                    logger.debug(f"WebSocket send failed (connection closed): {e}")
-                    return
+                    try:
+                        await websocket.send_json(tick_msg)
+                        # Log every 50 ticks
+                        if tick_count % 50 == 0:
+                            logger.info(f"[{user_id}] Sent {tick_count} {exchange} ticks")
+                    except Exception as e:
+                        # Connection closed
+                        logger.info(f"[{user_id}] WebSocket closed after {tick_count} ticks: {e}")
+                        return
+            else:
+                empty_polls += 1
+                # Log every 20 empty polls (1 second of silence)
+                if empty_polls % 20 == 0:
+                    logger.debug(f"[{user_id}] Empty poll #{empty_polls} (total ticks sent: {tick_count})")
+
+                # Small yield to prevent busy-waiting
+                await asyncio.sleep(0.001)
 
     except Exception as e:
         logger.debug(f"WebSocket closed: {e}")
@@ -731,6 +759,18 @@ async def get_page_visitors(limit: int = 50):
     return {
         "total_visitors": len(page_visitors),
         "recent_visitors": page_visitors[-limit:] if page_visitors else [],
+    }
+
+@app.get("/api/tick-stats")
+async def get_tick_stats():
+    """Get parallel aggregator statistics"""
+    aggregator = get_aggregator()
+    stats = aggregator.get_stats()
+    return {
+        "status": "active",
+        "architecture": "parallel_tick_driven",
+        "collectors": ["kraken", "coinbase", "lcx"],
+        **stats
     }
 
 # ============================================================================
