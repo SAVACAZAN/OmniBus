@@ -501,37 +501,37 @@ async def get_price(
 # ============================================================================
 
 def read_real_prices():
-    """Read REAL prices from Kraken/Coinbase/LCX feeder buffer"""
+    """Read REAL prices from Kraken/Coinbase/LCX feeder buffer (MultiSourceBuffer format)"""
     try:
         buffer_path = "/tmp/omnibus_all_prices.bin"
         if not os.path.exists(buffer_path):
             return None
 
         with open(buffer_path, "rb") as f:
-            data = f.read(72)  # Read 72-byte single exchange buffer
+            data = f.read(96)  # Read first 96 bytes of MultiSourceBuffer
 
-        if len(data) < 40:
+        if len(data) < 32:
             return None
 
         import struct
-        # Buffer layout (little-endian, 72 bytes total):
+        # MultiSourceBuffer layout (144 bytes total, first 96 shown):
         # Offset 0x00: timestamp (Q, 8 bytes)
-        # Offset 0x08: btc_price_cents (Q, 8 bytes) ← BTC in cents
-        # Offset 0x10: btc_volume (Q, 8 bytes)
-        # Offset 0x18: eth_price_cents (Q, 8 bytes) ← ETH in cents
-        # Offset 0x20: eth_volume (Q, 8 bytes)
-        # Offset 0x28: flags (I, 4 bytes)
-        # Offset 0x2C: reserved (I, 4 bytes)
-        # Offset 0x30: last_tsc (Q, 8 bytes)
-        # Offset 0x38: lcx_cents (Q, 8 bytes)
-        # Offset 0x40: lcx_volume (Q, 8 bytes)
+        # Offset 0x08: kraken_btc_cents (Q, 8 bytes) ← BTC price in cents
+        # Offset 0x10: kraken_eth_cents (Q, 8 bytes) ← ETH price in cents
+        # Offset 0x18: kraken_lcx_microcents (Q, 8 bytes)
+        # Offset 0x20: kraken_lcx_vol (Q, 8 bytes)
+        # Offset 0x28: coinbase_lcx_microcents (Q, 8 bytes)
+        # Offset 0x30: coinbase_lcx_vol (Q, 8 bytes)
+        # Offset 0x38: lcxexch_lcx_microcents (Q, 8 bytes)
+        # Offset 0x40: lcxexch_lcx_vol (Q, 8 bytes)
+        # Offset 0x48: flags (I, 4 bytes)
+        # Offset 0x4C: cycle_count (I, 4 bytes)
 
-        # Unpack: timestamp, btc_cents, btc_vol, eth_cents, eth_vol, flags, reserved, tsc, lcx_cents, lcx_vol
-        # Format: 5Q (40) + 2I (8) + 3Q (24) = 72 bytes total  (10 format codes)
-        unpacked = struct.unpack('<QQQQQIIQQQ', data[:72])  # 5Q + 2I + 3Q = 72 bytes
+        # Unpack: 9 Q's for the data portion
+        unpacked = struct.unpack('<QQQQQQQQQ', data[:72])
 
-        btc_cents = unpacked[1]  # Index 1 = BTC price in cents
-        eth_cents = unpacked[3]  # Index 3 = ETH price in cents
+        btc_cents = unpacked[1]  # Index 1 = Kraken BTC price in cents
+        eth_cents = unpacked[2]  # Index 2 = Kraken ETH price in cents
 
         btc_price = btc_cents / 100.0 if btc_cents > 0 else None
         eth_price = eth_cents / 100.0 if eth_cents > 0 else None
@@ -592,10 +592,6 @@ async def websocket_prices(
         while True:
             await asyncio.sleep(0.2)  # 200ms update cycle
 
-            # Check if connection is still open
-            if websocket.client_state.value != 0:  # 0 = CONNECTING, 1 = CONNECTED
-                break
-
             # Read REAL prices from feeder — NO MOCK FALLBACK
             prices = read_real_prices()
             if not prices:
@@ -620,6 +616,7 @@ async def websocket_prices(
                     await websocket.send_json(price_update)
                 except Exception as e:
                     # Connection closed, exit loop cleanly
+                    logger.debug(f"WebSocket send failed (connection closed): {e}")
                     return
 
     except Exception as e:
