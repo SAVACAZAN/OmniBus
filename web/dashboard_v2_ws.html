@@ -283,14 +283,21 @@ class LiveDashboard {
     }
 
     updatePrices() {
+        // Prices from WebSocket are already in dollars (not cents)
+        // API sends: price = btc_cents / 100.0, so no further division needed
+
         if (this.priceBuffer.BTC) {
-            const btc = Math.floor(this.priceBuffer.BTC / 100);
-            document.getElementById('price-btc').textContent = `$${btc.toLocaleString()}`;
-            document.getElementById('stat-price').textContent = `$${btc.toLocaleString()}`;
+            const btc = this.priceBuffer.BTC;  // Already in dollars
+            document.getElementById('price-btc').textContent = `$${btc.toFixed(2)}`;
+            document.getElementById('stat-price').textContent = `$${btc.toFixed(2)}`;
         }
         if (this.priceBuffer.ETH) {
-            const eth = Math.floor(this.priceBuffer.ETH / 100);
-            document.getElementById('price-eth').textContent = `$${eth.toLocaleString()}`;
+            const eth = this.priceBuffer.ETH;  // Already in dollars
+            document.getElementById('price-eth').textContent = `$${eth.toFixed(2)}`;
+        }
+        if (this.priceBuffer.LCX) {
+            const lcx = this.priceBuffer.LCX;
+            document.getElementById('price-lcx').textContent = `$${lcx.toFixed(6)}`;
         }
     }
 
@@ -298,12 +305,12 @@ class LiveDashboard {
         try {
             const response = await fetch('/api/orderbook?pair=BTC/USD');
             const data = await response.json();
-            
+
             this.displayOrderbook(data, 'kraken');
             this.displayOrderbook(data, 'coinbase');
             this.displayOrderbook(data, 'lcx');
 
-            // Update stats
+            // Update BTC stats from Kraken
             if (data.kraken && data.kraken.bids && data.kraken.asks) {
                 const bid = data.kraken.bids[0]?.price || 0;
                 const ask = data.kraken.asks[0]?.price || 0;
@@ -314,6 +321,20 @@ class LiveDashboard {
                         document.getElementById('stat-spread').textContent = data.kraken.spread.toFixed(2) + ' bps';
                         document.getElementById('spread-btc').textContent = data.kraken.spread.toFixed(2);
                     }
+                }
+            }
+
+            // If LCX not available from orderbook, try alternative pair
+            if ((!data.lcx || !data.lcx.bids) && !this.priceBuffer.LCX) {
+                try {
+                    const lcxResponse = await fetch('/api/orderbook?pair=LCX/USDC');
+                    const lcxData = lcxResponse.ok ? await lcxResponse.json() : null;
+                    if (lcxData && lcxData.kraken && lcxData.kraken.bids) {
+                        data.lcx = lcxData.kraken;
+                        this.displayOrderbook(data, 'lcx');
+                    }
+                } catch (e) {
+                    console.debug('LCX/USDC pair not available');
                 }
             }
         } catch (e) {
