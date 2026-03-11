@@ -36,10 +36,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker/DomainResolver loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
@@ -64,6 +64,7 @@ build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_
 	@echo "  Phase 50b: Cross-Validator OS (L23 — Ada/seL4 divergence detection) ✅"
 	@echo "  Phase 50c: Formal Proofs OS (L24 — T1-T4 Ada security theorems verified) ✅"
 	@echo "  Phase 50d: Convergence Test OS (L25 — 1000+ cycles, v2.0 ready) ✅"
+	@echo "  Phase 51: Domain Resolver OS (L26 — ENS, .anyone, ArNS support) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -932,3 +933,22 @@ $(BUILD_DIR)/convergence_test_os.bin: $(BUILD_DIR)/convergence_test_os.elf
 	@echo "[OC] Converting Convergence Test OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Convergence Test OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 51: Domain Resolver OS (L26, 0x4E0000) — Blockchain domain resolution (ENS, .anyone, ArNS)
+$(BUILD_DIR)/domain_resolver_os.o: ./modules/domain_resolver/domain_resolver_os.zig ./modules/domain_resolver/domain_resolver_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Domain Resolver OS to object file..."
+	cd ./modules/domain_resolver && zig build-obj domain_resolver_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/domain_resolver/domain_resolver_os.o ]; then mv ./modules/domain_resolver/domain_resolver_os.o $@; fi
+
+$(BUILD_DIR)/domain_resolver_stubs.o: ./modules/domain_resolver/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Domain Resolver OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/domain_resolver_os.elf: $(BUILD_DIR)/domain_resolver_os.o $(BUILD_DIR)/domain_resolver_stubs.o ./modules/domain_resolver/domain_resolver.ld
+	@echo "[LD] Linking Domain Resolver OS ELF..."
+	ld -T ./modules/domain_resolver/domain_resolver.ld -o $@ $(BUILD_DIR)/domain_resolver_os.o $(BUILD_DIR)/domain_resolver_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/domain_resolver_os.bin: $(BUILD_DIR)/domain_resolver_os.elf
+	@echo "[OC] Converting Domain Resolver OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Domain Resolver OS binary: $@ (size: $$(stat -c%s $@) bytes)"
