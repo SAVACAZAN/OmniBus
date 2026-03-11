@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin $(BUILD_DIR)/wallet_manager.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker/DomainResolver loaded"
@@ -1376,5 +1376,59 @@ $(BUILD_DIR)/zen_os.bin: $(BUILD_DIR)/zen_os.elf
 	@echo "  L21: Zen.OS (State checkpoint) @ 0x3B7800"
 	@echo "  Total: 159KB, 0x380000–0x3BAFFF (Plugin segment)"
 	@echo "  HAP Protocol: ∅ ∞ ∃! ≅ activated"
+	@echo ""
+
+
+# ============================================================================
+# PHASE 53: WALLET MANAGER (L48) - Multi-Chain Stealth Wallets + 3 Recovery Modes
+# ============================================================================
+
+$(BUILD_DIR)/wallet_manager.o: modules/wallet_manager.zig
+	@echo "[ZIG] Compiling Wallet Manager..."
+	zig build-obj -target x86_64-freestanding \
+		--name wallet_manager \
+		-O ReleaseSafe \
+		modules/wallet_manager.zig -fno-llvm -fno-lld
+
+$(BUILD_DIR)/math_formulas.o: modules/math_formulas.zig
+	@echo "[ZIG] Compiling Math Formulas (4 encryption algorithms)..."
+	zig build-obj -target x86_64-freestanding \
+		--name math_formulas \
+		-O ReleaseSafe \
+		modules/math_formulas.zig -fno-llvm -fno-lld
+
+$(BUILD_DIR)/wallet_manager.elf: $(BUILD_DIR)/wallet_manager.o $(BUILD_DIR)/math_formulas.o modules/wallet_manager.ld
+	@echo "[LD] Linking Wallet Manager ELF..."
+	ld -T modules/wallet_manager.ld \
+		$(BUILD_DIR)/wallet_manager.o \
+		$(BUILD_DIR)/math_formulas.o \
+		-o $@
+	@echo "  Wallet Manager ELF: $@"
+
+$(BUILD_DIR)/wallet_manager.bin: $(BUILD_DIR)/wallet_manager.elf
+	@echo "[OC] Converting Wallet Manager to binary..."
+	objcopy -O binary $< $@
+	@echo "  Wallet Manager binary: $@ (size: $$(stat -c%s $@) bytes)"
+	@echo ""
+	@echo "✓ PHASE 53A: WALLET MANAGER COMPLETE"
+	@echo "  L48: Wallet Manager (Multi-Chain HD Wallets) @ 0x530000"
+	@echo "  BTC: BIP32/BIP39 (P2WPKH) - m/44'/0'/0'/0/0"
+	@echo "  ETH: EOA addresses - m/44'/60'/0'/0/0"
+	@echo "  SOL: Derived keys - m/44'/501'/0'/0/0"
+	@echo "  EGLD: Bech32 addresses - m/44'/508'/0'/0/0"
+	@echo ""
+	@echo "  3 Recovery Modes:"
+	@echo "    1. RECOVER - 10-step seed-based recovery (4 formulas)"
+	@echo "    2. NO_RECOVER - One-time only, maximum security"
+	@echo "    3. RECOVER_FROM_VAULTS - Hardware/external vault backup"
+	@echo ""
+	@echo "  4 Encryption Formulas:"
+	@echo "    F1: Hash-Based (SHA256)"
+	@echo "    F2: Timestamp-Based (HMAC-SHA256)"
+	@echo "    F3: ECDSA-Based (Elliptic Curve KDF)"
+	@echo "    F4: Combinatorial (BLAKE2 3-pass Shamir)"
+	@echo ""
+	@echo "  Total: 320KB stealth zone (0x530000–0x57FFFF)"
+	@echo "  Addresses: Always visible | Keys: Encrypted + fragmented"
 	@echo ""
 
