@@ -1,0 +1,13 @@
+Solidity Code
+      │
+      ▼
+AST (Abstract Syntax Tree)
+      │
+      ▼
+IR (Intermediate Representation)
+      │
+      ▼
+Native Machine Code
+      │
+      ▼
+Execution

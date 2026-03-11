@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌐 OMNIBUS COMMUNITY HUB - Totul pentru comunitate</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e, #0f0c29);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Animated Background */
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            z-index: -2;
+            opacity: 0.1;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Community Header */
+        .community-header {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .community-title {
+            font-size: 4em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ffd700, #ff6b6b, #4ecdc4, #a8e6cf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            animation: titleGlow 3s infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(255,215,0,0.5)); }
+            50% { filter: drop-shadow(0 0 40px rgba(255,107,107,0.5)); }
+        }
+
+        .community-subtitle {
+            font-size: 1.8em;
+            color: rgba(255,255,255,0.9);
+            max-width: 1000px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin: 40px 0;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-label {
+            color: rgba(255,255,255,0.7);
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 30px 0;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 25px;
+            text-align: center;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            color: rgba(255,255,255,0.7);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(45deg, #ffd700, #ff6b6b);
+            color: #000;
+            box-shadow: 0 0 30px rgba(255,215,0,0.5);
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .community-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .community-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: #ffd700;
+            box-shadow: 0 20px 40px rgba(255,215,0,0.2);
+        }
+
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(45deg, #ffd700, #ff6b6b);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .card-desc {
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,215,0,0.2);
+            color: #ffd700;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.8em;
+            border: 1px solid #ffd700;
+        }
+
+        /* Events List */
+        .events-list {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .event-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: background 0.3s;
+        }
+
+        .event-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        .event-date {
+            background: linear-gradient(45deg, #ffd700, #ff6b6b);
+            padding: 10px 15px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .event-day {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .event-month {
+            font-size: 0.8em;
+            color: #000;
+        }
+
+        .event-details {
+            flex: 1;
+        }
+
+        .event-name {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .event-location {
+            color: rgba(255,255,255,0.5);
+            margin-top: 5px;
+        }
+
+        .event-attendees {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Forum Threads */
+        .forum-thread {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .forum-thread:hover {
+            background: rgba(255,215,0,0.1);
+            transform: translateX(10px);
+        }
+
+        .thread-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .thread-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ffd700, #ff6b6b);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .thread-info {
+            flex: 1;
+        }
+
+        .thread-title {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .thread-meta {
+            display: flex;
+            gap: 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        /* Leaderboard */
+        .leaderboard {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: background 0.3s;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(255,215,0,0.1);
+        }
+
+        .leaderboard-rank {
+            font-size: 1.5em;
+            font-weight: bold;
+            min-width: 50px;
+            color: #ffd700;
+        }
+
+        .leaderboard-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #ffd700, #ff6b6b);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .leaderboard-info {
+            flex: 1;
+        }
+
+        .leaderboard-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .leaderboard-points {
+            color: #ffd700;
+            font-size: 0.9em;
+        }
+
+        .leaderboard-badge {
+            background: rgba(255,215,0,0.2);
+            color: #ffd700;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.8em;
+        }
+
+        /* Create Post */
+        .create-post {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .post-input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+
+        .post-input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+
+        .post-btn {
+            background: linear-gradient(45deg, #ffd700, #ff6b6b);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .post-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .community-title {
+                font-size: 2.5em;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .event-item {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gradient-bg"></div>
+
+    <div class="container">
+        <!-- Community Header -->
+        <div class="community-header">
+            <h1 class="community-title">🌍 OMNIBUS COMMUNITY HUB</h1>
+            <p class="community-subtitle">
+                Un loc pentru toți: developeri, designeri, traderi, gameri, artiști, investitori 
+                și oricine vrea să facă parte din cea mai tare comunitate Web3!
+            </p>
+
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">45,678</div>
+                    <div class="stat-label">Membri</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">1,234</div>
+                    <div class="stat-label">Online</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Support</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">156</div>
+                    <div class="stat-label">Țări</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">89</div>
+                    <div class="stat-label">Evenimente</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">12k</div>
+                    <div class="stat-label">Posts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="switchCommunityTab('feed')">📱 Feed</div>
+            <div class="nav-tab" onclick="switchCommunityTab('events')">📅 Evenimente</div>
+            <div class="nav-tab" onclick="switchCommunityTab('forum')">💬 Forum</div>
+            <div class="nav-tab" onclick="switchCommunityTab('leaderboard')">🏆 Leaderboard</div>
+            <div class="nav-tab" onclick="switchCommunityTab('projects')">🚀 Proiecte</div>
+            <div class="nav-tab" onclick="switchCommunityTab('jobs')">💼 Joburi</div>
+            <div class="nav-tab" onclick="switchCommunityTab('learn')">📚 Learn</div>
+            <div class="nav-tab" onclick="switchCommunityTab('market')">🏪 Marketplace</div>
+            <div class="nav-tab" onclick="switchCommunityTab('dao')">🗳️ DAO</div>
+        </div>
+
+        <!-- Feed Section -->
+        <div id="feed" class="content-section active">
+            <!-- Create Post -->
+            <div class="create-post">
+                <textarea class="post-input" rows="3" placeholder="Ce mai faci, comunitate?"></textarea>
+                <button class="post-btn" onclick="createPost()">📤 Postează</button>
+            </div>
+
+            <div class="cards-grid">
+                <!-- Post 1 -->
+                <div class="community-card">
+                    <div class="card-badge">🚀 PROIECT NOU</div>
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(45deg, #ffd700, #ff6b6b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">AC</div>
+                        <div>
+                            <div style="font-weight: bold;">Alex Codewalker</div>
+                            <div style="color: rgba(255,255,255,0.5);">Acum 2 ore</div>
+                        </div>
+                    </div>
+                    <div class="card-title">Am lansat primul meu joc P2E! 🎮</div>
+                    <div class="card-desc">
+                        După 6 luni de muncă, sunt mândru să anunț lansarea CryptoQuest - un joc RPG unde poți câștiga token-uri explorând dungeon-uri.
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <span style="background: rgba(255,215,0,0.2); padding: 5px 10px; border-radius: 5px; margin-right: 5px;">#gamedev</span>
+                        <span style="background: rgba(255,215,0,0.2); padding: 5px 10px; border-radius: 5px;">#p2e</span>
+                    </div>
+                    <div class="card-meta">
+                        <span>❤️ 234</span>
+                        <span>💬 45</span>
+                        <span>🔄 12</span>
+                    </div>
+                </div>
+
+                <!-- Post 2 -->
+                <div class="community-card">
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(45deg, #4ecdc4, #23a6d5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">EM</div>
+                        <div>
+                            <div style="font-weight: bold;">Elena Mihai</div>
+                            <div style="color: rgba(255,255,255,0.5);">Acum 5 ore</div>
+                        </div>
+                    </div>
+                    <div class="card-title">Tutorial: Cum să-ți faci primul NFT 🎨</div>
+                    <div class="card-desc">
+                        Am făcut un ghid pas-cu-pas pentru începători. Vă arăt cum să creați, mințați și vindeți primul vostru NFT pe OpenSea.
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <span style="background: rgba(255,215,0,0.2); padding: 5px 10px; border-radius: 5px; margin-right: 5px;">#tutorial</span>
+                        <span style="background: rgba(255,215,0,0.2); padding: 5px 10px; border-radius: 5px;">#nft</span>
+                    </div>
+                    <div class="card-meta">
+                        <span>❤️ 567</span>
+                        <span>💬 89</span>
+                        <span>🔄 34</span>
+                    </div>
+                </div>
+
+                <!-- Post 3 -->
+                <div class="community-card">
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(45deg, #e73c7e, #ee7752); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">MD</div>
+                        <div>
+                            <div style="font-weight: bold;">Maria D.</div>
+                            <div style="color: rgba(255,255,255,0.5);">Ieri</div>
+                        </div>
+                    </div>
+                    <div class="card-title">Căutăm 3 designeri pentru proiect DeFi</div>
+                    <div class="card-desc">
+                        Start-up-ul nostru caută designeri talentați pentru o platformă DeFi inovatoare. Plătit în token-uri + equity.
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <span style="background: rgba(255,215,0,0.2); padding: 5px 10px; border-radius: 5px; margin-right: 5px;">#job</span>
+                        <span style="background: rgba(255,215,0,0.2); padding: 5px 10px; border-radius: 5px;">#design</span>
+                    </div>
+                    <div class="card-meta">
+                        <span>❤️ 89</span>
+                        <span>💬 23</span>
+                        <span>🔄 7</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Section -->
+        <div id="events" class="content-section">
+            <div class="events-list">
+                <h2 style="margin-bottom: 20px;">📅 Evenimente Viitoare</h2>
+                
+                <div class="event-item">
+                    <div class="event-date">
+                        <div class="event-day">15</div>
+                        <div class="event-month">MARTIE</div>
+                    </div>
+                    <div class="event-details">
+                        <div class="event-name">🚀 OmniBus Launchpad - Prezentări de Proiecte</div>
+                        <div class="event-location">Online • Zoom + Discord</div>
+                    </div>
+                    <div class="event-attendees">234 participanți</div>
+                </div>
+
+                <div class="event-item">
+                    <div class="event-date">
+                        <div class="event-day">20</div>
+                        <div class="event-month">MARTIE</div>
+                    </div>
+                    <div class="event-details">
+                        <div class="event-name">💻 Hackathon Web3 - 48h de coding</div>
+                        <div class="event-location">București + Online</div>
+                    </div>
+                    <div class="event-attendees">89 echipe</div>
+                </div>
+
+                <div class="event-item">
+                    <div class="event-date">
+                        <div class="event-day">25</div>
+                        <div class="event-month">MARTIE</div>
+                    </div>
+                    <div class="event-details">
+                        <div class="event-name">🎨 NFT Art Gallery - Expoziție Virtuală</div>
+                        <div class="event-location">Metaverse • Spatial</div>
+                    </div>
+                    <div class="event-attendees">156 artiști</div>
+                </div>
+
+                <div class="event-item">
+                    <div class="event-date">
+                        <div class="event-day">30</div>
+                        <div class="event-month">MARTIE</div>
+                    </div>
+                    <div class="event-details">
+                        <div class="event-name">📊 Web3 Trading Workshop</div>
+                        <div class="event-location">Online • YouTube Live</div>
+                    </div>
+                    <div class="event-attendees">1.2k interesați</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forum Section -->
+        <div id="forum" class="content-section">
+            <div style="margin-bottom: 30px;">
+                <h2>💬 Forum Discuții</h2>
+                <p style="color: rgba(255,255,255,0.7);">1,234 subiecte active • 12,345 mesaje</p>
+            </div>
+
+            <div class="forum-thread">
+                <div class="thread-header">
+                    <div class="thread-avatar">CW</div>
+                    <div class="thread-info">
+                        <div class="thread-title">🚀 Cum văd eu viitorul DeFi în 2026</div>
+                        <div class="thread-meta">
+                            <span>👤 CryptoWizard</span>
+                            <span>📅 Acum 3 ore</span>
+                            <span>💬 45 replies</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="forum-thread">
+                <div class="thread-header">
+                    <div class="thread-avatar">BK</div>
+                    <div class="thread-info">
+                        <div class="thread-title">❓ Întrebare: Cel mai bun wallet pentru începători?</div>
+                        <div class="thread-meta">
+                            <span>👤 BootloaderKing</span>
+                            <span>📅 Ieri</span>
+                            <span>💬 23 replies</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="forum-thread">
+                <div class="thread-header">
+                    <div class="thread-avatar">ZM</div>
+                    <div class="thread-info">
+                        <div class="thread-title">🔧 Tutorial: Cum să configurezi un nod Ethereum</div>
+                        <div class="thread-meta">
+                            <span>👤 ZigMaster</span>
+                            <span>📅 2 zile în urmă</span>
+                            <span>💬 67 replies</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Section -->
+        <div id="leaderboard" class="content-section">
+            <div class="leaderboard">
+                <h2 style="margin-bottom: 20px;">🏆 Top Contribuitori - Martie 2026</h2>
+                
+                <div class="leaderboard-item">
+                    <div class="leaderboard-rank">🥇</div>
+                    <div class="leaderboard-avatar">CW</div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">CryptoWizard</div>
+                        <div class="leaderboard-points">12,450 puncte</div>
+                    </div>
+                    <div class="leaderboard-badge">LEGEND</div>
+                </div>
+
+                <div class="leaderboard-item">
+                    <div class="leaderboard-rank">🥈</div>
+                    <div class="leaderboard-avatar">BK</div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">BootloaderKing</div>
+                        <div class="leaderboard-points">10,890 puncte</div>
+                    </div>
+                    <div class="leaderboard-badge">MASTER</div>
+                </div>
+
+                <div class="leaderboard-item">
+                    <div class="leaderboard-rank">🥉</div>
+                    <div class="leaderboard-avatar">ZM</div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">ZigMaster</div>
+                        <div class="leaderboard-points">9,230 puncte</div>
+                    </div>
+                    <div class="leaderboard-badge">EXPERT</div>
+                </div>
+
+                <div class="leaderboard-item">
+                    <div class="leaderboard-rank">4</div>
+                    <div class="leaderboard-avatar">AW</div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">AssemblyWizard</div>
+                        <div class="leaderboard-points">8,450 puncte</div>
+                    </div>
+                    <div class="leaderboard-badge">ADVANCED</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div id="projects" class="content-section">
+            <div class="cards-grid">
+                <div class="community-card">
+                    <div class="card-icon">🎮</div>
+                    <div class="card-title">CryptoQuest</div>
+                    <div class="card-desc">Joc RPG P2E cu dungeon-uri generate procedural</div>
+                    <div class="card-meta">
+                        <span>👥 5 membri</span>
+                        <span>🚀 80%</span>
+                    </div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-icon">💱</div>
+                    <div class="card-title">DeFiSwap</div>
+                    <div class="card-desc">Exchange descentralizat cu cele mai mici fee-uri</div>
+                    <div class="card-meta">
+                        <span>👥 12 membri</span>
+                        <span>🚀 95%</span>
+                    </div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-icon">🎨</div>
+                    <div class="card-title">NFT Gallery</div>
+                    <div class="card-desc">Platformă pentru artiști români în Web3</div>
+                    <div class="card-meta">
+                        <span>👥 3 membri</span>
+                        <span>🚀 60%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jobs Section -->
+        <div id="jobs" class="content-section">
+            <div class="cards-grid">
+                <div class="community-card">
+                    <div class="card-badge">🔥 URGENT</div>
+                    <div class="card-title">Solidity Developer</div>
+                    <div class="card-desc">Căutăm developer Solidity pentru proiect DeFi</div>
+                    <div class="card-meta">
+                        <span>💰 5k-8k USD</span>
+                        <span>🌍 Remote</span>
+                    </div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-title">UI/UX Designer</div>
+                    <div class="card-desc">Pentru aplicație mobilă Web3 wallet</div>
+                    <div class="card-meta">
+                        <span>💰 3k-5k USD</span>
+                        <span>🌍 Remote</span>
+                    </div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-title">Community Manager</div>
+                    <div class="card-desc">Pentru comunitatea noastră de gaming</div>
+                    <div class="card-meta">
+                        <span>💰 2k-4k USD</span>
+                        <span>🌍 Remote</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learn Section -->
+        <div id="learn" class="content-section">
+            <div class="cards-grid">
+                <div class="community-card">
+                    <div class="card-icon">📚</div>
+                    <div class="card-title">Web3 pentru Începători</div>
+                    <div class="card-desc">10 lecții • 2 ore</div>
+                    <div class="card-meta">234 studenți</div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-icon">💻</div>
+                    <div class="card-title">Solidity Masterclass</div>
+                    <div class="card-desc">20 lecții • 5 ore</div>
+                    <div class="card-meta">89 studenți</div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-icon">🎨</div>
+                    <div class="card-title">NFT Creation 101</div>
+                    <div class="card-desc">5 lecții • 1.5 ore</div>
+                    <div class="card-meta">156 studenți</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketplace Section -->
+        <div id="market" class="content-section">
+            <div class="cards-grid">
+                <div class="community-card">
+                    <div class="card-icon">🖼️</div>
+                    <div class="card-title">NFT: Dragon #42</div>
+                    <div class="card-desc">Artist: CryptoWizard</div>
+                    <div class="card-meta">0.5 ETH</div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-icon">🎫</div>
+                    <div class="card-title">Gift Card 1000 🪙</div>
+                    <div class="card-desc">Vânzător: BootloaderKing</div>
+                    <div class="card-meta">950 🪙</div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-icon">📦</div>
+                    <div class="card-title">Mystery Box - Epic</div>
+                    <div class="card-desc">Ediție limitată</div>
+                    <div class="card-meta">2,500 🪙</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DAO Section -->
+        <div id="dao" class="content-section">
+            <div class="cards-grid">
+                <div class="community-card">
+                    <div class="card-badge">ACTIVE</div>
+                    <div class="card-title">Propunere #42</div>
+                    <div class="card-desc">Mărirea bugetului pentru evenimente</div>
+                    <div class="card-meta">
+                        <span>✅ 78% For</span>
+                        <span>⏳ 2d left</span>
+                    </div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-badge">ACTIVE</div>
+                    <div class="card-title">Propunere #43</div>
+                    <div class="card-desc">Nou parteneriat cu Polygon</div>
+                    <div class="card-meta">
+                        <span>✅ 92% For</span>
+                        <span>⏳ 3d left</span>
+                    </div>
+                </div>
+
+                <div class="community-card">
+                    <div class="card-badge">PASSED</div>
+                    <div class="card-title">Propunere #41</div>
+                    <div class="card-desc">Trezorerie pentru granturi</div>
+                    <div class="card-meta">
+                        <span>✅ 89% For</span>
+                        <span>✅ Executed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Join Community CTA -->
+        <div style="text-align: center; margin: 60px 0; padding: 40px; background: rgba(255,255,255,0.05); border-radius: 30px;">
+            <h2 style="font-size: 2.5em; margin-bottom: 20px;">🤝 ALĂTURĂ-TE COMUNITĂȚII</h2>
+            <p style="font-size: 1.3em; margin-bottom: 30px; color: rgba(255,255,255,0.8);">
+                45,678 membri deja sunt aici. Tu când vii?
+            </p>
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <button class="post-btn" onclick="joinDiscord()" style="padding: 15px 40px; font-size: 1.2em;">
+                    <i class="fab fa-discord"></i> Discord
+                </button>
+                <button class="post-btn" onclick="joinTwitter()" style="padding: 15px 40px; font-size: 1.2em;">
+                    <i class="fab fa-twitter"></i> Twitter
+                </button>
+                <button class="post-btn" onclick="joinTelegram()" style="padding: 15px 40px; font-size: 1.2em;">
+                    <i class="fab fa-telegram"></i> Telegram
+                </button>
+                <button class="post-btn" onclick="joinGithub()" style="padding: 15px 40px; font-size: 1.2em;">
+                    <i class="fab fa-github"></i> GitHub
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchCommunityTab(tabId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(tabId).classList.add('active');
+            
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Create post
+        function createPost() {
+            const postInput = document.querySelector('.post-input');
+            const postText = postInput.value;
+            
+            if (postText.trim()) {
+                alert('✅ Postarea ta a fost publicată în feed!');
+                postInput.value = '';
+                
+                // Add to feed (simulated)
+                const feed = document.getElementById('feed').querySelector('.cards-grid');
+                const newPost = document.createElement('div');
+                newPost.className = 'community-card';
+                newPost.innerHTML = `
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(45deg, #ffd700, #ff6b6b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">TU</div>
+                        <div>
+                            <div style="font-weight: bold;">Tu</div>
+                            <div style="color: rgba(255,255,255,0.5);">Acum</div>
+                        </div>
+                    </div>
+                    <div class="card-desc">${postText}</div>
+                    <div class="card-meta">
+                        <span>❤️ 0</span>
+                        <span>💬 0</span>
+                        <span>🔄 0</span>
+                    </div>
+                `;
+                feed.insertBefore(newPost, feed.firstChild);
+            }
+        }
+
+        // Social functions
+        function joinDiscord() {
+            alert('🔗 Discord: https://discord.gg/omnibus');
+        }
+
+        function joinTwitter() {
+            alert('🐦 Twitter: https://twitter.com/OmniBusGame');
+        }
+
+        function joinTelegram() {
+            alert('📱 Telegram: https://t.me/omnibus');
+        }
+
+        function joinGithub() {
+            alert('🐙 GitHub: https://github.com/omnibus');
+        }
+
+        // Simulate live updates
+        setInterval(() => {
+            // Update online count randomly
+            const onlineElement = document.querySelector('.stat-item:nth-child(2) .stat-number');
+            const currentOnline = parseInt(onlineElement.textContent.replace(',', ''));
+            const newOnline = currentOnline + Math.floor(Math.random() * 10 - 5);
+            onlineElement.textContent = newOnline.toLocaleString();
+        }, 5000);
+    </script>
+</body>
+</html>

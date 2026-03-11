@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRID-DSL OMNIBUS DASHBOARD - Platformă Multi-Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', 'JetBrains Mono', monospace;
+        }
+
+        :root {
+            --bg-deep: #0a0c14;
+            --bg-card: #121620;
+            --bg-panel: #1a1f2a;
+            --bg-terminal: #1e2430;
+            --bg-success: #00a86b;
+            --bg-warning: #f0b400;
+            --bg-danger: #dc3545;
+            --bg-info: #17a2b8;
+            --bg-purple: #6f42c1;
+            --bg-pink: #d63384;
+            --bg-gold: #ffd700;
+            --text-primary: #e9f1ff;
+            --text-secondary: #8b9bb5;
+            --text-muted: #5f6c80;
+            --border: #2a3442;
+            --accent-cyan: #00ffff;
+            --accent-green: #00ff88;
+            --accent-purple: #aa80ff;
+            --accent-pink: #ff66b2;
+            --accent-orange: #ffaa66;
+            --accent-gold: #ffd700;
+            --gradient-1: linear-gradient(135deg, #00ffff, #aa80ff);
+            --gradient-2: linear-gradient(135deg, #00ff88, #00ffff);
+            --gradient-3: linear-gradient(135deg, #ff66b2, #aa80ff);
+            --gradient-4: linear-gradient(135deg, #ffd700, #ffaa66);
+            --shadow: 0 8px 32px rgba(0, 255, 255, 0.15);
+            --glow: 0 0 20px rgba(0, 255, 255, 0.3);
+            --glow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-card); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-green); }
+
+        /* Layout principal */
+        .dashboard {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 25px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 0.7em;
+        }
+
+        .codex-stats {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 15px;
+        }
+
+        .menu-category {
+            margin-bottom: 25px;
+        }
+
+        .menu-category-title {
+            padding: 10px 15px;
+            color: var(--text-secondary);
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin: 2px 0;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 255, 255, 0.05);
+            color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--accent-cyan);
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .menu-item i { width: 24px; }
+
+        .badge {
+            margin-left: auto;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Topbar */
+        .topbar {
+            height: 70px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            gap: 20px;
+        }
+
+        .page-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            width: 100%;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+        }
+
+        /* Tabs */
+        .tab-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px 8px 0 0;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .tab.active {
+            border-color: var(--accent-cyan);
+            border-bottom-color: transparent;
+            color: var(--accent-cyan);
+            background: rgba(0,255,255,0.05);
+        }
+
+        /* Codex Cards */
+        .codex-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .codex-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .codex-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .codex-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .codex-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-cyan);
+        }
+
+        .codex-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .codex-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .codex-desc {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .codex-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
+
+        /* Agent Grid */
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .agent-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .agent-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-3px);
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .agent-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .agent-avatar.qwen { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+        .agent-avatar.claude { background: linear-gradient(135deg, #6c5ce7, #a55eea); }
+        .agent-avatar.gpt { background: linear-gradient(135deg, #00b894, #00cec9); }
+        .agent-avatar.llama { background: linear-gradient(135deg, #e84393, #fd79a8); }
+
+        .agent-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .agent-role {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+        }
+
+        .agent-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8em;
+            margin: 10px 0;
+        }
+
+        .status-led {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .led-online { background: var(--bg-success); box-shadow: 0 0 10px var(--bg-success); }
+        .led-thinking { background: var(--accent-cyan); box-shadow: var(--glow); }
+        .led-idle { background: var(--text-muted); }
+
+        /* Chat Container */
+        .chat-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chat-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-panel);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            height: 300px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+        }
+
+        .message-content {
+            flex: 1;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 0.9em;
+        }
+
+        .message-meta {
+            color: var(--text-muted);
+            font-size: 0.7em;
+            margin-top: 5px;
+        }
+
+        .chat-input {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 10px 15px;
+            color: var(--text-primary);
+        }
+
+        .chat-input button {
+            padding: 10px 20px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Task Grid */
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .task-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .task-priority {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7em;
+        }
+
+        .priority-high { background: rgba(220, 53, 69, 0.2); color: #ff6b6b; }
+        .priority-medium { background: rgba(240, 180, 0, 0.2); color: #f0b400; }
+        .priority-low { background: rgba(0, 168, 107, 0.2); color: #00a86b; }
+
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .task-desc {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            margin-bottom: 15px;
+        }
+
+        .task-assignee {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            font-size: 0.85em;
+        }
+
+        .task-progress {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .task-progress-fill {
+            height: 100%;
+            background: var(--accent-cyan);
+            border-radius: 3px;
+        }
+
+        /* Games Grid */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .game-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .game-players {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding: 15px;
+            background: var(--bg-panel);
+            border-radius: 10px;
+        }
+
+        .player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .player-score {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .game-status {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0,255,255,0.05);
+            border-radius: 8px;
+        }
+
+        /* Math Cards */
+        .math-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .math-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .math-equation {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .math-solution {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        .math-metadata {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+
+        /* Script Monitor */
+        .script-monitor {
+            background: var(--bg-terminal);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .script-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .script-line {
+            padding: 5px 0;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .script-line.success { color: var(--accent-green); }
+        .script-line.error { color: var(--bg-danger); }
+        .script-line.warning { color: var(--bg-warning); }
+
+        /* Card special */
+        .special-card {
+            background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(170,128,255,0.1));
+            border: 2px solid var(--accent-gold);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .special-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--accent-gold);
+        }
+
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metadata-item {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">📚</div>
+                    <div class="logo-text">
+                        <h1>GRID-DSL OMNIBUS</h1>
+                        <p>Platformă Multi-Agent</p>
+                    </div>
+                </div>
+                
+                <div class="codex-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">847</div>
+                        <div class="stat-label">CODEX URI</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">12</div>
+                        <div class="stat-label">AGENȚI</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">47</div>
+                        <div class="stat-label">TASK-URI</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-category">
+                    <div class="menu-category-title">CODEX</div>
+                    <div class="menu-item" onclick="loadSection('codex-grid-dsl')">
+                        <i>📐</i> Grid-DSL Codex
+                        <span class="badge">342</span>
+                    </div>
+                    <div class="menu-item" onclick="loadSection('codex-omnibus')">
+                        <i>🏛️</i> OmniBusDSL Codex
+                        <span class="badge">289</span>
+                    </div>
+                    <div class="menu-item" onclick="loadSection('codex-mathos')">
+                        <i>🧮</i> MathosDSL Codex
+                        <span class="badge">216</span>
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">AGENȚI</div>
+                    <div class="menu-item" onclick="loadSection('agents-chat')">
+                        <i>💬</i> Chat între Agenți
+                    </div>
+                    <div class="menu-item" onclick="loadSection('agents-tasks')">
+                        <i>✅</i> Task-uri și Misiuni
+                    </div>
+                    <div class="menu-item" onclick="loadSection('agents-games')">
+                        <i>🎮</i> Jocuri între Agenți
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">SCRIPT-URI</div>
+                    <div class="menu-item" onclick="loadSection('scripts')">
+                        <i>⚙️</i> Script Monitor
+                    </div>
+                    <div class="menu-item" onclick="loadSection('intercept')">
+                        <i>🕵️</i> Interceptare Rezultate
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">MATEMATICĂ</div>
+                    <div class="menu-item" onclick="loadSection('math-problems')">
+                        <i>➕</i> Probleme
+                    </div>
+                    <div class="menu-item" onclick="loadSection('math-stats')">
+                        <i>📊</i> Statistici Rezolvare
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="page-title" id="pageTitle">GRID-DSL OMNIBUS CODEX</div>
+                <div class="search-box">
+                    <i>🔍</i>
+                    <input type="text" placeholder="Caută în codex, agenți, task-uri...">
+                </div>
+                <div class="topbar-actions">
+                    <button class="btn-icon">🔔</button>
+                    <button class="btn-icon">⚙️</button>
+                    <button class="btn-icon">👤</button>
+                </div>
+            </div>
+            
+            <!-- Workspace -->
+            <div class="workspace" id="workspace">
+                <!-- Conținut dinamic -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // DATELE SISTEMULUI
+        // ============================================================
+        
+        const codexData = {
+            grid: {
+                title: "Grid-DSL Codex",
+                icon: "📐",
+                entries: 342,
+                desc: "Limbaj pentru definirea grilelor de trading și arbitraj",
+                pages: [
+                    "Structuri Grid de bază",
+                    "Topologii rețea Grid",
+                    "Protocoale de consens",
+                    "Algoritmi de arbitraj"
+                ]
+            },
+            omnibus: {
+                title: "OmniBusDSL Codex",
+                icon: "🏛️",
+                entries: 289,
+                desc: "Sistemul de operare pentru agenți AI și trading",
+                pages: [
+                    "Kernel Ada/SPARK",
+                    "Zig Engines",
+                    "Plugin-uri și extensii",
+                    "SIMLINK Trinity"
+                ]
+            },
+            mathos: {
+                title: "MathosDSL Codex",
+                icon: "🧮",
+                entries: 216,
+                desc: "Matematică transifinită și logică pentru agenți",
+                pages: [
+                    "Teoria mulțimilor",
+                    "Infinit și transfinit",
+                    "Șiruri infinite",
+                    "Protocol WE ARE HERE"
+                ]
+            }
+        };
+        
+        const agents = [
+            { name: "Qwen-Coder", role: "Specialist Cod", status: "online", type: "qwen", tasks: 12 },
+            { name: "Claude-3", role: "Analiză și sinteză", status: "thinking", type: "claude", tasks: 8 },
+            { name: "GPT-4", role: "Relaționare și planificare", status: "online", type: "gpt", tasks: 15 },
+            { name: "Llama-3", role: "Matematică și logică", status: "idle", type: "llama", tasks: 5 }
+        ];
+        
+        const tasks = [
+            { id: 1, title: "Optimizare Grid Arbitraj", desc: "Găsește cea mai bună topologie pentru arbitraj cross-chain", priority: "high", assignee: "Qwen-Coder", progress: 75 },
+            { id: 2, title: "Analiză statistică prețuri BTC", desc: "Calculează medii mobile și volatilitate", priority: "medium", assignee: "Claude-3", progress: 45 },
+            { id: 3, title: "Generare cod Grid DSL", desc: "Implementează structura pentru nod validator", priority: "high", assignee: "GPT-4", progress: 90 },
+            { id: 4, title: "Rezolvare problemă matematică", desc: "Demonstrează teorema lui Cantor", priority: "low", assignee: "Llama-3", progress: 30 }
+        ];
+        
+        const games = [
+            { id: 1, name: "Bătălia Gridurilor", type: "competiție", players: ["Qwen-Coder", "GPT-4"], scores: [1240, 980], status: "în desfășurare" },
+            { id: 2, name: "Colaborare Codex", type: "cooperare", players: ["Claude-3", "Llama-3"], scores: [847, 847], status: "finalizat" }
+        ];
+        
+        const mathProblems = [
+            { id: 1, equation: "ℵ₀ × ℵ₀ = ?", solution: "ℵ₀", agent: "Llama-3", time: "2.3s", status: "corect" },
+            { id: 2, equation: "2^ℵ₀ = ?", solution: "ℵ₁", agent: "Qwen-Coder", time: "1.8s", status: "corect" },
+            { id: 3, equation: "Ø ∪ {∞} = ?", solution: "{∞}", agent: "Claude-3", time: "3.1s", status: "corect" },
+            { id: 4, equation: "lim_{n→∞} (1 + 1/n)^n", solution: "e", agent: "GPT-4", time: "2.7s", status: "corect" }
+        ];
+        
+        // ============================================================
+        // GENERARE CONȚINUT DINAMIC
+        // ============================================================
+        
+        function loadSection(section) {
+            const container = document.getElementById('workspace');
+            const pageTitle = document.getElementById('pageTitle');
+            
+            switch(section) {
+                case 'codex-grid-dsl':
+                case 'codex-omnibus':
+                case 'codex-mathos':
+                    pageTitle.innerText = '📚 CODEX - Grid-DSL | OmniBus | Mathos';
+                    container.innerHTML = generateCodexPage(section);
+                    break;
+                case 'agents-chat':
+                    pageTitle.innerText = '💬 CHAT ÎNTRE AGENȚI';
+                    container.innerHTML = generateChatPage();
+                    break;
+                case 'agents-tasks':
+                    pageTitle.innerText = '✅ TASK-URI ȘI MISIUNI';
+                    container.innerHTML = generateTasksPage();
+                    break;
+                case 'agents-games':
+                    pageTitle.innerText = '🎮 JOCURI ÎNTRE AGENȚI';
+                    container.innerHTML = generateGamesPage();
+                    break;
+                case 'scripts':
+                    pageTitle.innerText = '⚙️ SCRIPT MONITOR';
+                    container.innerHTML = generateScriptsPage();
+                    break;
+                case 'intercept':
+                    pageTitle.innerText = '🕵️ INTERCEPTARE REZULTATE';
+                    container.innerHTML = generateInterceptPage();
+                    break;
+                case 'math-problems':
+                    pageTitle.innerText = '➕ PROBLEME MATEMATICE';
+                    container.innerHTML = generateMathPage();
+                    break;
+                default:
+                    pageTitle.innerText = 'GRID-DSL OMNIBUS CODEX';
+                    container.innerHTML = generateDefaultPage();
+            }
+        }
+        
+        function generateCodexPage(type) {
+            let codex;
+            if (type === 'codex-grid-dsl') codex = codexData.grid;
+            else if (type === 'codex-omnibus') codex = codexData.omnibus;
+            else codex = codexData.mathos;
+            
+            return `
+                <!-- Codex Cards -->
+                <div class="codex-grid">
+                    <div class="codex-card" onclick="loadSection('codex-grid-dsl')">
+                        <div class="codex-icon">📐</div>
+                        <div class="codex-title">Grid-DSL Codex</div>
+                        <div class="codex-desc">${codexData.grid.desc}</div>
+                        <div class="codex-meta">
+                            <span>📄 ${codexData.grid.entries} intrări</span>
+                            <span>🔗 12 link-uri</span>
+                        </div>
+                    </div>
+                    <div class="codex-card" onclick="loadSection('codex-omnibus')">
+                        <div class="codex-icon">🏛️</div>
+                        <div class="codex-title">OmniBusDSL Codex</div>
+                        <div class="codex-desc">${codexData.omnibus.desc}</div>
+                        <div class="codex-meta">
+                            <span>📄 ${codexData.omnibus.entries} intrări</span>
+                            <span>🔗 24 link-uri</span>
+                        </div>
+                    </div>
+                    <div class="codex-card" onclick="loadSection('codex-mathos')">
+                        <div class="codex-icon">🧮</div>
+                        <div class="codex-title">MathosDSL Codex</div>
+                        <div class="codex-desc">${codexData.mathos.desc}</div>
+                        <div class="codex-meta">
+                            <span>📄 ${codexData.mathos.entries} intrări</span>
+                            <span>🔗 10 link-uri</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pagina curentă -->
+                <div class="special-card">
+                    <div class="special-title">📖 ${codex.title}</div>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">${codex.desc}</p>
+                    
+                    <div class="metadata-grid">
+                        ${codex.pages.map(page => `
+                            <div class="metadata-item">
+                                <div style="color: var(--accent-cyan); margin-bottom: 10px;">${page}</div>
+                                <div style="font-size: 0.8em; color: var(--text-muted);">
+                                    <span>📄 24 referințe</span>
+                                    <span style="margin-left: 10px;">🔗 12 exemple</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: var(--bg-panel); border-radius: 10px;">
+                        <div style="color: var(--accent-gold); margin-bottom: 10px;">📊 Statistici Codex</div>
+                        <div style="display: grid; grid-template-columns: repeat(3,1fr); gap: 15px;">
+                            <div

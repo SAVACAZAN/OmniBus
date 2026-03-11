@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOBCHAIN - Piața Universală a Muncii și Serviciilor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root {
+            --bg-deep: #0a0c12;
+            --bg-card: #12161e;
+            --bg-panel: #1a202a;
+            --bg-success: #00a86b;
+            --bg-warning: #f0b400;
+            --bg-danger: #dc3545;
+            --bg-info: #17a2b8;
+            --bg-purple: #6f42c1;
+            --bg-pink: #d63384;
+            --bg-gold: #ffd700;
+            --text-primary: #e9f1ff;
+            --text-secondary: #8b9bb5;
+            --text-muted: #5f6c80;
+            --border: #2a3442;
+            --accent-cyan: #00ffff;
+            --accent-green: #00ff88;
+            --accent-purple: #aa80ff;
+            --accent-pink: #ff66b2;
+            --accent-orange: #ffaa66;
+            --accent-gold: #ffd700;
+            --gradient-1: linear-gradient(135deg, #00ffff, #aa80ff);
+            --gradient-2: linear-gradient(135deg, #00ff88, #00ffff);
+            --gradient-3: linear-gradient(135deg, #ff66b2, #aa80ff);
+            --gradient-4: linear-gradient(135deg, #ffd700, #ffaa66);
+            --shadow: 0 8px 32px rgba(0, 255, 255, 0.15);
+            --glow: 0 0 20px rgba(0, 255, 255, 0.3);
+            --glow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-card); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-green); }
+
+        /* Layout principal */
+        .jobchain {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(145deg, var(--bg-card), var(--bg-deep));
+            text-align: center;
+        }
+
+        /* Logo - Globul de Cristal */
+        .crystal-globe {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            position: relative;
+            cursor: pointer;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+
+        .globe-outer {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(0,255,255,0.2));
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 
+                0 0 50px rgba(0, 255, 255, 0.3),
+                inset 0 0 30px rgba(255, 255, 255, 0.5);
+            animation: rotate 20s linear infinite;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .globe-inner {
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(circle at 70% 70%, rgba(255,215,0,0.3), transparent 70%);
+            border-radius: 50%;
+        }
+
+        .continent {
+            position: absolute;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .continent1 { width: 30px; height: 30px; top: 20px; left: 30px; }
+        .continent2 { width: 25px; height: 25px; bottom: 25px; right: 35px; }
+        .continent3 { width: 20px; height: 20px; top: 40px; right: 40px; }
+        .continent4 { width: 35px; height: 35px; bottom: 30px; left: 25px; }
+
+        .globe-reflection {
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 30%;
+            height: 30%;
+            background: radial-gradient(circle at 30% 30%, white, transparent 70%);
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        .logo-text {
+            font-size: 2em;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .logo-sub {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+            letter-spacing: 2px;
+        }
+
+        .stats-badge {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--bg-panel);
+            border-radius: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 15px;
+        }
+
+        .menu-category {
+            margin-bottom: 25px;
+        }
+
+        .menu-category-title {
+            padding: 10px 15px;
+            color: var(--text-secondary);
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin: 2px 0;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 255, 255, 0.05);
+            color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--accent-cyan);
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .menu-item i { width: 24px; }
+
+        .badge {
+            margin-left: auto;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Topbar */
+        .topbar {
+            height: 80px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            gap: 20px;
+        }
+
+        .page-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            background: var(--gradient-4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 500px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            width: 100%;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .btn.primary {
+            background: var(--gradient-1);
+            border: none;
+            color: white;
+        }
+
+        .btn.primary:hover {
+            box-shadow: var(--glow);
+        }
+
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(170,128,255,0.1));
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,215,0,0.1), transparent 70%);
+            animation: rotate 60s linear infinite;
+        }
+
+        .hero-title {
+            font-size: 3em;
+            font-weight: 800;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .hero-title span {
+            background: var(--gradient-4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-sub {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            max-width: 600px;
+            position: relative;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-3px);
+        }
+
+        .stat-icon {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            color: var(--text-secondary);
+        }
+
+        /* Category Grid */
+        .category-section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 1.3em;
+            border-left: 4px solid var(--accent-gold);
+            padding-left: 15px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .category-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-4);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .category-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-gold);
+            box-shadow: var(--glow-gold);
+        }
+
+        .category-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .category-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .category-stats {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        /* Marketplace Grid */
+        .marketplace-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .marketplace-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .marketplace-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-3px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .card-sub {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+        }
+
+        .card-stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding: 10px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-price {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .card-rating {
+            color: var(--accent-gold);
+        }
+
+        /* Job Listings */
+        .job-listings {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .job-filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .filter-btn.active {
+            background: var(--gradient-1);
+            color: white;
+            border: none;
+        }
+
+        .job-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .job-item:hover {
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        .job-item:last-child {
+            border-bottom: none;
+        }
+
+        .job-company {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            margin-right: 20px;
+        }
+
+        .job-info {
+            flex: 2;
+        }
+
+        .job-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .job-details {
+            display: flex;
+            gap: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .job-salary {
+            flex: 1;
+            text-align: right;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .job-type {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        /* Bazar Universal */
+        .bazar-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .bazar-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .bazar-item:hover {
+            border-color: var(--accent-gold);
+            transform: scale(1.05);
+        }
+
+        .bazar-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .bazar-name {
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        /* Platforme */
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .platform-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .platform-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-3px);
+        }
+
+        .platform-logo {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .platform-name {
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        /* Legal & Operational */
+        .legal-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .legal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .legal-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .legal-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .legal-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Trust Section */
+        .trust-section {
+            background: linear-gradient(135deg, rgba(0,255,255,0.05), rgba(255,215,0,0.05));
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .trust-meter {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .trust-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-green) 0deg 320deg, var(--border) 320deg 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: rotate 10s linear infinite;
+        }
+
+        .trust-inner {
+            width: 160px;
+            height: 160px;
+            background: var(--bg-card);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .category-grid { grid-template-columns: repeat(2, 1fr); }
+            .marketplace-grid { grid-template-columns: repeat(2, 1fr); }
+            .bazar-grid { grid-template-columns: repeat(3, 1fr); }
+            .platforms-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar { display: none; }
+            .legal-section { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="jobchain">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="crystal-globe">
+                    <div class="globe-outer">
+                        <div class="continent continent1"></div>
+                        <div class="continent continent2"></div>
+                        <div class="continent continent3"></div>
+                        <div class="continent continent4"></div>
+                        <div class="globe-inner"></div>
+                        <div class="globe-reflection"></div>
+                    </div>
+                </div>
+                <div class="logo-text">JOBCHAIN</div>
+                <div class="logo-sub">DE LA ALIBABA LA SAVACAZAN</div>
+                
+                <div class="stats-badge">
+                    <div class="stat-item">
+                        <div class="stat-number">1.2B</div>
+                        <div class="stat-label">OAMENI</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">847M</div>
+                        <div class="stat-label">JOBURI</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">192</div>
+                        <div class="stat-label">ȚĂRI</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-category">
+                    <div class="menu-category-title">PIAȚA UNIVERSALĂ</div>
+                    <div class="menu-item active"><i>🏠</i> Acasă</div>
+                    <div class="menu-item"><i>🔍</i> Caută</div>
+                    <div class="menu-item"><i>📊</i> Tablou General</div>
+                    <div class="menu-item"><i>⭐</i> Recomandări</div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">MUNCĂ</div>
+                    <div class="menu-item"><i>👔</i> Angajați</div>
+                    <div class="menu-item"><i>🏢</i> Angajatori</div>
+                    <div class="menu-item"><i>🤝</i> Freelanceri</div>
+                    <div class="menu-item"><i>⚖️</i> Stat</div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">SERVICII</div>
+                    <div class="menu-item"><i>🏨</i> Hoteluri</div>
+                    <div class="menu-item"><i>🏠</i> Airbnb</div>
+                    <div class="menu-item"><i>✈️</i> Booking</div>
+                    <div class="menu-item"><i>🚗</i> Uber</div>
+                    <div class="menu-item"><i>🚲</i> Sharing</div>
+                    <div class="menu-item"><i>🧳</i> Turism</div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">BAZAR</div>
+                    <div class="menu-item"><i>📦</i> Alibaba</div>
+                    <div class="menu-item"><i>🛒</i> Amazon</div>
+                    <div class="menu-item"><i>💎</i> SAVACAZAN</div>
+                    <div class="menu-item"><i>🌍</i> Local</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="page-title">BAZARUL UNIVERSAL AL MUNCII ȘI SERVICIILOR</div>
+                <div class="search-box">
+                    <i>🔍</i>
+                    <input type="text" placeholder="Caută joburi, servicii, produse, oameni...">
+                </div>
+                <div class="topbar-actions">
+                    <button class="btn"><i>🔔</i></button>
+                    <button class="btn primary"><i>➕</i> Adaugă Ofertă</button>
+                </div>
+            </div>
+            
+            <!-- Workspace -->
+            <div class="workspace">
+                <!-- Hero Section -->
+                <div class="hero-section">
+                    <div class="hero-title">
+                        <span>JOBCHAIN</span> - Piața Universală
+                    </div>
+                    <div class="hero-sub">
+                        De la cel mai mic la cel mai mare. Digital și fizic. De la Alibaba la SAVACAZAN.
+                        Un bazar imens pentru 1.2 miliarde de oameni.
+                    </div>
+                </div>
+                
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">1.2B</div><div class="stat-label">OAMENI</div></div>
+                    <div class="stat-card"><div class="stat-icon">💼</div><div class="stat-value">847M</div><div class="stat-label">JOBURI</div></div>
+                    <div class="stat-card"><div class="stat-icon">🏨</div><div class="stat-value">52M</div><div class="stat-label">HOTELURI</div></div>
+                    <div class="stat-card"><div class="stat-icon">🚗</div><div class="stat-value">124M</div><div class="stat-label">UBER</div></div>
+                    <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-value">78M</div><div class="stat-label">AIRBNB</div></div>
+                    <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value">2.3B</div><div class="stat-label">PRODUSE</div></div>
+                </div>
+                
+                <!-- Platforme -->
+                <div class="platforms-grid">
+                    <div class="platform-card"><div class="platform-logo">🏢</div><div class="platform-name">LinkedIn</div></div>
+                    <div class="platform-card"><div class="platform-logo">🤝</div><div class="platform-name">Upwork</div></div>
+                    <div class="platform-card"><div class="platform-logo">🏨</div><div class="platform-name">Booking</div></div>
+                    <div class="platform-card"><div class="platform-logo">🏠</div><div class="platform-name">Airbnb</div></div>
+                    <div class="platform-card"><div class="platform-logo">🚗</div><div class="platform-name">Uber</div></div>
+                    <div class="platform-card"><div class="platform-logo">📦</div><div class="platform-name">Alibaba</div></div>
+                </div>
+                
+                <!-- Categorii -->
+                <div class="category-section">
+                    <div class="section-header">
+                        <h2>📋 PIAȚA MUNCII</h2>
+                        <span class="badge">847,231 OFERTE</span>
+                    </div>
+                    
+                    <div class="category-grid">
+                        <div class="category-card">
+                            <div class="category-icon">👔</div>
+                            <div class="category-name">Angajați</div>
+                            <div class="category-stats">342,123 oferte</div>
+                        </div>
+                        <div class="category-card">
+                            <div class="category-icon">🏢</div>
+                            <div class="category-name">Angajatori</div>
+                            <div class="category-stats">124,567 companii</div>
+                        </div>
+                        <div class="category-card">
+                            <div class="category-icon">🤝</div>
+                            <div class="category-name">Freelanceri</div>
+                            <div class="category-stats">2.3M profesioniști</div>
+                        </div>
+                        <div class="category-card">
+                            <div class="category-icon">⚖️</div>
+                            <div class="category-name">Stat</div>
+                            <div class="category-stats">45,231 posturi</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Job Listings -->
+                <div class="job-listings">
+                    <div class="job-header">
+                        <h3>🔥 OFERTE RECENTE</h3>
+                        <div class="job-filters">
+                            <button class="filter-btn active">Toate</button>
+                            <button class="filter-btn">IT</button>
+                            <button class="filter-btn">Construcții</button>
+                            <button class="filter-btn">Turism</button>
+                            <button class="filter-btn">Remote</button>
+                        </div>
+                    </div>
+                    
+                    <div class="job-item">
+                        <div class="job-company">👨‍💻</div>
+                        <div class="job-info">
+                            <div class="job-title">Senior Full Stack Developer</div>
+                            <div class="job-details">
+                                <span>Google</span>
+                                <span>Remote</span>
+                                <span>Full-time</span>
+                            </div>
+                        </div>
+                        <div class="job-salary">$180k/an</div>
+                        <div class="job-type" style="background: rgba(0,255,0,0.1);">NEW</div>
+                    </div>
+                    
+                    <div class="job-item">
+                        <div class="job-company">🏗️</div>
+                        <div class="job-info">
+                            <div class="job-title">Arhitect Șef</div>
+                            <div class="job-details">
+                                <span>Construcții Moderne</span>
+                                <span>București</span>
+                                <span>Proiect 5 ani</span>
+                            </div>
+                        </div>
+                        <div class="job-salary">€4,500/lună</div>
+                    </div>
+                    
+                    <div class="job-item">
+                        <div class="job-company">🧳</div>
+                        <div class="job-info">
+                            <div class="job-title">Ghizi Turism - Transilvania</div>
+                            <div class="job-details">
+                                <span>Booking.com</span>
+                                <span>Sezonier</span>
+                                <span>5 limbi</span>
+                            </div>
+                        </div>
+                        <div class="job-salary">€2,800/lună</div>
+                    </div>
+                </div>
+                
+                <!-- Marketplace -->
+                <div class="marketplace-grid">
+                    <div class="marketplace-card">
+                        <div class="card-header">
+                            <div class="card-icon">🏨</div>
+                            <div>
+                                <div class="card-title">Hoteluri</div>
+                                <div class="card-sub">Booking.com</div>
+                            </div>
+                        </div>
+                        <div class="card-stats">
+                            <span>⭐ 4.8</span>
+                            <span>🌍 192 țări</span>
+                        </div>
+                        <div class="card-price">de la €25/noapte</div>
+                    </div>
+                    
+                    <div class="marketplace-card">
+                        <div class="card-header">
+                            <div class="card-icon">🏠</div>
+                            <div>
+                                <div class="card-title">Airbnb</div>
+                                <div class="card-sub">Închirieri scurte</div>
+                            </div>
+                        </div>
+                        <div class="card-stats">
+                            <span>⭐ 4.9</span>
+                            <span>7M locuințe</span>
+                        </div>
+                        <div class="card-price">de la €15/noapte</div>
+                    </div>
+                    
+                    <div class="marketplace-card">
+                        <div class="card-header">
+                            <div class="card-icon">🚗</div>
+                            <div>
+                                <div class="card-title">Uber</div>
+                                <div class="card-sub">Curse/Bucătari</div>
+                            </div>
+                        </div>
+                        <div class="card-stats">
+                            <span>⭐ 4.7</span>
+                            <span>5M șoferi</span>
+                        </div>
+                        <div class="card-price">câștigă până la €25/h</div>
+                    </div>
+                </div>
+                
+                <!-- Bazar Universal -->
+                <div class="category-section">
+                    <div class="section-header">
+                        <h2>🌍 BAZARUL UNIVERSAL - DE LA MIC LA MARE</h2>
+                        <span class="badge">2.3 MILIARDE PRODUSE</span>
+                    </div>
+                    
+                    <div class="bazar-grid">
+                        <div class="bazar-item"><div class="bazar-icon">📱</div><div class="bazar-name">Electronice</div></div>
+                        <div class="bazar-item"><div class="bazar-icon">👕</div><div class="bazar-name">Îmbrăcăminte</div></div>
+                        <div class="bazar-item"><div class="bazar-icon">🏺</div><div class="bazar-name">Antichități</div></div>
+                        <div class="bazar-item"><div class="bazar-icon">🚜</div><div class="bazar-name">Utilaje</div></div>
+                        <div class="bazar-item"><div class="bazar-icon">💎</div><div class="bazar-name">SAVACAZAN</div></div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <span style="color: var(--accent-cyan);">De la cel mai mic meșteșugar din sat, la cea mai mare fabrică din China.</span>
+                    </div>
+                </div>
+                
+                <!-- Legal & Operational -->
+                <div class="legal-section">
+                    <div class="legal-card">
+                        <div class="legal-title">
+                            <span>⚖️</span> Cadru Legal
+                        </div>
+                        <div class="legal-item">
+                            <span>Contracte standard</span>
+                            <span style="color: var(--accent-green);">124,532 active</span>
+                        </div>
+                        <div class="legal-item">
+                            <span>Protecția datelor</span>
+                            <span style="color: var(--accent-green);">GDPR compliant</span>
+                        </div>
+                        <div class="legal-item">
+                            <span>Taxe automate</span>
+                            <span>32% medie</span>
+                        </div>
+                        <div class="legal-item">
+                            <span>Dispute rezolvate</span>
+                            <span>98.7% success</span>
+                        </div>
+                    </div>
+                    
+                    <div class="legal-card">
+                        <div class="legal-title">
+                            <span>⚙️</span> Operațional
+                        </div>
+                        <div class="legal-item">
+                            <span>Plăți procesate</span>
+                            <span>$847M azi</span>
+                        </div>
+                        <div class="legal-item">
+                            <span>Contracte active</span>
+                            <span>2.3M</span>
+                        </div>
+                        <div class="legal-item">
+                            <span>Rating mediu</span>
+                            <span>⭐⭐⭐⭐ 4.7</span>
+                        </div>
+                        <div class="legal-item">
+                            <span>Trust Score</span>
+                            <span style="color: var(--accent-cyan);">98.3%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trust Section -->
+                <div class="trust-section">
+                    <div class="trust-meter">
+                        <div class="trust-circle">
+                            <div class="trust-inner">98%</div>
+                        </div>
+                    </div>
+                    <h3>Încredere Globală</h3>
+                    <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+                        Construit pe cei 10 piloni SAVACAZAN: Reputație, Uptime, Activitate, Idle, Muncă,
+                        Dezvoltare, Inovație, Efort, Confort, Educație+Religie.
+                    </p>
+                </div>
+                
+                <!-- Footer -->
+                <div class="footer">
+                    <div style="font-size: 1.5em; margin-bottom: 20px;">🌍 JOBCHAIN</div>
+                    <div>Piața Universală a Muncii și Serviciilor</div>
+                    <div style="margin: 20px 0; color: var(--accent-cyan);">De la Alibaba la SAVACAZAN</div>
+                    <div style="font-size: 0.8em;">1.2 miliarde de oameni • 192 de țări • 2.3 miliarde de produse</div>
+                    <div style="margin-top: 30px;">⭐ Fiecare tranzacție crește Trust-ul Global ⭐</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animație glob
+        setInterval(() => {
+            const globe = document.querySelector('.globe-outer');
+            if (globe) {
+                globe.style.transform = `rotate(${Date.now() / 100 % 360}deg)`;
+            }
+        }, 50);
+    </script>
+</body>
+</html>

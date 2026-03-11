@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGNAL DASHBOARD - DevOps & System Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Terminal-inspired palette */
+            --bg-deep: #0c0c0c;
+            --bg-terminal: #1a1a1a;
+            --bg-panel: #222222;
+            --bg-header: #2a2a2a;
+            --border: #333333;
+            --text-primary: #e0e0e0;
+            --text-secondary: #888888;
+            --text-muted: #555555;
+            --accent-green: #00ff00;
+            --accent-green-dim: #00aa00;
+            --accent-red: #ff5555;
+            --accent-yellow: #ffff55;
+            --accent-blue: #5555ff;
+            --accent-cyan: #55ffff;
+            --accent-purple: #ff55ff;
+            --glow-green: 0 0 10px rgba(0, 255, 0, 0.5);
+            --glow-red: 0 0 10px rgba(255, 85, 85, 0.5);
+            --glow-yellow: 0 0 10px rgba(255, 255, 85, 0.5);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Scrollbar terminal-style */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-terminal); }
+        ::-webkit-scrollbar-thumb { 
+            background: var(--accent-green-dim); 
+            border-radius: 0;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-green); }
+
+        /* Layout principal */
+        .signal {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* Sidebar - terminal style */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-terminal);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: inset -5px 0 10px rgba(0,0,0,0.5);
+        }
+
+        .sidebar-header {
+            padding: 25px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            color: var(--accent-green);
+            text-shadow: var(--glow-green);
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        .logo-text h1 {
+            font-size: 1.5em;
+            font-weight: 400;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: var(--glow-green);
+        }
+
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 0.7em;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: var(--accent-green);
+        }
+
+        .user-info h3 {
+            font-size: 1em;
+            font-weight: 400;
+            margin-bottom: 5px;
+        }
+
+        .user-info .role {
+            color: var(--accent-green-dim);
+            font-size: 0.8em;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 15px;
+        }
+
+        .menu-category {
+            margin-bottom: 25px;
+        }
+
+        .menu-category-title {
+            padding: 10px 15px;
+            color: var(--accent-green-dim);
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin: 2px 0;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            font-size: 0.9em;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 255, 0, 0.05);
+            color: var(--accent-green);
+            border-left-color: var(--accent-green);
+        }
+
+        .menu-item.active {
+            background: rgba(0, 255, 0, 0.1);
+            color: var(--accent-green);
+            border-left-color: var(--accent-green);
+        }
+
+        .menu-item i { width: 24px; }
+
+        .badge {
+            margin-left: auto;
+            padding: 2px 8px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid var(--accent-green-dim);
+            color: var(--accent-green);
+            font-size: 0.7em;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-deep);
+        }
+
+        /* Topbar - terminal style */
+        .topbar {
+            height: 60px;
+            background: var(--bg-terminal);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            gap: 20px;
+            box-shadow: inset 0 -1px 0 var(--border);
+        }
+
+        .page-title {
+            font-size: 1.1em;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 500px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            width: 100%;
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-box i {
+            color: var(--accent-green-dim);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            box-shadow: var(--glow-green);
+        }
+
+        .btn-icon.active {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: 30px;
+            background: var(--bg-terminal);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            gap: 30px;
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            box-shadow: inset 0 1px 0 var(--border);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-led {
+            width: 8px;
+            height: 8px;
+            border-radius: 0;
+        }
+
+        .led-green { background: var(--accent-green); box-shadow: var(--glow-green); }
+        .led-red { background: var(--accent-red); box-shadow: var(--glow-red); }
+        .led-yellow { background: var(--accent-yellow); box-shadow: var(--glow-yellow); }
+
+        .status-value {
+            color: var(--accent-green);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-green);
+            box-shadow: var(--glow-green);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 400;
+            color: var(--accent-green);
+            margin-bottom: 5px;
+        }
+
+        .stat-unit {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+        }
+
+        .stat-change {
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+
+        .stat-change.positive { color: var(--accent-green); }
+        .stat-change.negative { color: var(--accent-red); }
+
+        /* Terminal Grid */
+        .terminal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .terminal-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 0;
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-terminal);
+        }
+
+        .panel-title {
+            color: var(--accent-green);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        /* Server List */
+        .server-list {
+            list-style: none;
+        }
+
+        .server-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .server-item:last-child {
+            border-bottom: none;
+        }
+
+        .server-status {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-green);
+            box-shadow: var(--glow-green);
+        }
+
+        .server-status.warning { background: var(--accent-yellow); box-shadow: var(--glow-yellow); }
+        .server-status.error { background: var(--accent-red); box-shadow: var(--glow-red); }
+
+        .server-info {
+            flex: 1;
+        }
+
+        .server-name {
+            font-weight: 400;
+            margin-bottom: 3px;
+        }
+
+        .server-meta {
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
+
+        .server-stats {
+            text-align: right;
+        }
+
+        .server-cpu {
+            color: var(--accent-green);
+            margin-bottom: 3px;
+        }
+
+        .server-ram {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+        }
+
+        /* Container Grid */
+        .containers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .container-item {
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid var(--border);
+            padding: 15px;
+        }
+
+        .container-name {
+            color: var(--accent-green);
+            margin-bottom: 5px;
+        }
+
+        .container-status {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+        }
+
+        .container-status .running { color: var(--accent-green); }
+        .container-status .stopped { color: var(--accent-red); }
+
+        /* Log Explorer */
+        .log-container {
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .log-timestamp {
+            color: var(--text-muted);
+            margin-right: 15px;
+        }
+
+        .log-level-info { color: var(--accent-green); }
+        .log-level-warn { color: var(--accent-yellow); }
+        .log-level-error { color: var(--accent-red); }
+
+        /* Metric Bars */
+        .metric-bar-container {
+            margin: 15px 0;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.8em;
+        }
+
+        .metric-bar {
+            height: 4px;
+            background: var(--border);
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            background: var(--accent-green);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .metric-fill.warning { background: var(--accent-yellow); }
+        .metric-fill.error { background: var(--accent-red); }
+
+        /* Percentiles */
+        .percentiles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .percentile-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .percentile-label {
+            color: var(--text-secondary);
+            font-size: 0.7em;
+            margin-bottom: 5px;
+        }
+
+        .percentile-value {
+            color: var(--accent-green);
+            font-size: 1.2em;
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            color: var(--accent-green);
+            font-weight: 400;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-terminal);
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover td {
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        /* Tabs */
+        .tab-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tab:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .tab.active {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        /* Blink animation */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .blink {
+            animation: blink 2s infinite;
+        }
+
+        /* Cursor animation */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: var(--accent-green);
+            animation: blink 1s infinite;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="signal">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">📡</div>
+                    <div class="logo-text">
+                        <h1>SIGNAL</h1>
+                        <p>DEVOPS TERMINAL</p>
+                    </div>
+                </div>
+                
+                <div class="user-badge">
+                    <div class="user-avatar">⚡</div>
+                    <div class="user-info">
+                        <h3>root@savacazan</h3>
+                        <div class="role"># sysadmin • 9 active</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-category">
+                    <div class="menu-category-title">SYSTEM</div>
+                    <div class="menu-item active" onclick="switchView('overview')">
+                        <i>📊</i> Overview
+                        <span class="badge">9</span>
+                    </div>
+                    <div class="menu-item" onclick="switchView('servers')">
+                        <i>🖥️</i> Server Fleet
+                        <span class="badge">12</span>
+                    </div>
+                    <div class="menu-item" onclick="switchView('containers')">
+                        <i>📦</i> Containers
+                        <span class="badge">23</span>
+                    </div>
+                    <div class="menu-item" onclick="switchView('kubernetes')">
+                        <i>☸️</i> Kubernetes
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">OPS</div>
+                    <div class="menu-item" onclick="switchView('deployments')">
+                        <i>🚀</i> Deployments
+                    </div>
+                    <div class="menu-item" onclick="switchView('incidents')">
+                        <i>⚠️</i> Incidents
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="menu-item" onclick="switchView('logs')">
+                        <i>📋</i> Log Explorer
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">MONITORING</div>
+                    <div class="menu-item" onclick="switchView('uptime')">
+                        <i>📈</i> Uptime Monitor
+                    </div>
+                    <div class="menu-item" onclick="switchView('api')">
+                        <i>🔌</i> API Monitoring
+                    </div>
+                    <div class="menu-item" onclick="switchView('cloud')">
+                        <i>☁️</i> Cloud Costs
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">NETWORK</div>
+                    <div class="menu-item" onclick="switchView('network')">
+                        <i>🌐</i> Network
+                    </div>
+                    <div class="menu-item" onclick="switchView('firewall')">
+                        <i>🔥</i> Firewall
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="page-title" id="pageTitle">SIGNAL@DEVOPS:~$ <span class="cursor"></span></div>
+                <div class="search-box">
+                    <i>🔍</i>
+                    <input type="text" placeholder="grep -r 'error' /var/log/ ...">
+                </div>
+                <div class="topbar-actions">
+                    <button class="btn-icon">📡</button>
+                    <button class="btn-icon">⚙️</button>
+                    <button class="btn-icon">👤</button>
+                </div>
+            </div>
+            
+            <!-- Workspace -->
+            <div class="workspace" id="workspace">
+                <!-- Conținut dinamic -->
+            </div>
+            
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-led led-green"></span>
+                    <span>System: ONLINE</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-led led-green"></span>
+                    <span>12/12 servers</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-led led-yellow"></span>
+                    <span>3 incidents</span>
+                </div>
+                <div class="status-item">
+                    <span>CPU: 23%</span>
+                    <span class="status-value">p95: 45ms</span>
+                </div>
+                <div class="status-item">
+                    <span>MEM: 8.4/32GB</span>
+                </div>
+                <div style="flex:1"></div>
+                <div class="status-item">
+                    <span>root@savacazan:~$</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentView = 'overview';
+
+        function switchView(view) {
+            currentView = view;
+            
+            // Update active menu
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            // Update page title
+            const titles = {
+                'overview': 'SIGNAL@DEVOPS:~$ ./dashboard',
+                'servers': 'SIGNAL@DEVOPS:~$ ./server-fleet',
+                'containers': 'SIGNAL@DEVOPS:~$ docker ps -a',
+                'kubernetes': 'SIGNAL@DEVOPS:~$ kubectl get all',
+                'deployments': 'SIGNAL@DEVOPS:~$ git deploy',
+                'incidents': 'SIGNAL@DEVOPS:~$ tail -f /var/log/incidents',
+                'logs': 'SIGNAL@DEVOPS:~$ journalctl -f',
+                'uptime': 'SIGNAL@DEVOPS:~$ uptime -s',
+                'api': 'SIGNAL@DEVOPS:~$ curl api/metrics',
+                'cloud': 'SIGNAL@DEVOPS:~$ aws ce get-costs'
+            };
+            
+            document.getElementById('pageTitle').innerHTML = (titles[view] || 'SIGNAL@DEVOPS:~$') + ' <span class="cursor"></span>';
+            
+            generateContent(view);
+        }
+
+        function generateContent(view) {
+            const workspace = document.getElementById('workspace');
+            
+            const content = {
+                overview: `
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">SERVERS</div>
+                            <div class="stat-value">12 <span class="stat-unit">/12</span></div>
+                            <div class="stat-change positive">+2 today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">CONTAINERS</div>
+                            <div class="stat-value">23 <span class="stat-unit">running</span></div>
+                            <div class="stat-change">3 stopped</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">API LATENCY (p95)</div>
+                            <div class="stat-value">45 <span class="stat-unit">ms</span></div>
+                            <div class="stat-change positive">-12ms</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">CLOUD COSTS</div>
+                            <div class="stat-value">$847 <span class="stat-unit">/day</span></div>
+                            <div class="stat-change negative">+8%</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Terminal Grid -->
+                    <div class="terminal-grid">
+                        <div class="terminal-panel">
+                            <div class="panel-header">
+                                <span class="panel-title">SERVER FLEET</span>
+                                <span class="panel-actions">
+                                    <button class="btn-icon">↻</button>
+                                </span>
+                            </div>
+                            <div class="panel-content">
+                                <ul class="server-list">
+                                    <li class="server-item">
+                                        <span class="server-status"></span>
+                                        <div class="server-info">
+                                            <div class="server-name">prod-api-01</div>
+                                            <div class="server-meta">10.0.1.12 • uptime 24d</div>
+                                        </div>
+                                        <div class="server-stats">
+                                            <div class="server-cpu">23% CPU</div>
+                                            <div class="server-ram">4.2/16GB RAM</div>
+                                        </div>
+                                    </li>
+                                    <li class="server-item">
+                                        <span class="server-status"></span>
+                                        <div class="server-info">
+                                            <div class="server-name">prod-db-01</div>
+                                            <div class="server-meta">10.0.2.5 • uptime 92d</div>
+                                        </div>
+                                        <div class="server-stats">
+                                            <div class="server-cpu">45% CPU</div>
+                                            <div class="server-ram">12.8/32GB RAM</div>
+                                        </div>
+                                    </li>
+                                    <li class="server-item">
+                                        <span class="server-status warning"></span>
+                                        <div class="server-info">
+                                            <div class="server-name">staging-worker-03</div>
+                                            <div class="server-meta">10.0.3.8 • high load</div>
+                                        </div>
+                                        <div class="server-stats">
+                                            <div class="server-cpu">87% CPU</div>
+                                            <div class="server-ram">14.2/16GB RAM</div>
+                                        </div>
+                                    </li>
+                                    <li class="server-item">
+                                        <span class="server-status"></span>
+                                        <div class="server-info">
+                                            <div class="server-name">dev-cache-01</div>
+                                            <div class="server-meta">10.0.4.2 • uptime 7d</div>
+                                        </div>
+                                        <div class="server-stats">
+                                            <div class="server-cpu">12% CPU</div>
+                                            <div class="server-ram">2.1/8GB RAM</div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="terminal-panel">
+                            <div class="panel-header">
+                                <span class="panel-title">CONTAINERS (running)</span>
+                                <span class="panel-actions">
+                                    <button class="btn-icon">↻</button>
+                                </span>
+                            </div>
+                            <div class="panel-content">
+                                <div class="containers-grid">
+                                    <div class="container-item">
+                                        <div class="container-name">api-gateway:latest</div>
+                                        <div class="container-status"><span class="running">● running</span> • 2d</div>
+                                    </div>
+                                    <div class="container-item">
+                                        <div class="container-name">auth-service:v3</div>
+                                        <div class="container-status"><span class="running">● running</span> • 5d</div>
+                                    </div>
+                                    <div class="container-item">
+                                        <div class="container-name">postgres:15</div>
+                                        <div class="container-status"><span class="running">● running</span> • 92d</div>
+                                    </div>
+                                    <div class="container-item">
+                                        <div class="container-name">redis:7</div>
+                                        <div class="container-status"><span class="running">● running</span> • 24d</div>
+                                    </div>
+                                    <div class="container-item">
+                                        <div class="container-name">worker-ai:beta</div>
+                                        <div class="container-status"><span class="running">● running</span> • 12h</div>
+                                    </div>
+                                    <div class="container-item">
+                                        <div class="container-name">nginx:latest</div>
+                                        <div class="container-status"><span class="running">● running</span> • 7d</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Log Explorer -->
+                    <div class="terminal-panel" style="margin-bottom: 25px;">
+                        <div class="panel-header">
+                            <span class="panel-title">LIVE LOGS [journalctl -f]</span>
+                            <span class="panel-actions">
+                                <button class="btn-icon">⏸️</button>
+                                <button class="btn-icon">📥</button>
+                            </span>
+                        </div>
+                        <div class="log-container" id="logContainer">
+                            <div class="log-entry"><span class="log-timestamp">2026-03-09 14:23:45</span> <span class="log-level-info">INFO</span> api-gateway: request processed 200</div>
+                            <div class="log-entry"><span class="log-timestamp">2026-03-09 14:23:42</span> <span class="log-level-warn">WARN</span> auth-service: high latency 234ms</div>
+                            <div class="log-entry"><span class="log-timestamp">2026-03-09 14:23:38</span> <span class="log-level-info">INFO</span> postgres: checkpoint starting</div>
+                            <div class="log-entry"><span class="log-timestamp">2026-03-09 14:23:35</span> <span class="log-level-error">ERROR</span> worker-ai: connection timeout</div>
+                            <div class="log-entry"><span class="log-timestamp">2026-03-09 14:23:30</span> <span class="log-level-info">INFO</span> redis: background saving started</div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Monitoring -->
+                    <div class="terminal-grid">
+                        <div class="terminal-panel">
+                            <div class="panel-header">
+                                <span class="panel-title">API ENDPOINTS</span>
+                            </div>
+                            <div class="panel-content">
+                                <div class="metric-bar-container">
+                                    <div class="metric-header"><span>GET /api/users</span><span>45ms</span></div>
+                                    <div class="metric-bar"><div class="metric-fill" style="width:45%"></div></div>
+                                </div>
+                                <div class="metric-bar-container">
+                                    <div class="metric-header"><span>POST /api/orders</span><span>123ms</span></div>
+                                    <div class="metric-bar"><div class="metric-fill warning" style="width:82%"></div></div>
+                                </div>
+                                <div class="metric-bar-container">
+                                    <div class="metric-header"><span>GET /api/products</span><span>67ms</span></div>
+                                    <div class="metric-bar"><div class="metric-fill" style="width:67%"></div></div>
+                                </div>
+                                <div class="metric-bar-container">
+                                    <div class="metric-header"><span>POST /api/auth</span><span>234ms</span></div>
+                                    <div class="metric-bar"><div class="metric-fill error" style="width:94%"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="terminal-panel">
+                            <div class="panel-header">
+                                <span class="panel-title">LATENCY PERCENTILES</span>
+                            </div>
+                            <div class="panel-content">
+                                <div class="percentiles-grid">
+                                    <div class="percentile-item">
+                                        <div class="percentile-label">p50</div>
+                                        <div class="percentile-value">32ms</div>
+                                    </div>
+                                    <div class="percentile-item">
+                                        <div class="percentile-label">p95</div>
+                                        <div class="percentile-value">45ms</div>
+                                    </div>
+                                    <div class="percentile-item">
+                                        <div class="percentile-label">p99</div>
+                                        <div class="percentile-value">87ms</div>
+                                    </div>
+                                </div>
+                                <div style="margin-top:20px;">
+                                    <div class="metric-header"><span>Success rate</span><span>99.87%</span></div>
+                                    <div class="metric-bar"><div class="metric-fill" style="width:99%"></div></div>
+                                </div>
+                                <div style="margin-top:15px;">
+                                    <div class="metric-header"><span>Error rate</span><span>0.13%</span></div>
+                                    <div class="metric-bar"><div class="metric-fill" style="width:1%"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                
+                servers: `
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-label">TOTAL</div><div class="stat-value">12</div></div>
+                        <div class="stat-card"><div class="stat-label">ONLINE</div><div class="stat-value">11</div></div>
+                        <div class="stat-card"><div class="stat-label">CPU AVG</div><div class="stat-value">32%</div></div>
+                        <div class="stat-card"><div class="stat-label">MEM AVG</div><div class="stat-value">8.2/32GB</div></div>
+                    </div>
+                    
+                    <div class="terminal-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">SERVER FLEET [12 nodes]</span>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <tr><th>NAME</th><th>IP</th><th>STATUS</th><th>CPU</th><th>RAM</th><th>UPTIME</th></tr>
+                                <tr><td>prod-api-01</td><td>10.0.1.12</td><td><span class="status-led led-green" style="display:inline-block;"></span> online</td><td>23%</td><td>4.2/16GB</td><td>24d</td></tr>
+                                <tr><td>prod-db-01</td><td>10.0.2.5</td><td><span class="status-led led-green" style="display:inline-block;"></span> online</td><td>45%</td><td>12.8/32GB</td><td>92d</td></tr>
+                                <tr><td>staging-worker-03</td><td>10.0.3.8</td><td><span class="status-led led-yellow" style="display:inline-block;"></span> high load</td><td>87%</td><td>14.2/16GB</td><td>12d</td></tr>
+                                <tr><td>dev-cache-01</td><td>10.0.4.2</td><td><span class="status-led led-green" style="display:inline-block;"></span> online</td><td>12%</td><td>2.1/8GB</td><td>7d</td></tr>
+                                <tr><td>monitoring-01</td><td>10.0.5.10</td><td><span class="status-led led-green" style="display:inline-block;"></span> online</td><td>8%</td><td>1.8/8GB</td><td>45d</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                `,
+                
+                incidents: `
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-label">ACTIVE</div><div class="stat-value">3</div></div>
+                        <div class="stat-card"><div class="stat-label">ACKNOWLEDGED</div><div class="stat-value">2</div></div>
+                        <div class="stat-card"><div class="stat-label">RESOLVED (24h)</div><div class="stat-value">7</div></div>
+                        <div class="stat-card"><div class="stat-label">MTTR</div><div class="stat-value">24m</div></div>
+                    </div>
+                    
+                    <div class="terminal-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">ACTIVE INCIDENTS</span>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <tr><th>ID</th><th>SEVERITY</th><th>SERVICE</th><th>MESSAGE</th><th>TIME</th><th>STATUS</th></tr>
+                                <tr><td>INC-847</td><td><span class="log-level-error">CRITICAL</span></td><td>api-gateway</td><td>5xx errors spike</td><td>2m ago</td><td>investigating</td></tr>
+                                <tr><td>INC-846</td><td><span class="log-level-warn">HIGH</span></td><td>postgres</td><td>replication lag 45s</td><td>15m ago</td><td>mitigating</td></tr>
+                                <tr><td>INC-845</td><td><span class="log-level-warn">MEDIUM</span></td><td>worker-ai</td><td>high latency p95 234ms</td><td>47m ago</td><td>monitoring</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                `,
+                
+                api: `
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-label">REQUESTS/s</div><div class="stat-value">847</div></div>
+                        <div class="stat-card"><div class="stat-label">p95 LATENCY</div><div class="stat-value">45ms</div></div>
+                        <div class="stat-card"><div class="stat-label">ERROR RATE</div><div class="stat-value">0.13%</div></div>
+                        <div class="stat-card"><div class="stat-label">SUCCESS</div><div class="stat-value">99.87%</div></div>
+                    </div>
+                    
+                    <div class="terminal-grid">
+                        <div class="terminal-panel">
+                            <div class="panel-header">
+                                <span class="panel-title">ENDPOINT METRICS</span>
+                            </div>
+                            <div class="panel-content">
+                                <div class="metric-bar-container"><div class="metric-header"><span>GET /api/users</span><span>45ms • 234 req/s</span></div><div class="metric-bar"><div class="metric-fill" style="width:45%"></div></div></div>
+                                <div class="metric-bar-container"><div class="metric-header"><span>POST /api/orders</span><span>123ms • 89 req/s</span></div><div class="metric-bar"><div class="metric-fill warning" style="width:82%"></div></div></div>
+                                <div class="metric-bar-container"><div class="metric-header"><span>GET /api/products</span><span>67ms • 156 req/s</span></div><div class="metric-bar"><div class="metric-fill" style="width:67%"></div></div></div>
+                                <div class="metric-bar-container"><div class="metric-header"><span>POST /api/auth</span><span>234ms • 45 req/s</span></div><div class="metric-bar"><div class="metric-fill error" style="width:94%"></div></div></div>
+                            </div>
+                        </div>
+                        
+                        <div class="terminal-panel">
+                            <div class="panel-header">
+                                <span class="panel-title">LATENCY PERCENTILES</span>
+                            </div>
+                            <div class="panel-content">
+                                <div class="percentiles-grid">
+                                    <div class="percentile-item"><div class="percentile-label">p50</div><div class="percentile-value">32ms</div></div>
+                                    <div class="percentile-item"><div class="percentile-label">p95</div><div class="percentile-value">45ms</div></div>
+                                    <div class="percentile-item"><div class="percentile-label">p99</div><div class="percentile-value">87ms</div></div>
+                                </div>
+                                <div class="percentiles-grid" style="margin-top:10px;">
+                                    <div class="percentile-item"><div class="percentile-label">p99.9</div><div class="percentile-value">156ms</div></div>
+                                    <div class="percentile-item"><div class="percentile-label">p99.99</div><div class="percentile-value">423ms</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                
+                cloud: `
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-label">TODAY</div><div class="stat-value">$847</div></div>
+                        <div class="stat-card"><div class="stat-label">THIS WEEK</div><div class="stat-value">$5,847</div></div>
+                        <div class="stat-card"><div class="stat-label">THIS MONTH</div><div class="stat-value">$24,231</div></div>
+                        <div class="stat-card"><div class="stat-label">FORECAST</div><div class="stat-value">$32,400</div></div>
+                    </div>
+                    
+                    <div class="terminal-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">COST BREAKDOWN BY SERVICE</span>
+                        </div>
+                        <div class="panel-content">
+                            <div class="metric-bar-container"><div class="metric-header"><span>EC2</span><span>$342 (40%)</span></div><div class="metric-bar"><div class="metric-fill" style="width:40%"></div></div></div>
+                            <div class="metric-bar-container"><div class="metric-header"><span>RDS</span><span>$231 (27%)</span></div><div class="metric-bar"><div class="metric-fill" style="width:27%"></div></div></div>
+                            <div class="metric-bar-container"><div class="metric-header"><span>S3</span><span>$98 (12%)</span></div><div class="metric-bar"><div class="metric-fill" style="width:12%"></div></div></div>
+                            <div class="metric-bar-container"><div class="metric-header"><span>Lambda</span><span>$76 (9%)</span></div><div class="metric-bar"><div class="metric-fill" style="width:9%"></div></div></div>
+                        </div>
+                    </div>
+                `
+            };
+            
+            workspace.innerHTML = content[view] || content.overview;
+            
+            // Add logs periodically
+            if (view === 'overview') {
+                setInterval(() => {
+                    const logContainer = document.getElementById('logContainer');
+                    if (logContainer) {
+                        const levels = ['INFO', 'WARN', 'ERROR'];
+                        const level = levels[Math.floor(Math.random() * levels.length)];
+                        const className = level === 'INFO' ? 'log-level-info' : level === 'WARN' ? 'log-level-warn' : 'log-level-error';
+                        const now = new Date();
+                        const timestamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+                        
+                        const newLog = document.createElement('div');
+                        newLog.className = 'log-entry';
+                        newLog.innerHTML = `<span class="log-timestamp">${timestamp}</span> <span class="${className}">${level}</span> system: ${Math.random().toString(36).substring(7)}`;
+                        
+                        logContainer.appendChild(newLog);
+                        if (logContainer.children.length > 20) {
+                            logContainer.removeChild(logContainer.children[0]);
+                        }
+                        logContainer.scrollTop = logContainer.scrollHeight;
+                    }
+                }, 3000);
+            }
+        }
+
+        // Inițializare
+        window.onload = function() {
+            generateContent('overview');
+        };
+    </script>
+</body>
+</html>

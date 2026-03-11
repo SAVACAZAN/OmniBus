@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📘 Manualul Complet OmniBus - 20+ Pagini</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .nav-search {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            width: 250px;
+        }
+
+        /* Container principal */
+        .main-container {
+            max-width: 1400px;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        /* Sidebar - Cuprins */
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 80px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .sidebar h3 {
+            color: #4a2f8c;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .toc-list {
+            list-style: none;
+        }
+
+        .toc-item {
+            margin-bottom: 5px;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 8px 15px;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+
+        .toc-link:hover {
+            background: #f0f2f5;
+            color: #667eea;
+            padding-left: 25px;
+        }
+
+        .toc-link.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .toc-section {
+            font-weight: bold;
+            color: #2d3748;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            padding-left: 10px;
+        }
+
+        /* Content principal */
+        .content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            min-height: 800px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .page-title {
+            font-size: 2.2em;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .page-meta {
+            color: #718096;
+            font-size: 0.9em;
+            display: flex;
+            gap: 20px;
+        }
+
+        .page-content {
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+
+        /* Elemente de conținut */
+        .info-box {
+            background: #ebf4ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .warning-box {
+            background: #fff5f5;
+            border-left: 4px solid #f56565;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .success-box {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #a0eec0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .code-copy {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .code-copy:hover {
+            background: #667eea;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th {
+            background: #f7fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .image-placeholder {
+            background: #f0f2f5;
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            color: #718096;
+        }
+
+        .page-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f2f5;
+        }
+
+        .nav-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s;
+        }
+
+        .nav-button:hover {
+            transform: translateX(5px);
+            background: #764ba2;
+        }
+
+        .nav-button.prev:hover {
+            transform: translateX(-5px);
+        }
+
+        /* Progress bar */
+        .reading-progress {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            z-index: 99;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Quick actions */
+        .quick-actions {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-button {
+            width: 50px;
+            height: 50px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: transform 0.3s;
+        }
+
+        .action-button:hover {
+            transform: scale(1.1);
+        }
+
+        /* Print styles */
+        @media print {
+            .nav-bar, .sidebar, .quick-actions, .page-navigation {
+                display: none;
+            }
+            
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .content {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation bar -->
+    <div class="nav-bar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span>📘</span>
+                <span>OmniBus Manual Complet</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" onclick="showPage(1)">Acasă</a>
+                <a href="#" onclick="showPage(2)">Instalare</a>
+                <a href="#" onclick="showPage(8)">Arhitectură</a>
+                <a href="#" onclick="showPage(15)">Module</a>
+                <a href="#" onclick="showPage(20)">Debug</a>
+            </div>
+            <input type="text" class="nav-search" placeholder="🔍 Caută în manual..." id="searchInput" onkeyup="searchManual()">
+        </div>
+    </div>
+
+    <!-- Reading progress -->
+    <div class="reading-progress">
+        <div class="progress-fill" id="readingProgress"></div>
+    </div>
+
+    <!-- Main container -->
+    <div class="main-container">
+        <!-- Sidebar with TOC -->
+        <div class="sidebar">
+            <h3>📑 Cuprins (22 pagini)</h3>
+            <ul class="toc-list" id="toc"></ul>
+        </div>
+
+        <!-- Content area -->
+        <div class="content" id="content" onscroll="updateReadingProgress()">
+            <!-- Pagina 1: Introducere -->
+            <div class="page active" id="page1">
+                <div class="page-header">
+                    <h1 class="page-title">📘 Capitolul 1: Introducere în OmniBus</h1>
+                    <div class="page-meta">
+                        <span>📅 Actualizat: Martie 2026</span>
+                        <span>⏱️ Timp citire: 15 min</span>
+                        <span>📊 Versiune: 0.1.0</span>
+                    </div>
+                </div>
+                <div class="page-content">
+                    <div class="info-box">
+                        <strong>🎯 Ce este OmniBus?</strong>
+                        <p>OmniBus este un sistem de trading de mare frecvență (HFT) care rulează direct pe hardware (bare-metal), fără sistem de operare. Este construit pentru viteză extremă și latență sub microsecundă.</p>
+                    </div>
+
+                    <h2>1.1 Arhitectura pe 7 straturi</h2>
+                    <table>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Limbaj</th>
+                            <th>Rol</th>
+                            <th>Memorie</th>
+                        </tr>
+                        <tr><td>L0</td><td>Assembly</td><td>Bootloader, control CPU</td><td>0x000000</td></tr>
+                        <tr><td>L1</td><td>Ada SPARK</td><td>Kernel (Mother OS)</td><td>0x100000</td></tr>
+                        <tr><td>L2</td><td>Zig</td><td>Analytics, Grid</td><td>0x110000-0x200000</td></tr>
+                        <tr><td>L3</td><td>C/Rust</td><td>NIC drivers, exchange APIs</td><td>0x130000+</td></tr>
+                        <tr><td>L4</td><td>Solana</td><td>Blockchain OS</td><td>0x00150000</td></tr>
+                        <tr><td>L5</td><td>BankOS</td><td>SWIFT/ACH</td><td>0x00250000</td></tr>
+                        <tr><td>L6</td><td>Neuro OS</td><td>ML/Genetic Algorithms</td><td>0x00280000</td></tr>
+                    </table>
+
+                    <h2>1.2 Concepte fundamentale</h2>
+                    <ul>
+                        <li><strong>Bare-metal:</strong> Rulează direct pe CPU, fără Linux/Windows</li>
+                        <li><strong>Zero dynamic allocations:</strong> Toată memoria e alocată static la compilare</li>
+                        <li><strong>Fixed-point arithmetic:</strong> Fără float-uri, totul în numere întregi pentru determinism</li>
+                        <li><strong>Ring buffers:</strong> Comunicare între module prin memorie partajată</li>
+                    </ul>
+
+                    <div class="image-placeholder">
+                        📊 [Diagrama arhitecturală OmniBus - 7 straturi]
+                        <br><small>(Imaginea va fi adăugată în versiunea finală)</small>
+                    </div>
+
+                    <h2>1.3 Fluxul datelor</h2>
+                    <div class="code-block">
+                        DMA Input (prețuri burse) → Analytics OS (filtrare) → Grid OS (generare ordine) → Execution OS (semnare) → Exchange API
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 2: Instalare - Requirements -->
+            <div class="page" id="page2">
+                <div class="page-header">
+                    <h1 class="page-title">💻 Capitolul 2: Cerințe sistem</h1>
+                    <div class="page-meta">
+                        <span>📅 Actualizat: Martie 2026</span>
+                        <span>⏱️ Timp citire: 10 min</span>
+                    </div>
+                </div>
+                <div class="page-content">
+                    <h2>2.1 Cerințe hardware</h2>
+                    <table>
+                        <tr><th>Componentă</th><th>Minim</th><th>Recomandat</th></tr>
+                        <tr><td>CPU</td><td>2 nuclee cu VT-x/AMD-V</td><td>8+ nuclee</td></tr>
+                        <tr><td>RAM</td><td>4 GB</td><td>16 GB</td></tr>
+                        <tr><td>SSD</td><td>10 GB</td><td>50 GB</td></tr>
+                        <tr><td>Rețea</td><td>1 Gbps</td><td>10 Gbps</td></tr>
+                    </table>
+
+                    <h2>2.2 Cerințe software</h2>
+                    <ul>
+                        <li>Ubuntu 22.04 / 24.04 / 26.04 (sau orice Linux cu KVM)</li>
+                        <li>KVM cu virtualizare hardware activată</li>
+                        <li>NASM (Netwide Assembler) ≥ 2.15</li>
+                        <li>Zig compiler 0.13.0</li>
+                        <li>QEMU ≥ 6.0.0</li>
+                        <li>Git</li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <strong>⚠️ Verificare esențială:</strong>
+                        <p>Înainte de instalare, rulează: <code>egrep -c '(vmx|svm)' /proc/cpuinfo</code><br>
+                        Trebuie să afișeze un număr > 0. Dacă afișează 0, virtualizarea e dezactivată în BIOS.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 3: Instalare KVM -->
+            <div class="page" id="page3">
+                <div class="page-header">
+                    <h1 class="page-title">🔧 Capitolul 3: Instalare KVM și unelte</h1>
+                </div>
+                <div class="page-content">
+                    <h2>3.1 Instalare pachete</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        sudo apt update<br>
+                        sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager<br>
+                        sudo apt install -y nasm make wget git
+                    </div>
+
+                    <h2>3.2 Configurare utilizator</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        sudo usermod -aG libvirt $USER<br>
+                        sudo usermod -aG kvm $USER
+                    </div>
+
+                    <div class="warning-box">
+                        <strong>⚠️ Pas critic:</strong> După aceste comenzi, trebuie să te deconectezi și să te reconectezi!
+                    </div>
+
+                    <h2>3.3 Verificare instalare</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        sudo systemctl status libvirtd<br>
+                        virsh list --all
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 4: Instalare Zig -->
+            <div class="page" id="page4">
+                <div class="page-header">
+                    <h1 class="page-title">⚡ Capitolul 4: Instalare Zig compiler</h1>
+                </div>
+                <div class="page-content">
+                    <h2>4.1 Descărcare Zig 0.13.0</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        cd /tmp<br>
+                        wget https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz<br>
+                        tar -xf zig-linux-x86_64-0.13.0.tar.xz<br>
+                        sudo mv zig-linux-x86_64-0.13.0 /opt/zig<br>
+                        sudo ln -s /opt/zig/zig /usr/local/bin/zig
+                    </div>
+
+                    <h2>4.2 Verificare</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        zig version<br>
+                        # Ar trebui să afișeze: 0.13.0
+                    </div>
+
+                    <div class="info-box">
+                        <strong>📝 Notă:</strong> Zig este folosit pentru modulele Analytics OS, Grid OS și Execution OS datorită performanței și siguranței memoriei.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 5: Clonare proiect -->
+            <div class="page" id="page5">
+                <div class="page-header">
+                    <h1 class="page-title">📥 Capitolul 5: Obținerea codului sursă</h1>
+                </div>
+                <div class="page-content">
+                    <h2>5.1 Clonare repository</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        cd ~<br>
+                        git clone https://github.com/SAVACAZAN/OmniBus<br>
+                        cd OmniBus
+                    </div>
+
+                    <h2>5.2 Explorare structură</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        ls -la<br>
+                        # Ar trebui să vezi:<br>
+                        # bootloader/   modules/   Makefile   README.md   CLAUDE.md
+                    </div>
+
+                    <table>
+                        <tr><th>Director</th><th>Conținut</th></tr>
+                        <tr><td>bootloader/</td><td>Assembly bootloader (stage 1 & 2)</td></tr>
+                        <tr><td>modules/analytics_os/</td><td>Procesare prețuri, consens</td></tr>
+                        <tr><td>modules/grid_os/</td><td>Generare nivele grid, arbitraj</td></tr>
+                        <tr><td>modules/execution_os/</td><td>Semnare ordine, trimitere la exchange</td></tr>
+                        <tr><td>opcodeOs/</td><td>Documentație tehnică (ROMÂNĂ)</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagina 6: Compilare -->
+            <div class="page" id="page6">
+                <div class="page-header">
+                    <h1 class="page-title">🛠️ Capitolul 6: Compilare OmniBus</h1>
+                </div>
+                <div class="page-content">
+                    <h2>6.1 Compilare bootloader</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        cd ~/OmniBus<br>
+                        make clean<br>
+                        make build
+                    </div>
+
+                    <h2>6.2 Compilare module individuale</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        # Analytics OS<br>
+                        zig build-lib modules/analytics_os/analytics_os.zig -target x86_64-freestanding -O ReleaseFast<br><br>
+                        # Grid OS<br>
+                        zig build-lib modules/grid_os/grid_os.zig -target x86_64-freestanding -O ReleaseFast<br><br>
+                        # Execution OS<br>
+                        zig build-lib modules/execution_os/execution_os.zig -target x86_64-freestanding -O ReleaseFast
+                    </div>
+
+                    <h2>6.3 Verificare fișiere generate</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        ls -la *.img *.a<br>
+                        # Ar trebui să vezi: omnibus.img, libanalytics_os.a, libgrid_os.a, libexecution_os.a
+                    </div>
+
+                    <div class="success-box">
+                        <strong>✅ Succes!</strong> Dacă vezi fișierul omnibus.img, compilarea a reușit.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 7: Test în QEMU -->
+            <div class="page" id="page7">
+                <div class="page-header">
+                    <h1 class="page-title">🎮 Capitolul 7: Testare în QEMU</h1>
+                </div>
+                <div class="page-content">
+                    <h2>7.1 Pornire în emulator</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        cd ~/OmniBus<br>
+                        make qemu
+                    </div>
+
+                    <h2>7.2 Pornire cu debug</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        make qemu-debug<br>
+                        # În alt terminal:<br>
+                        gdb<br>
+                        target remote localhost:1234<br>
+                        set {char}0x100050 = 0x70<br>
+                        continue
+                    </div>
+
+                    <h2>7.3 Ieșire din QEMU</h2>
+                    <p>Apasă <strong>Ctrl + A</strong>, apoi <strong>X</strong></p>
+
+                    <div class="info-box">
+                        <strong>📝 Ce ar trebui să vezi:</strong>
+                        <p>O fereastră neagră cu text de la bootloader. Dacă vezi "OmniBus" și adrese de memorie, totul funcționează corect.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 8: Arhitectură detaliată -->
+            <div class="page" id="page8">
+                <div class="page-header">
+                    <h1 class="page-title">🏗️ Capitolul 8: Arhitectură detaliată</h1>
+                </div>
+                <div class="page-content">
+                    <h2>8.1 Memory Map complet</h2>
+                    <table>
+                        <tr><th>Adresă</th><th>Dimensiune</th><th>Componentă</th></tr>
+                        <tr><td>0x000000</td><td>512B</td><td>Boot sector</td></tr>
+                        <tr><td>0x007E00</td><td>4KB</td><td>Stage 2 bootloader</td></tr>
+                        <tr><td>0x100000</td><td>128KB</td><td>Ada Mother OS</td></tr>
+                        <tr><td>0x100050</td><td>1B</td><td>Auth gate</td></tr>
+                        <tr><td>0x110000</td><td>128KB</td><td>Grid OS</td></tr>
+                        <tr><td>0x110840</td><td>12KB</td><td>Order array (256 × 48B)</td></tr>
+                        <tr><td>0x113840</td><td>3KB</td><td>Arb opportunities (32 × 96B)</td></tr>
+                        <tr><td>0x130000</td><td>128KB</td><td>Execution OS</td></tr>
+                        <tr><td>0x130040</td><td>16B</td><td>Ring header</td></tr>
+                        <tr><td>0x130050</td><td>32KB</td><td>Order ring (256 × 128B)</td></tr>
+                        <tr><td>0x138050</td><td>24KB</td><td>TX queue (64 × 384B)</td></tr>
+                        <tr><td>0x13E050</td><td>16KB</td><td>FillResult (256 × 64B)</td></tr>
+                        <tr><td>0x142050</td><td>1.5KB</td><td>API keys (3 × 512B)</td></tr>
+                        <tr><td>0x150000</td><td>512KB</td><td>Analytics OS (price feed)</td></tr>
+                    </table>
+
+                    <h2>8.2 Ring Buffer Protocol</h2>
+                    <div class="code-block">
+                        struct RingHeader {<br>
+                            head: u32,  // Avansat de reader (Execution OS)<br>
+                            tail: u32,  // Avansat de writer (Grid OS)<br>
+                            mask: u32 = 0xFF,  // 256 slot-uri<br>
+                        };<br><br>
+                        // Verificare date noi<br>
+                        if (head != tail) {<br>
+                            idx = head & mask;<br>
+                            process(order_ring[idx]);<br>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 9: Analytics OS -->
+            <div class="page" id="page9">
+                <div class="page-header">
+                    <h1 class="page-title">📊 Capitolul 9: Analytics OS (L2)</h1>
+                </div>
+                <div class="page-content">
+                    <h2>9.1 Modulul UART (uart.zig)</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        const uart = @as(*volatile u8, @ptrFromInt(0x3F8));<br>
+                        <br>
+                        pub fn writeByte(byte: u8) void {<br>
+                            while (uart.* & 0x20 == 0) {}  // așteaptă buffer liber<br>
+                            uart.* = byte;<br>
+                        }<br>
+                        <br>
+                        pub fn writeString(str: []const u8) void {<br>
+                            for (str) |c| writeByte(c);<br>
+                        }
+                    </div>
+
+                    <h2>9.2 Consensus Filter (consensus.zig)</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        pub fn medianFilter(prices: []const u64) u64 {<br>
+                            // 71% median filter<br>
+                            // Elimină 5% outliers<br>
+                            // Returnează prețul de consens<br>
+                        }
+                    </div>
+
+                    <h2>9.3 Market Matrix (market_matrix.zig)</h2>
+                    <ul>
+                        <li>32 de perechi de trading</li>
+                        <li>30 de intervale OHLCV</li>
+                        <li>Timestamp folosind TSC</li>
+                        <li>Scriere la adresa 0x150000</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Pagina 10: Grid OS -->
+            <div class="page" id="page10">
+                <div class="page-header">
+                    <h1 class="page-title">📐 Capitolul 10: Grid OS (L2)</h1>
+                </div>
+                <div class="page-content">
+                    <h2>10.1 Grid Levels (grid.zig)</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        const GridLevel = struct {<br>
+                            price: u64,      // preț în cenți<br>
+                            buy_qty: u64,    // cantitate în sats<br>
+                            sell_qty: u64,   // cantitate în sats<br>
+                            buy_orders: u8,  // nr ordine de cumpărare<br>
+                            sell_orders: u8, // nr ordine de vânzare<br>
+                        };
+                    </div>
+
+                    <h2>10.2 Arbitrage Detection (scanner.zig)</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        const ArbitrageOpp = struct {<br>
+                            buy_exchange: u8,<br>
+                            sell_exchange: u8,<br>
+                            pair_id: u8,<br>
+                            buy_price: u64,<br>
+                            sell_price: u64,<br>
+                            profit_bps: u16,<br>
+                            timestamp: u64,<br>
+                        };
+                    </div>
+
+                    <h2>10.3 Rebalancing</h2>
+                    <p>Când prețul se mișcă cu >5%, grid-ul este regândit pentru a minimiza riscul.</p>
+                </div>
+            </div>
+
+            <!-- Pagina 11: Execution OS - Types -->
+            <div class="page" id="page11">
+                <div class="page-header">
+                    <h1 class="page-title">⚙️ Capitolul 11: Execution OS (L3) - Tipuri de date</h1>
+                </div>
+                <div class="page-content">
+                    <h2>11.1 Structuri de bază</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        const OrderPacket = packed struct {<br>
+                            pair_id: u8,<br>
+                            side: u8,           // 0=buy, 1=sell<br>
+                            order_type: u8,      // 0=limit, 1=market<br>
+                            exchange_id: u8,<br>
+                            price: u64,<br>
+                            quantity: u64,<br>
+                            timestamp: u64,<br>
+                            status: u8,          // 0=pending, 1=signed, 2=sent, 3=filled<br>
+                        };
+                    </div>
+
+                    <h2>11.2 Signed Order Slot</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        const SignedOrderSlot = packed struct {<br>
+                            order: OrderPacket,<br>
+                            signature: [64]u8,<br>
+                            signature_len: u8,<br>
+                            exchange_order_id: [32]u8,<br>
+                            timestamp_sent: u64,<br>
+                        };
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 12: Execution OS - Crypto -->
+            <div class="page" id="page12">
+                <div class="page-header">
+                    <h1 class="page-title">🔐 Capitolul 12: Execution OS - Cryptografie</h1>
+                </div>
+                <div class="page-content">
+                    <h2>12.1 Algoritmi suportați</h2>
+                    <table>
+                        <tr><th>Exchange</th><th>Algoritm</th><th>Modul</th></tr>
+                        <tr><td>LCX</td><td>HMAC-SHA256</td><td>lcx_sign.zig</td></tr>
+                        <tr><td>Kraken</td><td>SHA256 + HMAC-SHA512</td><td>kraken_sign.zig</td></tr>
+                        <tr><td>Coinbase</td><td>ECDSA P-256 JWT</td><td>coinbase_sign.zig</td></tr>
+                    </table>
+
+                    <h2>12.2 Exemple semnare</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        // Kraken signature<br>
+                        fn signKraken(path: []const u8, nonce: []const u8, postData: []const u8, secret: []const u8) [64]u8 {<br>
+                            const sha256 = std.crypto.hash.sha2.Sha256;<br>
+                            var hash: [32]u8 = undefined;<br>
+                            sha256.hash(postData, &hash, .{});<br>
+                            <br>
+                            var message: [256]u8 = undefined;<br>
+                            // ... construire mesaj<br>
+                            return std.crypto.auth.hmac.sha512.HmacSha512.create(secret, message[0..]);<br>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 13: Debugging cu GDB -->
+            <div class="page" id="page13">
+                <div class="page-header">
+                    <h1 class="page-title">🐛 Capitolul 13: Debugging cu GDB</h1>
+                </div>
+                <div class="page-content">
+                    <h2>13.1 Pornire în mod debug</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        # Terminal 1<br>
+                        make qemu-debug<br><br>
+                        # Terminal 2<br>
+                        gdb<br>
+                        (gdb) target remote localhost:1234
+                    </div>
+
+                    <h2>13.2 Comenzi utile GDB</h2>
+                    <table>
+                        <tr><th>Comandă</th><th>Efect</th></tr>
+                        <tr><td>set {char}0x100050 = 0x70</td><td>Activează auth gate</td></tr>
+                        <tr><td>x/10x 0x110840</td><td>Vezi 10 hex words la adresa ordere</td></tr>
+                        <tr><td>break *0x130000</td><td>Breakpoint la Execution OS</td></tr>
+                        <tr><td>info registers</td><td>Afișează registrele CPU</td></tr>
+                        <tr><td>stepi</td><td>Execută o instrucțiune</td></tr>
+                        <tr><td>continue</td><td>Continuă execuția</td></tr>
+                    </table>
+
+                    <div class="info-box">
+                        <strong>🔍 Exemplu de sesiune:</strong><br>
+                        (gdb) set {char}0x100050 = 0x70<br>
+                        (gdb) break *0x110000<br>
+                        (gdb) continue<br>
+                        (gdb) x/20x 0x110840  # vezi ordinele generate
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 14: Serial Output -->
+            <div class="page" id="page14">
+                <div class="page-header">
+                    <h1 class="page-title">📟 Capitolul 14: UART Serial Debug</h1>
+                </div>
+                <div class="page-content">
+                    <h2>14.1 Activare serial în QEMU</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        qemu-system-x86_64 -serial stdio -hda omnibus.img
+                    </div>
+
+                    <h2>14.2 Conectare la port serial real</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        screen /dev/ttyUSB0 115200
+                    </div>
+
+                    <h2>14.3 Format mesaje</h2>
+                    <div class="code-block">
+                        [ANALYTICS] Price feed updated BTC/USD: 63500.00<br>
+                        [GRID] New grid level at 63400.00 (buy 0.1 BTC)<br>
+                        [EXEC] Signed order 0x7F3A for Kraken<br>
+                        [EXEC] Fill received: order 0x7F3A filled at 63450.00
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 15: Fixed-Point Math -->
+            <div class="page" id="page15">
+                <div class="page-header">
+                    <h1 class="page-title">🧮 Capitolul 15: Fixed-Point Arithmetic</h1>
+                </div>
+                <div class="page-content">
+                    <h2>15.1 Formatul numerelor</h2>
+                    <table>
+                        <tr><th>Tip</th><th>Format</th><th>Exemplu</th></tr>
+                        <tr><td>Preț</td><td>u64 × 100 (cenți)</td><td>6_350_000 = $63,500.00</td></tr>
+                        <tr><td>Cantitate</td><td>u64 × 1e8 (satoshis)</td><td>100_000_000 = 1 BTC</td></tr>
+                        <tr><td>Fee</td><td>u32 (basis points)</td><td>50 = 0.50%</td></tr>
+                    </table>
+
+                    <h2>15.2 Operații matematice</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        // Înmulțire cu păstrare precizie<br>
+                        fn mulDiv(a: u64, b: u64, c: u64) u64 {<br>
+                            return @as(u64, (@as(u128, a) * @as(u128, b)) / @as(u128, c));<br>
+                        }<br><br>
+                        // Calcul profit arbitraj<br>
+                        fn calcProfitBps(buy_price: u64, sell_price: u64) u16 {<br>
+                            const profit = sell_price - buy_price;<br>
+                            return @intCast((profit * 10000) / buy_price);<br>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 16: Volatile Pointers -->
+            <div class="page" id="page16">
+                <div class="page-header">
+                    <h1 class="page-title">📍 Capitolul 16: I/O cu Volatile Pointers</h1>
+                </div>
+                <div class="page-content">
+                    <h2>16.1 Acces la memorie partajată</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        // Citire auth gate<br>
+                        const auth = @as(*volatile u8, @ptrFromInt(0x100050));<br>
+                        if (auth.* != 0x70) return;<br><br>
+                        // Scriere în order array<br>
+                        const orders = @as([*]volatile Order, @ptrFromInt(0x110840));<br>
+                        orders[head].status = .filled;<br>
+                        orders[head].fill_price = price;
+                    </div>
+
+                    <h2>16.2 Ring buffer communication</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        const header = @as(*volatile RingHeader, @ptrFromInt(0x130040));<br>
+                        const ring = @as([*]volatile OrderPacket, @ptrFromInt(0x130050));<br>
+                        <br>
+                        // Grid OS (writer)<br>
+                        ring[tail] = new_order;<br>
+                        header.tail +%= 1;<br>
+                        <br>
+                        // Execution OS (reader)<br>
+                        while (header.head != header.tail) {<br>
+                            process(ring[header.head]);<br>
+                            header.head +%= 1;<br>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 17: Module complete -->
+            <div class="page" id="page17">
+                <div class="page-header">
+                    <h1 class="page-title">📦 Capitolul 17: Lista completă a modulelor</h1>
+                </div>
+                <div class="page-content">
+                    <h2>17.1 Analytics OS (9 module)</h2>
+                    <ul>
+                        <li>uart.zig - Serial debug</li>
+                        <li>types.zig - Fixed-point, DMA structures</li>
+                        <li>dma_ring.zig - Ring buffer polling</li>
+                        <li>market_matrix.zig - 32×30 OHLCV</li>
+                        <li>consensus.zig - 71% median filter</li>
+                        <li>price_feed.zig - Write la 0x150000</li>
+                        <li>analytics_os.zig - Root module</li>
+                        <li>... +2 module suport</li>
+                    </ul>
+
+                    <h2>17.2 Grid OS (8 module, ~1914 lines)</h2>
+                    <ul>
+                        <li>types.zig - GridState, Order, ArbitrageOpp</li>
+                        <li>math.zig - Fixed-point math</li>
+                        <li>grid.zig - Grid level generation</li>
+                        <li>order.zig - Order state machine</li>
+                        <li>scanner.zig - Cross-exchange arbitrage</li>
+                        <li>rebalance.zig - Grid shift</li>
+                        <li>grid_os.zig - Root</li>
+                        <li>... +1 modul</li>
+                    </ul>
+
+                    <h2>17.3 Execution OS (9 module, ~1996 lines)</h2>
+                    <ul>
+                        <li>types.zig - Memory layout</li>
+                        <li>crypto.zig - SHA256, HMAC, RDRAND</li>
+                        <li>order_reader.zig - Ring buffer polling</li>
+                        <li>order_format.zig - Fixed-point → string</li>
+                        <li>lcx_sign.zig - HMAC-SHA256</li>
+                        <li>kraken_sign.zig - SHA256 + HMAC-SHA512</li>
+                        <li>coinbase_sign.zig - ECDSA P-256 JWT</li>
+                        <li>fill_tracker.zig - FillResult processing</li>
+                        <li>execution_os.zig - Root</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Pagina 18: Future Layers -->
+            <div class="page" id="page18">
+                <div class="page-header">
+                    <h1 class="page-title">🔮 Capitolul 18: Viitoarele straturi (L4-L6)</h1>
+                </div>
+                <div class="page-content">
+                    <h2>18.1 L4: Blockchain OS</h2>
+                    <ul>
+                        <li>Solana flash loans</li>
+                        <li>EGLD staking</li>
+                        <li>Adresă: 0x00150000 - 0x00250000</li>
+                        <li>Status: ⏳ Planificat</li>
+                    </ul>
+
+                    <h2>18.2 L5: Bank OS</h2>
+                    <ul>
+                        <li>Settlement SWIFT/ACH</li>
+                        <li>Integrare cu conturi bancare</li>
+                        <li>Adresă: 0x00250000 - 0x00280000</li>
+                        <li>Status: ⏳ Planificat</li>
+                    </ul>
+
+                    <h2>18.3 L6: Neuro OS</h2>
+                    <ul>
+                        <li>Genetic algorithms pentru optimizare</li>
+                        <li>ML pentru pattern detection</li>
+                        <li>Adresă: 0x00280000 - 0x002C0000</li>
+                        <li>Status: ⏳ În cercetare</li>
+                    </ul>
+
+                    <div class="info-box">
+                        <strong>🧠 Genetic Algorithm:</strong> Continuously optimize trading parameters. No separate "training phase" - learns in production. Population-based evolution across all 7 OS layers.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 19: Testare unitară -->
+            <div class="page" id="page19">
+                <div class="page-header">
+                    <h1 class="page-title">🧪 Capitolul 19: Testare și validare</h1>
+                </div>
+                <div class="page-content">
+                    <h2>19.1 Teste unitare per modul</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        # Testare Execution OS<br>
+                        zig test modules/execution_os/execution_os.zig -target x86_64-freestanding<br><br>
+                        # Testare Grid OS<br>
+                        zig test modules/grid_os/grid_os.zig -target x86_64-freestanding
+                    </div>
+
+                    <h2>19.2 Verificare syscalls</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        nm libanalytics_os.a | grep -E 'malloc|free|syscall'<br>
+                        # Expected: (niciun output)
+                    </div>
+
+                    <h2>19.3 Validare cu QEMU</h2>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)">📋 Copiază</button>
+                        # Test complet cu autorizare<br>
+                        make qemu-debug<br>
+                        # În GDB:<br>
+                        set {char}0x100050 = 0x70<br>
+                        continue
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagina 20: Troubleshooting -->
+            <div class="page" id="page20">
+                <div class="page-header">
+                    <h1 class="page-title">🔧 Capitolul 20: Probleme frecvente și soluții</h1>
+                </div>
+                <div class="page-content">
+                    <table>
+                        <tr><th>Problemă</th><th>Cauză</th><th>Soluție</th></tr>
+                        <tr>
+                            <td>"Permission denied" la /dev/kvm</td>
+                            <td>Utilizatorul nu e în grupul kvm</td>
+                            <td>sudo usermod -aG kvm $USER + restart</td>
+                        </tr>
+                        <tr>
+                            <td>QEMU rămâne negru</td>
+                            <td>Auth gate neactivat</td>
+                            <td>set {char}0x100050 = 0x70 în GDB</td>
+                        </tr>
+                        <tr>
+                            <td>make build crapă</td>
+                            <td>NASM lipsă sau versiune veche</td>
+                            <td>sudo apt install nasm && nasm -v (≥2.15)</td>
+                        </tr>
+                        <tr>
+                            <td>Nu văd output serial</td>
+                            <td>Consola greșită</td>
+                            <td>View → Serial Console în virt-manager</td>
+                        </tr>
+                        <tr>
+                            <td>Virtualizare dezactivată</td>
+                            <td>VT-x/AMD-V off în BIOS</td>
+                            <td>Intră în BIOS și activează</td>
+                        </tr>
+                        <tr>
+                            <td>Zig command not found</td>
+                            <td>PATH neactualizat</td>
+                            <td>export PATH=$PATH:/usr/local/bin</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagina 21: Referințe rapide -->
+            <div class="page" id="page21">
+                <div class="page-header">
+                    <h1 class="page-title">⚡ Capitolul 21: Quick Reference</h1>
+                </div>
+                <div class="page-content">
+                    <h2>21.1 Comenzi esențiale</h2>
+                    <table>
+                        <tr><th>Comandă</th><th>Descriere</th></tr>
+                        <tr><td>make build</td><td>Compilează totul</td></tr>
+                        <tr><td>make qemu</td><td>Rulează în emulator</td></tr>
+                        <tr><td>make qemu-debug</td><td>Rulează cu GDB</td></tr>
+                        <tr><td>make clean</td><td>Curăță fișierele compilate</td></tr>
+                        <tr><td>virt-manager</td><td>Deschide managerul VM</td></tr>
+                    </table>
+
+                    <h2>21.2 Adrese cheie</h2>
+                    <table>
+                        <tr><th>Adresă</th><th>Conținut</th></tr>
+                        <tr><td>0x100050</td><td>Auth gate (pune 0x70 pentru activare)</td></tr>
+                        <tr><td>0x110840</td><td>Grid OS order array</td></tr>
+                        <tr><td>0x130040</td><td>Execution OS ring header</td></tr>
+                        <tr><td>0x150000</td><td>Analytics price feed</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagina 22: Glosar -->
+            <div class="page" id="page22">
+                <div class="page-header">
+                    <h1 class="page-title">📖 Capitolul 22: Glosar de termeni</h1>
+                </div>
+                <div class="page-content">
+                    <dl>
+                        <dt><strong>Bare-metal</strong></dt>
+                        <dd>Rulează direct pe hardware, fără sistem de operare intermediar</dd>
+                        
+                        <dt><strong>Ring Buffer</strong></dt>
+                        <dd>Structură circulară în memorie pentru comunicare eficientă între module</dd>
+                        
+                        <dt><strong>Auth Gate</strong></dt>
+                        <dd>Locație de memorie (0x100050) care controlează activarea sistemului</dd>
+                        
+                        <dt><strong>Fixed-point</strong></dt>
+                        <dd>Aritmetică cu numere întregi în loc de float, pentru determinism</dd>
+                        
+                        <dt><strong>Basis Points (bps)</strong></dt>
+                        <dd>1 bps = 0.01% (folosit pentru fee-uri și profit)</dd>
+                        
+                        <dt><strong>DMA</strong></dt>
+                        <dd>Direct Memory Access - transfer date direct în memorie fără CPU</dd>
+                        
+                        <dt><strong>GDT</strong></dt>
+                        <dd>Global Descriptor Table - pentru protected mode</dd>
+                        
+                        <dt><strong>TSC</strong></dt>
+                        <dd>Time Stamp Counter - ceas de înaltă precizie pe CPU</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Page navigation -->
+            <div class="page-navigation">
+                <button class="nav-button prev" onclick="changePage(-1)">← Pagina anterioară</button>
+                <span id="pageIndicator">Pagina 1 / 22</span>
+                <button class="nav-button next" onclick="changePage(1)">Pagina următoare →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="quick-actions">
+        <button class="action-button" onclick="scrollToTop()" title="Sus">↑</button>
+        <button class="action-button" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
+        <button class="action-button" onclick="printManual()" title="Imprimă">🖨️</button>
+        <button class="action-button" onclick="downloadPDF()" title="PDF">📥</button>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const totalPages = 22;
+
+        // Inițializare cuprins
+        function initTOC() {
+            const toc = document.getElementById('toc');
+            const sections = [
+                { title: 'PARTEA I: INTRODUCERE', pages: [1,2,3,4,5,6,7] },
+                { title: 'PARTEA II: ARHITECTURĂ', pages: [8,9,10,11,12] },
+                { title: 'PARTEA III: MODULE', pages: [13,14,15,16,17] },
+                { title: 'PARTEA IV: AVANSAT', pages: [18,19,20,21,22] }
+            ];
+
+            let html = '';
+            sections.forEach(section => {
+                html += `<li class="toc-section">${section.title}</li>`;
+                section.pages.forEach(page => {
+                    html += `<li class="toc-item"><a href="#" class="toc-link" onclick="showPage(${page}); return false;">Pagina ${page}: ${getPageTitle(page)}</a></li>`;
+                });
+            });
+            toc.innerHTML = html;
+            updateTOCActive();
+        }
+
+        function getPageTitle(page) {
+            const titles = {
+                1: 'Introducere',
+                2: 'Cerințe sistem',
+                3: 'Instalare KVM',
+                4: 'Instalare Zig',
+                5: 'Clonare proiect',
+                6: 'Compilare',
+                7: 'Test QEMU',
+                8: 'Arhitectură',
+                9: 'Analytics OS',
+                10: 'Grid OS',
+                11: 'Execution OS - Types',
+                12: 'Execution OS - Crypto',
+                13: 'Debugging GDB',
+                14: 'Serial Output',
+                15: 'Fixed-Point Math',
+                16: 'Volatile Pointers',
+                17: 'Module complete',
+                18: 'Future Layers',
+                19: 'Testare',
+                20: 'Troubleshooting',
+                21: 'Quick Reference',
+                22: 'Glosar'
+            };
+            return titles[page] || `Pagina ${page}`;
+        }
+
+        function showPage(page) {
+            // Ascunde toate paginile
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            
+            // Arată pagina cerută
+            document.getElementById(`page${page}`).classList.add('active');
+            currentPage = page;
+            
+            // Update indicator
+            document.getElementById('pageIndicator').textContent = `Pagina ${page} / ${totalPages}`;
+            
+            // Update TOC active
+            updateTOCActive();
+            
+            // Scroll sus
+            window.scrollTo(0, 0);
+        }
+
+        function updateTOCActive() {
+            document.querySelectorAll('.toc-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.textContent.includes(`Pagina ${currentPage}`)) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        function changePage(direction) {
+            let newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                showPage(newPage);
+            }
+        }
+
+        function copyCode(button) {
+            const codeBlock = button.parentElement;
+            const code = codeBlock.innerText.replace('📋 Copiază', '').trim();
+            navigator.clipboard.writeText(code);
+            
+            button.textContent = '✅ Copiat!';
+            setTimeout(() => {
+                button.textContent = '📋 Copiază';
+            }, 2000);
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const button = document.querySelector('.action-button:nth-child(2)');
+            button.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+        }
+
+        function printManual() {
+            window.print();
+        }
+
+        function downloadPDF() {
+            alert('📥 PDF-ul va fi disponibil în versiunea următoare. Momentan poți folosi Print → Save as PDF');
+        }
+
+        function searchManual() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm.length < 2) return;
+            
+            const pages = document.querySelectorAll('.page');
+            let results = [];
+            
+            pages.forEach(page => {
+                const text = page.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    const pageNum = page.id.replace('page', '');
+                    results.push(`Pagina ${pageNum}: ${getPageTitle(parseInt(pageNum))}`);
+                }
+            });
+            
+            if (results.length > 0) {
+                alert('🔍 Rezultate:\n' + results.join('\n'));
+            } else {
+                alert('❌ Niciun rezultat');
+            }
+        }
+
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('readingProgress').style.width = scrolled + '%';
+        }
+
+        // Inițializare
+        initTOC();
+        showPage(1);
+
+        // Dark mode CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .dark-mode {
+                background: #1a1a1a;
+            }
+            .dark-mode .sidebar,
+            .dark-mode .content,
+            .dark-mode .nav-bar {
+                background: #2d2d2d;
+                color: #e0e0e0;
+            }
+            .dark-mode .page-title,
+            .dark-mode h2,
+            .dark-mode h3 {
+                color: #bb86fc;
+            }
+            .dark-mode table {
+                background: #333;
+                color: #e0e0e0;
+            }
+            .dark-mode th {
+                background: #404040;
+                color: #bb86fc;
+            }
+            .dark-mode td {
+                border-bottom-color: #404040;
+            }
+            .dark-mode .info-box {
+                background: #1e3a5f;
+                color: #e0e0e0;
+            }
+            .dark-mode .warning-box {
+                background: #4a2c2c;
+                color: #e0e0e0;
+            }
+            .dark-mode .success-box {
+                background: #1e4a2c;
+                color: #e0e0e0;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

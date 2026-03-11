@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌐 OMNIBUS MASTER - 50 Concepte Extinse</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
+    <script src="https://unpkg.com/htmx-ext-sse@2.0.1/sse.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', 'JetBrains Mono', sans-serif;
+        }
+
+        :root {
+            --bg-deep: #0a0c14;
+            --bg-card: #121620;
+            --bg-panel: #1a1f2a;
+            --bg-terminal: #1e2430;
+            --bg-success: #00a86b;
+            --bg-warning: #f0b400;
+            --bg-danger: #dc3545;
+            --bg-info: #17a2b8;
+            --bg-purple: #6f42c1;
+            --bg-pink: #d63384;
+            --bg-gold: #ffd700;
+            --text-primary: #e9f1ff;
+            --text-secondary: #8b9bb5;
+            --text-muted: #5f6c80;
+            --border: #2a3442;
+            --accent-cyan: #00ffff;
+            --accent-green: #00ff88;
+            --accent-purple: #aa80ff;
+            --accent-pink: #ff66b2;
+            --accent-orange: #ffaa66;
+            --accent-gold: #ffd700;
+            --gradient-1: linear-gradient(135deg, #00ffff, #aa80ff);
+            --gradient-2: linear-gradient(135deg, #00ff88, #00ffff);
+            --gradient-3: linear-gradient(135deg, #ff66b2, #aa80ff);
+            --gradient-4: linear-gradient(135deg, #ffd700, #ffaa66);
+            --gradient-5: linear-gradient(135deg, #ff6b6b, #ff66b2);
+            --shadow: 0 8px 32px rgba(0, 255, 255, 0.15);
+            --glow: 0 0 20px rgba(0, 255, 255, 0.3);
+            --glow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Container principal */
+        .master-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-deep));
+            border: 2px solid var(--accent-gold);
+            border-radius: 30px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,215,0,0.1), transparent 70%);
+            animation: rotate 60s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .header-title {
+            font-size: 3.5em;
+            font-weight: 800;
+            background: var(--gradient-4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .header-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            max-width: 800px;
+            position: relative;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--accent-gold);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
+
+        /* Navigare pe niveluri */
+        .level-nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 12px 25px;
+            border-radius: 40px;
+            border: 2px solid;
+            background: transparent;
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--glow);
+        }
+
+        .nav-btn.level1 { border-color: #ff6b6b; }
+        .nav-btn.level2 { border-color: #f0b400; }
+        .nav-btn.level3 { border-color: #00a86b; }
+        .nav-btn.level4 { border-color: #17a2b8; }
+        .nav-btn.level5 { border-color: #aa80ff; }
+        .nav-btn.active { background: var(--gradient-4); border-color: transparent; color: black; }
+
+        /* Grid concepte */
+        .concepts-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .concept-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .concept-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .concept-card.level1::before { background: linear-gradient(90deg, #ff6b6b, #ff66b2); }
+        .concept-card.level2::before { background: linear-gradient(90deg, #f0b400, #ffaa66); }
+        .concept-card.level3::before { background: linear-gradient(90deg, #00a86b, #00ff88); }
+        .concept-card.level4::before { background: linear-gradient(90deg, #17a2b8, #00ffff); }
+        .concept-card.level5::before { background: linear-gradient(90deg, #6f42c1, #aa80ff); }
+
+        .concept-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .concept-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-gold);
+            box-shadow: var(--glow-gold);
+        }
+
+        .concept-number {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .concept-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--accent-gold);
+        }
+
+        .concept-desc {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .concept-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .tag-htmx { background: rgba(0,255,255,0.2); color: var(--accent-cyan); }
+        .tag-mirror { background: rgba(255,215,0,0.2); color: var(--accent-gold); }
+        .tag-crypto { background: rgba(170,128,255,0.2); color: var(--accent-purple); }
+        .tag-game { background: rgba(255,102,178,0.2); color: var(--accent-pink); }
+        .tag-ai { background: rgba(0,255,136,0.2); color: var(--accent-green); }
+
+        /* Vizualizare 3D / Heatmap */
+        .visualization-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 30px;
+            margin: 40px 0;
+        }
+
+        .vis-title {
+            font-size: 1.8em;
+            color: var(--accent-cyan);
+            margin-bottom: 20px;
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            gap: 2px;
+            height: 200px;
+        }
+
+        .heatmap-cell {
+            background: #1a2a3a;
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        /* 7 categorii vizualizare */
+        .categories-showcase {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 15px;
+            margin: 40px 0;
+        }
+
+        .category-preview {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .preview-number {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 5px;
+        }
+
+        .preview-name {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        /* Mirror Network Preview */
+        .mirror-preview {
+            background: var(--bg-terminal);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .mirror-node {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #2a3a4a;
+            transition: all 0.3s;
+        }
+
+        .mirror-node.active {
+            background: var(--accent-cyan);
+            box-shadow: var(--glow);
+            transform: scale(1.2);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            margin-top: 60px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .footer-symbols {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            font-size: 2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="master-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">🌐 OMNIBUS MASTER</div>
+            <div class="header-subtitle">50 de concepte extinse pentru ecosistemul Matrioșka • 7 categorii • htmx • Mirror Network</div>
+            <div class="header-stats">
+                <div class="stat">
+                    <div class="stat-value">50</div>
+                    <div class="stat-label">Concepte</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Niveluri</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">7</div>
+                    <div class="stat-label">Categorii</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Scalabilitate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigare niveluri -->
+        <div class="level-nav">
+            <button class="nav-btn level1 active" onclick="filterLevel(1)">Nivel 1-10 • Arhitectură</button>
+            <button class="nav-btn level2" onclick="filterLevel(2)">Nivel 11-20 • Economie</button>
+            <button class="nav-btn level3" onclick="filterLevel(3)">Nivel 21-30 • Interfață</button>
+            <button class="nav-btn level4" onclick="filterLevel(4)">Nivel 31-40 • Gaming</button>
+            <button class="nav-btn level5" onclick="filterLevel(5)">Nivel 41-50 • Viitor</button>
+        </div>
+
+        <!-- Grid concepte -->
+        <div class="concepts-grid" id="concepts-grid">
+            <!-- Nivel 1-10: Arhitectură și Securitate -->
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#01</div>
+                <div class="concept-name">Ceasul Atomic htmx</div>
+                <div class="concept-desc">Cronometru descentralizat care forțează trigger-ul indiferent de server</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">htmx</span>
+                    <span class="tag tag-mirror">mirror</span>
+                </div>
+            </div>
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#02</div>
+                <div class="concept-name">Snapshotting Recursiv</div>
+                <div class="concept-desc">Salvarea stării tabelului în hash la fiecare 7 secunde (backup fractal)</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">recursiv</span>
+                    <span class="tag tag-crypto">hash</span>
+                </div>
+            </div>
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#03</div>
+                <div class="concept-name">Proof of Attendance</div>
+                <div class="concept-desc">Lozul devine mai valoros dacă ești online la momentul trigger-ului</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">proof</span>
+                    <span class="tag tag-game">gamification</span>
+                </div>
+            </div>
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#04</div>
+                <div class="concept-name">Criptare în Straturi</div>
+                <div class="concept-desc">Detaliile lozului se decojesc ca o ceapă doar la activarea categoriei</div>
+                <div class="concept-tags">
+                    <span class="tag tag-crypto">criptare</span>
+                    <span class="tag tag-htmx">layers</span>
+                </div>
+            </div>
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#05</div>
+                <div class="concept-name">Multi-Signature Trigger</div>
+                <div class="concept-desc">Confirmare 3 noduri martor pentru eliberarea plăților</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">multi-sig</span>
+                    <span class="tag tag-crypto">security</span>
+                </div>
+            </div>
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#06</div>
+                <div class="concept-name">Auto-Audit HTML</div>
+                <div class="concept-desc">Buton care descarcă instant logul etapei în format JSON/CSV</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">export</span>
+                    <span class="tag tag-mirror">audit</span>
+                </div>
+            </div>
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#07</div>
+                <div class="concept-name">Sistem Anti-Bot</div>
+                <div class="concept-desc">Verificare biometrică simplă prin hx-post pe mișcarea mouse-ului</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">biometric</span>
+                    <span class="tag tag-game">anti-bot</span>
+                </div>
+            </div>
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#08</div>
+                <div class="concept-name">Mirror Sharding</div>
+                <div class="concept-desc">Împărțirea tabelului în camere mai mici la peste 7.777 participanți</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">sharding</span>
+                    <span class="tag tag-htmx">scalability</span>
+                </div>
+            </div>
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#09</div>
+                <div class="concept-name">Hot-Swapping Logic</div>
+                <div class="concept-desc">Schimbarea algoritmului de distribuție fără oprirea serverului</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">hot-swap</span>
+                    <span class="tag tag-mirror">dynamic</span>
+                </div>
+            </div>
+            <div class="concept-card level1" data-level="1">
+                <div class="concept-number">#10</div>
+                <div class="concept-name">Shadow Validation</div>
+                <div class="concept-desc">Instanță paralelă care rulează și compară rezultatele instantaneu</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">validation</span>
+                    <span class="tag tag-crypto">redundancy</span>
+                </div>
+            </div>
+
+            <!-- Nivel 11-20: Economie și Categorii -->
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#11</div>
+                <div class="concept-name">Taxa de Solidaritate</div>
+                <div class="concept-desc">Fracție din Categoria 7 care alimentează Categoria 1 (Tezaur)</div>
+                <div class="concept-tags">
+                    <span class="tag tag-crypto">tax</span>
+                    <span class="tag tag-mirror">solidarity</span>
+                </div>
+            </div>
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#12</div>
+                <div class="concept-name">Lozuri Fracționate</div>
+                <div class="concept-desc">7 oameni pot deține împreună un singur loz Omnibus</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">fractional</span>
+                    <span class="tag tag-crypto">shares</span>
+                </div>
+            </div>
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#13</div>
+                <div class="concept-name">Burn Mechanism</div>
+                <div class="concept-desc">Distrugerea lozurilor nevalidate pentru a crește valoarea celor rămase</div>
+                <div class="concept-tags">
+                    <span class="tag tag-crypto">burn</span>
+                    <span class="tag tag-mirror">deflation</span>
+                </div>
+            </div>
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#14</div>
+                <div class="concept-name">Dividende de Rețea</div>
+                <div class="concept-desc">Deținătorii vechi primesc micro-procente din Categoria 3</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">dividends</span>
+                    <span class="tag tag-crypto">rewards</span>
+                </div>
+            </div>
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#15</div>
+                <div class="concept-name">Escrow Inteligent</div>
+                <div class="concept-desc">Banii stau blocați până când htmx confirmă recepția</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">escrow</span>
+                    <span class="tag tag-crypto">secure</span>
+                </div>
+            </div>
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#16</div>
+                <div class="concept-name">Dynamic Pricing</div>
+                <div class="concept-desc">Prețul lozului variază în funcție de viteza de umplere a Matrioșka</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">pricing</span>
+                    <span class="tag tag-htmx">dynamic</span>
+                </div>
+            </div>
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#17</div>
+                <div class="concept-name">Jackpot Progresiv</div>
+                <div class="concept-desc">Restul necastigat din Categoria 5 trece în Categoria 1 a etapei următoare</div>
+                <div class="concept-tags">
+                    <span class="tag tag-crypto">jackpot</span>
+                    <span class="tag tag-game">progressive</span>
+                </div>
+            </div>
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#18</div>
+                <div class="concept-name">Referral Fractal</div>
+                <div class="concept-desc">Primești sub-loz pentru fiecare invitație (recursivitate socială)</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">referral</span>
+                    <span class="tag tag-game">fractal</span>
+                </div>
+            </div>
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#19</div>
+                <div class="concept-name">Fondul de Urgență</div>
+                <div class="concept-desc">Categoria 4 reține procent pentru mentenanță critică 24/7</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">emergency</span>
+                    <span class="tag tag-crypto">reserve</span>
+                </div>
+            </div>
+            <div class="concept-card level2" data-level="2">
+                <div class="concept-number">#20</div>
+                <div class="concept-name">AirDrop de Lozuri</div>
+                <div class="concept-desc">Distribuție gratuită în Categoria 6 pentru reanimarea rețelei</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">airdrop</span>
+                    <span class="tag tag-game">free</span>
+                </div>
+            </div>
+
+            <!-- Nivel 21-30: Interfață și Experiență -->
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#21</div>
+                <div class="concept-name">Vedere 4D</div>
+                <div class="concept-desc">Tabel rotativ care arată straturile de date încastrate</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">3d</span>
+                    <span class="tag tag-mirror">visual</span>
+                </div>
+            </div>
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#22</div>
+                <div class="concept-name">Harta Căldurii (Heatmap)</div>
+                <div class="concept-desc">Vizualizarea zonelor cu cele mai multe lozuri</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">heatmap</span>
+                    <span class="tag tag-game">analytics</span>
+                </div>
+            </div>
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#23</div>
+                <div class="concept-name">Notificări Push htmx</div>
+                <div class="concept-desc">Alerte directe în browser pentru evenimente din Categoria 7</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">push</span>
+                    <span class="tag tag-mirror">notifications</span>
+                </div>
+            </div>
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#24</div>
+                <div class="concept-name">Modul Spectator</div>
+                <div class="concept-desc">Vizualizare fără participare, cu date anonimizate în timp real</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">spectator</span>
+                    <span class="tag tag-mirror">view</span>
+                </div>
+            </div>
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#25</div>
+                <div class="concept-name">Temă Adaptivă</div>
+                <div class="concept-desc">Culoarea interfeței se schimbă pe măsură ce se apropie Trigger-ul</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">theme</span>
+                    <span class="tag tag-game">dynamic</span>
+                </div>
+            </div>
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#26</div>
+                <div class="concept-name">Lupa Matematică</div>
+                <div class="concept-desc">Zoom pe o celulă pentru a vedea istoricul tranzacțiilor</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">zoom</span>
+                    <span class="tag tag-mirror">history</span>
+                </div>
+            </div>
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#27</div>
+                <div class="concept-name">Chat Contextual</div>
+                <div class="concept-desc">Mesagerie integrată în Table Room pentru piața secundară</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">chat</span>
+                    <span class="tag tag-mirror">social</span>
+                </div>
+            </div>
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#28</div>
+                <div class="concept-name">Sunet de Cristal</div>
+                <div class="concept-desc">Fiecare validare scoate un sunet de frecvență înaltă</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">sound</span>
+                    <span class="tag tag-htmx">audio</span>
+                </div>
+            </div>
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#29</div>
+                <div class="concept-name">Replay Etapă</div>
+                <div class="concept-desc">Vizualizarea animației de distribuție a unei etape trecute</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">replay</span>
+                    <span class="tag tag-mirror">history</span>
+                </div>
+            </div>
+            <div class="concept-card level3" data-level="3">
+                <div class="concept-number">#30</div>
+                <div class="concept-name">Interfață Vocală</div>
+                <div class="concept-desc">Comenzi rapide pentru cumpărare și verificare status prin voce</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">voice</span>
+                    <span class="tag tag-game">ui</span>
+                </div>
+            </div>
+
+            <!-- Nivel 31-40: Gaming și Strategie -->
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#31</div>
+                <div class="concept-name">Lozul Camaleon</div>
+                <div class="concept-desc">Își schimbă categoria în funcție de norocul celor din jur</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">chameleon</span>
+                    <span class="tag tag-mirror">dynamic</span>
+                </div>
+            </div>
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#32</div>
+                <div class="concept-name">Alianțe de Tabel</div>
+                <div class="concept-desc">Grupuri care își unesc lozurile pentru a domina Categoria 5</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">alliance</span>
+                    <span class="tag tag-mirror">team</span>
+                </div>
+            </div>
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#33</div>
+                <div class="concept-name">Misiuni Zilnice</div>
+                <div class="concept-desc">Participă la 3 etape pentru a debloca loz gratuit în Categoria 6</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">quests</span>
+                    <span class="tag tag-htmx">daily</span>
+                </div>
+            </div>
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#34</div>
+                <div class="concept-name">Nivel de Experiență</div>
+                <div class="concept-desc">Prioritate la Mirroring pentru participanții fideli</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">xp</span>
+                    <span class="tag tag-mirror">priority</span>
+                </div>
+            </div>
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#35</div>
+                <div class="concept-name">Badges de Stabilitate</div>
+                <div class="concept-desc">Insigne pentru noduri martor active 72 de ore</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">badges</span>
+                    <span class="tag tag-game">achievements</span>
+                </div>
+            </div>
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#36</div>
+                <div class="concept-name">Turneul Etapelor</div>
+                <div class="concept-desc">Clasament al celor mai profitabile deschideri de Matrioșka</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">tournament</span>
+                    <span class="tag tag-htmx">leaderboard</span>
+                </div>
+            </div>
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#37</div>
+                <div class="concept-name">Lozul de Sacrificiu</div>
+                <div class="concept-desc">Arzi un loz mic pentru a crește șansele unuia mare</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">sacrifice</span>
+                    <span class="tag tag-crypto">burn</span>
+                </div>
+            </div>
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#38</div>
+                <div class="concept-name">Randomizare Cuantică</div>
+                <div class="concept-desc">Generator hardware de numere cu adevărat aleatorii</div>
+                <div class="concept-tags">
+                    <span class="tag tag-crypto">quantum</span>
+                    <span class="tag tag-mirror">rng</span>
+                </div>
+            </div>
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#39</div>
+                <div class="concept-name">Pariuri pe Trigger</div>
+                <div class="concept-desc">Pariază pe secunda exactă a activării trigger-ului</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">betting</span>
+                    <span class="tag tag-htmx">prediction</span>
+                </div>
+            </div>
+            <div class="concept-card level4" data-level="4">
+                <div class="concept-number">#40</div>
+                <div class="concept-name">Sistem de Guild-uri</div>
+                <div class="concept-desc">Administrarea propriilor camere cu reguli personalizate</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">guild</span>
+                    <span class="tag tag-game">clans</span>
+                </div>
+            </div>
+
+            <!-- Nivel 41-50: Scalabilitate și Viitor -->
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#41</div>
+                <div class="concept-name">Multi-Currency</div>
+                <div class="concept-desc">Acceptarea Fiat, Crypto și Puncte pentru cumpărare lozuri</div>
+                <div class="concept-tags">
+                    <span class="tag tag-crypto">multi-currency</span>
+                    <span class="tag tag-htmx">payment</span>
+                </div>
+            </div>
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#42</div>
+                <div class="concept-name">Bridge între Camere</div>
+                <div class="concept-desc">Transferul valorii dintr-o Matrioșka mică într-una gigant</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">bridge</span>
+                    <span class="tag tag-crypto">cross-chain</span>
+                </div>
+            </div>
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#43</div>
+                <div class="concept-name">Arhivă Holografică</div>
+                <div class="concept-desc">Stocarea etapelor în format comprimat, accesibil prin htmx</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">archive</span>
+                    <span class="tag tag-mirror">holographic</span>
+                </div>
+            </div>
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#44</div>
+                <div class="concept-name">Predictor AI</div>
+                <div class="concept-desc">Algoritm care estimează timpul până la următorul Trigger</div>
+                <div class="concept-tags">
+                    <span class="tag tag-ai">AI</span>
+                    <span class="tag tag-htmx">prediction</span>
+                </div>
+            </div>
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#45</div>
+                <div class="concept-name">API pentru Dezvoltatori</div>
+                <div class="concept-desc">Permite construirea de interfețe noi peste Kernel</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">API</span>
+                    <span class="tag tag-mirror">dev</span>
+                </div>
+            </div>
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#46</div>
+                <div class="concept-name">Mod Offline</div>
+                <div class="concept-desc">Pregătire loz offline și sincronizare la reconectare</div>
+                <div class="concept-tags">
+                    <span class="tag tag-htmx">offline</span>
+                    <span class="tag tag-mirror">sync</span>
+                </div>
+            </div>
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#47</div>
+                <div class="concept-name">Sistem de Dispute</div>
+                <div class="concept-desc">Juriul format din Categoria 3 validează erorile tehnice</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">dispute</span>
+                    <span class="tag tag-game">jury</span>
+                </div>
+            </div>
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#48</div>
+                <div class="concept-name">Ecologie Digitală</div>
+                <div class="concept-desc">Serverul reduce consumul când nu sunt utilizatori activi</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">green</span>
+                    <span class="tag tag-htmx">eco</span>
+                </div>
+            </div>
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#49</div>
+                <div class="concept-name">Lozul Etern</div>
+                <div class="concept-desc">Bilet care participă automat la fiecare etapă până la câștig</div>
+                <div class="concept-tags">
+                    <span class="tag tag-game">eternal</span>
+                    <span class="tag tag-crypto">perpetual</span>
+                </div>
+            </div>
+            <div class="concept-card level5" data-level="5">
+                <div class="concept-number">#50</div>
+                <div class="concept-name">Omnibus Prime</div>
+                <div class="concept-desc">Unificarea celor 7 categorii într-o entitate matematică perfectă</div>
+                <div class="concept-tags">
+                    <span class="tag tag-mirror">prime</span>
+                    <span class="tag tag-ai">final</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cele 7 categorii (preview) -->
+        <div class="categories-showcase">
+            <div class="category-preview">
+                <div class="preview-number">#1</div>
+                <div class="preview-name">TEZAUR</div>
+            </div>
+            <div class="category-preview">
+                <div class="preview-number">#2</div>
+                <div class="preview-name">SEED</div>
+            </div>
+            <div class="category-preview">
+                <div class="preview-number">#3</div>
+                <div class="preview-name">MIRROR</div>
+            </div>
+            <div class="category-preview">
+                <div class="preview-number">#4</div>
+                <div class="preview-name">LEGAL/TECH</div>
+            </div>
+            <div class="category-preview">
+                <div class="preview-number">#5</div>
+                <div class="preview-name">MULTIPLIER</div>
+            </div>
+            <div class="category-preview">
+                <div class="preview-number">#6</div>
+                <div class="preview-name">SOCIAL</div>
+            </div>
+            <div class="category-preview">
+                <div class="preview-number">#7</div>
+                <div class="preview-name">OMNIBUS</div>
+            </div>
+        </div>
+
+        <!-- Vizualizare 3D / Heatmap -->
+        <div class="visualization-panel">
+            <div class="vis-title">📊 HEATMAP - Activitate în Tabelul Matrioșka</div>
+            <div class="heatmap-grid" id="heatmap">
+                <!-- Generat dinamic -->
+            </div>
+        </div>
+
+        <!-- Mirror Network Preview -->
+        <div class="mirror-preview" id="mirror-preview">
+            <!-- Generat dinamic -->
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-symbols">
+                <span style="color: #ff6b6b;">🔒</span>
+                <span style="color: #f0b400;">💰</span>
+                <span style="color: #00a86b;">🎨</span>
+                <span style="color: #17a2b8;">🎮</span>
+                <span style="color: #aa80ff;">🚀</span>
+                <span style="color: var(--accent-gold);">🌐</span>
+            </div>
+            <p>🌐 OMNIBUS MASTER - 50 Concepte Extinse • 5 Niveluri • 7 Categorii • ∞ Scalabilitate</p>
+            <p style="margin-top: 10px; color: var(--accent-gold);">WE ARE HERE • WE ARE STABLE</p>
+        </div>
+    </div>
+
+    <script>
+        // Filtrare pe niveluri
+        function filterLevel(level) {
+            const cards = document.querySelectorAll('.concept-card');
+            const btns = document.querySelectorAll('.nav-btn');
+            
+            btns.forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            cards.forEach(card => {
+                if (card.dataset.level == level) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Dacă nivelul e 1, afișăm primele 10
+            if (level === 1) {
+                cards.forEach(card => {
+                    if (parseInt(card.dataset.level) <= 1) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        // Generare heatmap
+        function generateHeatmap() {
+            const heatmap = document.getElementById('heatmap');
+            heatmap.innerHTML = '';
+            
+            for (let i = 0; i < 400; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                
+                // Random intensity
+                const intensity = Math.random();
+                const hue = 40 + (intensity * 40); // 40-80 (galben-auriu)
+                
+                if (intensity > 0.7) {
+                    cell.style.background = '#ffaa33';
+                } else if (intensity > 0.4) {
+                    cell.style.background = '#ffd700';
+                } else if (intensity > 0.2) {
+                    cell.style.background = '#aa8c00';
+                } else {
+                    cell.style.background = '#1a2a3a';
+                }
+                
+                heatmap.appendChild(cell);
+            }
+        }
+
+        // Generare Mirror Network
+        function generateMirror() {
+            const mirror = document.getElementById('mirror-preview');
+            mirror.innerHTML = '';
+            
+            for (let i = 0; i < 20; i++) {
+                const node = document.createElement('div');
+                node.className = 'mirror-node';
+                
+                // Random active
+                if (Math.random() > 0.6) {
+                    node.classList.add('active');
+                }
+                
+                mirror.appendChild(node);
+            }
+        }
+
+        // Inițializare
+        window.onload = function() {
+            generateHeatmap();
+            generateMirror();
+            
+            // Re-generare periodică
+            setInterval(() => {
+                generateHeatmap();
+            }, 5000);
+            
+            setInterval(() => {
+                generateMirror();
+            }, 3000);
+        };
+    </script>
+</body>
+</html>

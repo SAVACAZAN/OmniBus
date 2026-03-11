@@ -1,0 +1,388 @@
+================================================================================
+Phase 29: HTMX Dashboard (L14) - File Inventory
+================================================================================
+
+PROJECT: OmniBus Phase 29 - Real-time Web UI with WebSocket Kernel Memory Bridge
+STATUS: ✅ COMPLETE
+DATE: 2026-03-10
+
+================================================================================
+CORE APPLICATION FILES
+================================================================================
+
+1. dashboard_5pane.py (400 lines)
+   Location: /home/kiss/OmniBus/dashboard_5pane.py
+   Purpose: Main Flask app + Socket.IO WebSocket server
+   Features:
+   - Flask routes for HTML + REST API
+   - Socket.IO for real-time WebSocket updates
+   - Background kernel reader thread (100ms cycle)
+   - Support for SHM, /dev/mem, and REST fallback
+   - Demo mode for UI testing
+   Imports: flask, flask_socketio, shm_reader
+   Entry point: main()
+
+2. requirements.txt (10 lines)
+   Location: /home/kiss/OmniBus/requirements.txt
+   Purpose: Python package dependencies
+   Packages:
+   - Flask==2.3.3
+   - Flask-SocketIO==5.3.5
+   - python-socketio==5.10.0
+   - python-engineio==4.8.0
+   - Werkzeug==2.3.7
+
+================================================================================
+HTML TEMPLATES (Jinja2)
+================================================================================
+
+3. templates/base.html (80 lines)
+   Location: /home/kiss/OmniBus/templates/base.html
+   Purpose: Main dashboard layout (5-panel grid)
+   Components:
+   - Header with connection status + timestamp
+   - 5-panel grid (responsive, HTMX-enabled)
+   - Footer with phase info
+   - Tailwind CSS dark theme
+   - Socket.IO script import
+
+4. templates/trading_panel.html (50 lines)
+   Location: /home/kiss/OmniBus/templates/trading_panel.html
+   Purpose: Grid OS trading metrics
+   Displays:
+   - Active/Idle status
+   - Net P&L (color-coded)
+   - Grid levels + order count
+   - Top 3 arbitrage opportunities
+   Memory: 0x110000 (Grid OS state)
+
+5. templates/compliance_panel.html (45 lines)
+   Location: /home/kiss/OmniBus/templates/compliance_panel.html
+   Purpose: Zorin OS access control
+   Displays:
+   - ACL enforcement status
+   - 4 zone indicators (🇬🇧 🇩🇪 🇺🇸 🇯🇵)
+   - Violation counter
+   - Permission levels (R/W/X)
+   Memory: 0x330000 (Zorin OS state)
+
+6. templates/health_panel.html (50 lines)
+   Location: /home/kiss/OmniBus/templates/health_panel.html
+   Purpose: System health + integrity
+   Displays:
+   - Checksum OS verification status
+   - AutoRepair OS repair tracking
+   - Overall system operational status
+   - Uptime counter
+   Memory: 0x310000, 0x320000 (Checksum, AutoRepair)
+
+7. templates/audit_panel.html (60 lines)
+   Location: /home/kiss/OmniBus/templates/audit_panel.html
+   Purpose: Audit log (16 recent events)
+   Displays:
+   - Event sequence (Grid, Exec, Analytics, etc.)
+   - Relative timestamps
+   - Event type badges
+   - Total event counter
+   Memory: 0x340000 (Audit Log OS)
+
+8. templates/neuro_panel.html (55 lines)
+   Location: /home/kiss/OmniBus/templates/neuro_panel.html
+   Purpose: NeuroOS genetic algorithm evolution
+   Displays:
+   - Generation counter
+   - Best/worst fitness scores
+   - Evolution progress bar (0-100%)
+   - Algorithm parameters
+   Memory: 0x2D0000 (NeuroOS state)
+
+================================================================================
+STATIC ASSETS
+================================================================================
+
+9. static/kernel-bridge.js (250 lines)
+   Location: /home/kiss/OmniBus/static/kernel-bridge.js
+   Purpose: WebSocket client + HTMX integration
+   Features:
+   - Socket.IO connection (auto-reconnect)
+   - Kernel state event handler
+   - HTMX panel animation hooks
+   - Number change animations (↑↓ colors)
+   - REST API polling fallback
+   - 30s heartbeat keep-alive
+   - Browser console API (OmniBusDashboard)
+
+10. static/style.css (200 lines)
+    Location: /home/kiss/OmniBus/static/style.css
+    Purpose: Dashboard styling + animations
+    Features:
+    - Tailwind CSS integration
+    - Custom dark theme colors
+    - Panel hover effects
+    - Animation keyframes
+    - Responsive media queries
+    - Scrollbar styling
+    - Badge styles
+
+================================================================================
+DOCUMENTATION
+================================================================================
+
+11. PHASE_29_README.md (600 lines)
+    Location: /home/kiss/OmniBus/PHASE_29_README.md
+    Contents:
+    - Overview + architecture
+    - File structure
+    - Installation & usage instructions
+    - Feature descriptions (5 panels)
+    - Memory addresses + structs
+    - Configuration options
+    - API endpoints (HTTP + WebSocket)
+    - Browser console debugging
+    - Performance metrics
+    - Troubleshooting guide
+    - Development notes
+    - Future enhancements
+
+12. PHASE_29_QUICK_START.md (250 lines)
+    Location: /home/kiss/OmniBus/PHASE_29_QUICK_START.md
+    Contents:
+    - 60-second setup guide
+    - Panel visual overview
+    - Connection modes table
+    - Feature descriptions
+    - Troubleshooting quick reference
+    - API endpoints summary
+    - Verification checklist
+    - Next steps
+
+13. PHASE_29_IMPLEMENTATION_SUMMARY.md (400 lines)
+    Location: /home/kiss/OmniBus/PHASE_29_IMPLEMENTATION_SUMMARY.md
+    Contents:
+    - What was built
+    - File statistics
+    - Architecture diagram
+    - Data flow
+    - Technologies used
+    - Key features
+    - Usage instructions
+    - Testing procedures
+    - Integration with other phases
+    - Code quality notes
+    - Performance metrics
+    - Deployment checklist
+
+14. PHASE_29_FILES.txt (this file)
+    Location: /home/kiss/OmniBus/PHASE_29_FILES.txt
+    Purpose: Complete file inventory
+
+================================================================================
+HELPER SCRIPTS
+================================================================================
+
+15. run_phase_29.sh (100 lines)
+    Location: /home/kiss/OmniBus/run_phase_29.sh
+    Purpose: Automated setup + launch script
+    Features:
+    - Dependency verification
+    - File structure check
+    - Python syntax validation
+    - Multiple run modes (SHM, devmem, demo)
+    - Usage examples
+    Usage: ./run_phase_29.sh [--shm FILE] [--devmem] [--port PORT]
+
+================================================================================
+MODIFIED FILES (from shm_reader.py integration)
+================================================================================
+
+shm_reader.py (existing - not modified)
+   Location: /home/kiss/OmniBus/shm_reader.py
+   Used by: dashboard_5pane.py
+   Provides: ShmMetricsReader class for kernel memory access
+
+================================================================================
+MEMORY ADDRESSES READ BY DASHBOARD
+================================================================================
+
+0x110000 (256B) - Grid OS State
+   - Grid metrics: magic, pair_id, flags, bounds, step, profit, tsc
+   - Panel: TRADING
+   - Update: Every 100ms
+
+0x150000 (256B) - Analytics OS State
+   - Price consensus data
+   - Panel: TRADING (used for arb detection)
+   - Update: Every 100ms
+
+0x310000 (128B) - Checksum OS State
+   - Integrity verification metadata
+   - Panel: HEALTH
+   - Update: Every 100ms
+
+0x320000 (128B) - AutoRepair OS State
+   - Repair tracking, failure count
+   - Panel: HEALTH
+   - Update: Every 100ms
+
+0x330000 (128B) - Zorin OS State
+   - Access control, zones, violations
+   - Panel: COMPLIANCE
+   - Update: Every 100ms
+
+0x340000 (512B) - Audit Log OS
+   - Recent 16 events with timestamps
+   - Panel: AUDIT
+   - Update: Every 100ms
+
+0x2D0000 (128B) - NeuroOS State
+   - Generation, evolution cycles, fitness scores
+   - Panel: NEURO
+   - Update: Every 100ms
+
+0x400000 (512B) - OmniStruct (optional)
+   - All Tier 1 aggregates
+   - Not currently used (future)
+
+================================================================================
+ENTRY POINTS
+================================================================================
+
+1. Command Line
+   $ python3 dashboard_5pane.py [OPTIONS]
+
+   Options:
+   --shm FILE       Use QEMU shared memory file
+   --devmem         Use /dev/mem (requires root)
+   --port PORT      Listen port (default 8080)
+
+2. Web Browser
+   http://localhost:8080
+
+3. WebSocket
+   ws://localhost:8080/socket.io/
+
+4. REST API
+   GET http://localhost:8080/api/kernel-state
+
+================================================================================
+DEPLOYMENT CHECKLIST
+================================================================================
+
+[✓] Code written and tested
+[✓] All templates created
+[✓] Static assets finalized
+[✓] Dependencies documented
+[✓] README with full documentation
+[✓] Quick start guide
+[✓] Implementation summary
+[✓] Error handling + graceful degradation
+[✓] Browser dev tools compatible
+[✓] HTMX integration verified
+[✓] Socket.IO connection tested
+[✓] Python syntax verified
+[✓] File structure complete
+
+================================================================================
+TESTING RECOMMENDATIONS
+================================================================================
+
+1. Syntax Check
+   python3 -m py_compile dashboard_5pane.py
+
+2. File Structure
+   ls -la templates/ static/
+   # Should show 6 templates + 2 assets
+
+3. Dependencies
+   pip install -r requirements.txt
+   pip list | grep -i flask
+
+4. Demo Mode
+   python3 dashboard_5pane.py &
+   curl http://localhost:8080
+   kill %1
+
+5. With Kernel
+   make qemu SHM_FILE=/tmp/omnibus_live_mem &
+   sleep 3
+   python3 dashboard_5pane.py --shm /tmp/omnibus_live_mem &
+   curl -s http://localhost:8080 | grep "connection-status"
+   pkill -f dashboard_5pane.py
+   pkill -f qemu
+
+================================================================================
+QUICK REFERENCE
+================================================================================
+
+Start Dashboard (3 ways):
+
+1. Demo (no kernel needed):
+   python3 dashboard_5pane.py
+
+2. With QEMU SHM:
+   python3 dashboard_5pane.py --shm /tmp/omnibus_live_mem
+
+3. With /dev/mem (root):
+   sudo python3 dashboard_5pane.py --devmem
+
+Then open: http://localhost:8080
+
+================================================================================
+SIZE SUMMARY
+================================================================================
+
+Python Code:         ~400 lines (dashboard_5pane.py)
+HTML Templates:      ~300 lines (6 templates)
+JavaScript:          ~250 lines (kernel-bridge.js)
+CSS:                 ~200 lines (style.css)
+Documentation:       ~1,500 lines (3 markdown files)
+Total:               ~2,650 lines
+
+File Count:          15 files total
+  - Core:            2 (dashboard_5pane.py, requirements.txt)
+  - Templates:       6
+  - Assets:          2
+  - Documentation:   4
+  - Scripts:         1
+
+================================================================================
+NEXT PHASES
+================================================================================
+
+Phase 29B: Parameter Tuning UI
+- Add forms to adjust grid step, spread threshold
+- Real-time parameter updates to kernel
+
+Phase 30: Historical Graphing
+- Time-series charts (Chart.js)
+- Price + PnL history visualization
+
+Phase 31: Alert System
+- Email/Slack notifications
+- Custom alert rules + thresholds
+
+Phase 32: Multi-Kernel Federation
+- Dashboard for multiple Tier 1 instances
+- Aggregated metrics + cross-kernel arb
+
+Phase 33: Mobile App
+- React Native or Flutter
+- Native mobile dashboard
+
+================================================================================
+PROJECT COMPLETION
+================================================================================
+
+Status: ✅ PHASE 29 COMPLETE
+
+All deliverables implemented:
+✓ Flask web server with WebSocket
+✓ 5-panel HTMX dashboard
+✓ Real-time kernel memory bridge
+✓ Support for SHM, /dev/mem, REST API
+✓ Production-ready error handling
+✓ Complete documentation
+✓ Ready for deployment
+
+================================================================================
+EOF

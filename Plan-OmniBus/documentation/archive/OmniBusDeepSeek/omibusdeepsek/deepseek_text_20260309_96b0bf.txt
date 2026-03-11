@@ -1,0 +1,11 @@
+omnibus-ai-commander/
+│
+├── server.py                 # Backend Python (Flask + SSE + logică)
+├── templates/
+│   └── index.html            # Frontend HTMX (dashboard-ul)
+├── static/
+│   ├── style.css             # Stiluri (opțional, incluse în HTML)
+│   └── script.js              # JavaScript auxiliar (opțional)
+├── renders/                   # Folder pentru imagini randate
+├── configs/                   # Configurații quickemu
+└── README.md                  # Instrucțiuni

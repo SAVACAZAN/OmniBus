@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>🌐 OmniBus 2.0 - Yield Farming, DAO & Cross-chain</title>
+    
+    <!-- Chart.js și QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Yield Farming Header */
+        .yield-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 30px;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tvl-display {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .tvl-value {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        /* Yield Farming Grid */
+        .yield-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .farm-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .farm-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .farm-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #f56565;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .farm-apy {
+            font-size: 2em;
+            font-weight: bold;
+            color: #48bb78;
+            margin: 10px 0;
+        }
+
+        .farm-liquidity {
+            color: #718096;
+            font-size: 0.9em;
+        }
+
+        .farm-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* DAO Governance */
+        .dao-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .proposal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .proposal-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .proposal-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-active { background: #48bb78; color: white; }
+        .status-passed { background: #667eea; color: white; }
+        .status-rejected { background: #f56565; color: white; }
+
+        .vote-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .vote-for {
+            flex: 1;
+            padding: 10px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .vote-against {
+            flex: 1;
+            padding: 10px;
+            background: #f56565;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .vote-results {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* Mystery Box Trading */
+        .trading-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .listing-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .listing-price {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .listing-seller {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px 0;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .buy-now {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .make-offer {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        /* Gift Card Auctions */
+        .auction-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .auction-card {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            position: relative;
+        }
+
+        .auction-timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        .current-bid {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .bid-history {
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .bid-input {
+            display: flex;
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+        .bid-input input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .bid-input button {
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Android Wear OS */
+        .android-watch {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            margin: 20px 0;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .wear-frame {
+            background: #000;
+            border-radius: 50px;
+            padding: 15px;
+            width: 300px;
+            margin: 0 auto;
+        }
+
+        .wear-screen {
+            background: #000;
+            border-radius: 40px;
+            padding: 15px;
+            color: #00ff00;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Courier New', monospace;
+        }
+
+        .wear-time {
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00ff00;
+        }
+
+        .wear-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .wear-item {
+            background: rgba(0,255,0,0.1);
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .wear-value {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .wear-label {
+            font-size: 0.7em;
+            opacity: 0.7;
+        }
+
+        /* Cross-chain Bridge */
+        .bridge-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .bridge-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .chain-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .chain-card:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .chain-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .bridge-status {
+            color: #48bb78;
+            font-size: 0.9em;
+        }
+
+        .bridge-form {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .bridge-input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .bridge-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+
+        .fee-estimate {
+            background: #e2e8f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .yield-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .proposal-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .auction-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .android-watch {
+                grid-template-columns: 1fr;
+            }
+            
+            .bridge-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Yield Farming Header -->
+        <div class="yield-header">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 3em;">🌾</div>
+                <div>
+                    <h2>OmniBus Yield Farms</h2>
+                    <p>Earn up to 245% APY</p>
+                </div>
+            </div>
+            <div class="tvl-display">
+                <div>Total Value Locked</div>
+                <div class="tvl-value" id="tvl">$8.4M</div>
+                <div>Across 12 Farms</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="bank-button" onclick="connectWallet()">🔌 Connect Wallet</button>
+            </div>
+        </div>
+
+        <!-- Yield Farming Pools -->
+        <div class="yield-grid">
+            <div class="farm-card">
+                <div class="farm-badge">NEW</div>
+                <div style="font-size: 2em;">🪙</div>
+                <h3>OMNI-ETH LP</h3>
+                <div class="farm-apy" id="farm1Apy">245% APY</div>
+                <div class="farm-liquidity">Liquidity: $2.1M</div>
+                <div>Your stake: 1,245 LP</div>
+                <div>Earned: 89 OMNI</div>
+                <button class="farm-button" onclick="farm('omni-eth')">Farm Now</button>
+            </div>
+
+            <div class="farm-card">
+                <div style="font-size: 2em;">₿</div>
+                <h3>BTC-ETH LP</h3>
+                <div class="farm-apy" id="farm2Apy">124% APY</div>
+                <div class="farm-liquidity">Liquidity: $3.4M</div>
+                <div>Your stake: 0.45 LP</div>
+                <div>Earned: 0.012 BTC</div>
+                <button class="farm-button" onclick="farm('btc-eth')">Farm Now</button>
+            </div>
+
+            <div class="farm-card">
+                <div style="font-size: 2em;">💎</div>
+                <h3>OMNI-USD LP</h3>
+                <div class="farm-apy" id="farm3Apy">189% APY</div>
+                <div class="farm-liquidity">Liquidity: $1.8M</div>
+                <div>Your stake: 3,450 LP</div>
+                <div>Earned: 234 OMNI</div>
+                <button class="farm-button" onclick="farm('omni-usd')">Farm Now</button>
+            </div>
+
+            <div class="farm-card">
+                <div class="farm-badge">HOT</div>
+                <div style="font-size: 2em;">🦄</div>
+                <h3>UNI-V2 LP</h3>
+                <div class="farm-apy" id="farm4Apy">312% APY</div>
+                <div class="farm-liquidity">Liquidity: $1.1M</div>
+                <div>Your stake: 890 LP</div>
+                <div>Earned: 156 UNI</div>
+                <button class="farm-button" onclick="farm('uni-v2')">Farm Now</button>
+            </div>
+        </div>
+
+        <!-- DAO Governance -->
+        <div class="dao-section">
+            <h2>🤝 DAO Governance</h2>
+            <p>You have 1,420 veOMNI • Voting Power: 2.5%</p>
+            
+            <div class="proposal-grid">
+                <div class="proposal-card">
+                    <span class="proposal-status status-active">ACTIVE</span>
+                    <h3>Proposal #42: Increase Alliance Bonus</h3>
+                    <p>Raise alliance war bonus from 5% to 7.5%</p>
+                    <div class="vote-buttons">
+                        <button class="vote-for" onclick="vote(42, 'for')">For 124k</button>
+                        <button class="vote-against" onclick="vote(42, 'against')">Against 89k</button>
+                    </div>
+                    <div class="vote-results">
+                        <span>✅ 58% For</span>
+                        <span>❌ 42% Against</span>
+                        <span>⏳ 2d left</span>
+                    </div>
+                </div>
+
+                <div class="proposal-card">
+                    <span class="proposal-status status-active">ACTIVE</span>
+                    <h3>Proposal #43: New Mystery Box Series</h3>
+                    <p>Add Summer 2026 limited edition boxes</p>
+                    <div class="vote-buttons">
+                        <button class="vote-for" onclick="vote(43, 'for')">For 234k</button>
+                        <button class="vote-against" onclick="vote(43, 'against')">Against 145k</button>
+                    </div>
+                    <div class="vote-results">
+                        <span>✅ 62% For</span>
+                        <span>❌ 38% Against</span>
+                        <span>⏳ 3d left</span>
+                    </div>
+                </div>
+
+                <div class="proposal-card">
+                    <span class="proposal-status status-passed">PASSED</span>
+                    <h3>Proposal #41: Reduce Staking Fees</h3>
+                    <p>Lower withdrawal fee from 1% to 0.5%</p>
+                    <div class="vote-results">
+                        <span>✅ 89% For</span>
+                        <span>❌ 11% Against</span>
+                        <span>✅ Executed</span>
+                    </div>
+                </div>
+
+                <div class="proposal-card">
+                    <span class="proposal-status status-rejected">REJECTED</span>
+                    <h3>Proposal #40: Increase Guild Cap</h3>
+                    <p>Raise max guild members from 50 to 75</p>
+                    <div class="vote-results">
+                        <span>✅ 45% For</span>
+                        <span>❌ 55% Against</span>
+                        <span>❌ Rejected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mystery Box Trading - Secondary Market -->
+        <div class="dao-section">
+            <h2>📦 Mystery Box Trading</h2>
+            <div class="trading-grid">
+                <div class="listing-card">
+                    <div style="font-size: 2em;">🎃</div>
+                    <h3>Halloween 2026 Box</h3>
+                    <div class="listing-price">1,800 🪙</div>
+                    <div class="listing-seller">
+                        <span class="member-avatar-small">CW</span>
+                        <div>
+                            <div>CryptoWizard</div>
+                            <div style="font-size: 0.8em;">⭐ 4.9 (45 sales)</div>
+                        </div>
+                    </div>
+                    <button class="buy-now" onclick="buyBox(1)">Buy Now</button>
+                    <button class="make-offer" onclick="makeOffer(1)">Make Offer</button>
+                </div>
+
+                <div class="listing-card">
+                    <div style="font-size: 2em;">🎄</div>
+                    <h3>Christmas 2026 Box</h3>
+                    <div class="listing-price">2,200 🪙</div>
+                    <div class="listing-seller">
+                        <span class="member-avatar-small">BK</span>
+                        <div>
+                            <div>BootloaderKing</div>
+                            <div style="font-size: 0.8em;">⭐ 4.8 (32 sales)</div>
+                        </div>
+                    </div>
+                    <button class="buy-now" onclick="buyBox(2)">Buy Now</button>
+                    <button class="make-offer" onclick="makeOffer(2)">Make Offer</button>
+                </div>
+
+                <div class="listing-card">
+                    <div style="font-size: 2em;">🎂</div>
+                    <h3>Anniversary Box</h3>
+                    <div class="listing-price">4,500 🪙</div>
+                    <div class="listing-seller">
+                        <span class="member-avatar-small">ZM</span>
+                        <div>
+                            <div>ZigMaster</div>
+                            <div style="font-size: 0.8em;">⭐ 5.0 (12 sales)</div>
+                        </div>
+                    </div>
+                    <button class="buy-now" onclick="buyBox(3)">Buy Now</button>
+                    <button class="make-offer" onclick="makeOffer(3)">Make Offer</button>
+                </div>
+
+                <div class="listing-card">
+                    <div style="font-size: 2em;">🌟</div>
+                    <h3>Genesis Box</h3>
+                    <div class="listing-price">8,500 🪙</div>
+                    <div class="listing-seller">
+                        <span class="member-avatar-small">AM</span>
+                        <div>
+                            <div>AssemblyMaster</div>
+                            <div style="font-size: 0.8em;">⭐ 4.9 (8 sales)</div>
+                        </div>
+                    </div>
+                    <button class="buy-now" onclick="buyBox(4)">Buy Now</button>
+                    <button class="make-offer" onclick="makeOffer(4)">Make Offer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gift Card Auctions -->
+        <div class="dao-section">
+            <h2>🎁 Gift Card Auctions</h2>
+            <div class="auction-grid">
+                <div class="auction-card">
+                    <div class="auction-timer" id="auction1Timer">2h 34m</div>
+                    <div style="font-size: 2em;">💎</div>
+                    <h3>10,000 🪙 Gift Card</h3>
+                    <div class="current-bid">3,200 🪙</div>
+                    <div class="bid-history">
+                        <div>🟢 CryptoWizard: 3,200 🪙</div>
+                        <div>🟡 BootloaderKing: 3,000 🪙</div>
+                        <div>🔵 ZigMaster: 2,800 🪙</div>
+                    </div>
+                    <div class="bid-input">
+                        <input type="number" placeholder="Your bid" id="bid1">
+                        <button onclick="placeBid(1)">Bid</button>
+                    </div>
+                </div>
+
+                <div class="auction-card">
+                    <div class="auction-timer" id="auction2Timer">5h 12m</div>
+                    <div style="font-size: 2em;">🎫</div>
+                    <h3>5,000 🪙 Gift Card</h3>
+                    <div class="current-bid">1,450 🪙</div>
+                    <div class="bid-history">
+                        <div>🟢 RustAce: 1,450 🪙</div>
+                        <div>🟡 GridMaster: 1,400 🪙</div>
+                        <div>🔵 KernelKing: 1,350 🪙</div>
+                    </div>
+                    <div class="bid-input">
+                        <input type="number" placeholder="Your bid" id="bid2">
+                        <button onclick="placeBid(2)">Bid</button>
+                    </div>
+                </div>
+
+                <div class="auction-card">
+                    <div class="auction-timer" id="auction3Timer">1d 3h</div>
+                    <div style="font-size: 2em;">🎟️</div>
+                    <h3>1,000 🪙 Gift Card (x5)</h3>
+                    <div class="current-bid">2,800 🪙</div>
+                    <div class="bid-history">
+                        <div>🟢 AssemblyPro: 2,800 🪙</div>
+                        <div>🟡 CryptoNinja: 2,700 🪙</div>
+                        <div>🔵 ZigZag: 2,600 🪙</div>
+                    </div>
+                    <div class="bid-input">
+                        <input type="number" placeholder="Your bid" id="bid3">
+                        <button onclick="placeBid(3)">Bid</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Android Wear OS -->
+        <div class="android-watch">
+            <div class="wear-frame">
+                <div class="wear-screen">
+                    <div class="wear-time">14:45</div>
+                    <div style="text-align: center; margin-bottom: 15px;">OMNIBUS WEAR</div>
+                    
+                    <div class="wear-grid">
+                        <div class="wear-item">
+                            <div class="wear-value">₿ 52.4k</div>
+                            <div class="wear-label">BTC</div>
+                        </div>
+                        <div class="wear-item">
+                            <div class="wear-value">Ξ 3.2k</div>
+                            <div class="wear-label">ETH</div>
+                        </div>
+                        <div class="wear-item">
+                            <div class="wear-value">245%</div>
+                            <div class="wear-label">TOP APY</div>
+                        </div>
+                        <div class="wear-item">
+                            <div class="wear-value">1,420</div>
+                            <div class="wear-label">OMNI</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; background: rgba(0,255,0,0.1); padding: 10px; border-radius: 5px;">
+                        <div>⚔️ GUILD WAR</div>
+                        <div>BB 2,450 - 1,890 CK</div>
+                    </div>
+
+                    <div style="margin-top: 15px; font-size: 0.7em;">
+                        <div>📊 Farm rewards: +12.4 OMNI</div>
+                        <div>🔔 3 notifications</div>
+                    </div>
+                </div>
+            </div>
+            <div style="padding: 20px;">
+                <h2>📱 Android Wear OS</h2>
+                <ul style="margin-top: 20px; list-style: none;">
+                    <li style="margin: 15px 0;">⌚ Real-time crypto prices</li>
+                    <li style="margin: 15px 0;">⌚ Guild war notifications</li>
+                    <li style="margin: 15px 0;">⌚ Farm rewards tracking</li>
+                    <li style="margin: 15px 0;">⌚ Voice commands</li>
+                    <li style="margin: 15px 0;">⌚ Google Fit integration</li>
+                    <li style="margin: 15px 0;">⌚ Offline mode</li>
+                </ul>
+                <button class="bank-button" style="margin-top: 20px;" onclick="downloadWearApp()">Download for Wear OS</button>
+            </div>
+        </div>
+
+        <!-- Cross-chain Bridge -->
+        <div class="bridge-section">
+            <h2>🌐 Cross-chain Bridge</h2>
+            <div class="bridge-grid">
+                <div class="chain-card" onclick="selectChain('ethereum')">
+                    <div class="chain-icon">Ξ</div>
+                    <h3>Ethereum</h3>
+                    <div class="bridge-status">● Connected</div>
+                    <div>Gas: 24 Gwei</div>
+                </div>
+
+                <div class="chain-card" onclick="selectChain('bsc')">
+                    <div class="chain-icon">🟡</div>
+                    <h3>BNB Chain</h3>
+                    <div class="bridge-status">● Connected</div>
+                    <div>Gas: 5 Gwei</div>
+                </div>
+
+                <div class="chain-card" onclick="selectChain('polygon')">
+                    <div class="chain-icon">🟣</div>
+                    <h3>Polygon</h3>
+                    <div class="bridge-status">● Connected</div>
+                    <div>Gas: 50 Gwei</div>
+                </div>
+
+                <div class="chain-card" onclick="selectChain('arbitrum')">
+                    <div class="chain-icon">🔵</div>
+                    <h3>Arbitrum</h3>
+                    <div class="bridge-status">● Connected</div>
+                    <div>Gas: 0.1 Gwei</div>
+                </div>
+
+                <div class="chain-card" onclick="selectChain('optimism')">
+                    <div class="chain-icon">🔴</div>
+                    <h3>Optimism</h3>
+                    <div class="bridge-status">● Connected</div>
+                    <div>Gas: 0.5 Gwei</div>
+                </div>
+
+                <div class="chain-card" onclick="selectChain('avalanche')">
+                    <div class="chain-icon">❄️</div>
+                    <h3>Avalanche</h3>
+                    <div class="bridge-status">● Connected</div>
+                    <div>Gas: 25 Gwei</div>
+                </div>
+            </div>
+
+            <div class="bridge-form">
+                <h3>Bridge Assets</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label>From Chain</label>
+                        <select class="bridge-input" id="fromChain">
+                            <option>Ethereum</option>
+                            <option>BNB Chain</option>
+                            <option>Polygon</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>To Chain</label>
+                        <select class="bridge-input" id="toChain">
+                            <option>Arbitrum</option>
+                            <option>Optimism</option>
+                            <option>Avalanche</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Asset</label>
+                    <select class="bridge-input" id="asset">
+                        <option>ETH (Ethereum)</option>
+                        <option>OMNI (OmniBus)</option>
+                        <option>USDC (Circle)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Amount</label>
+                    <input type="number" class="bridge-input" id="amount" placeholder="0.0" value="1.0">
+                </div>
+
+                <div class="fee-estimate">
+                    Estimated Fee: 0.003 ETH • Time: ~5 minutes
+                </div>
+
+                <button class="bridge-button" onclick="bridgeAssets()">Bridge Assets</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== YIELD FARMING ====================
+        const farms = {
+            'omni-eth': { apy: 245, tvl: 2100000, user: 1245, earned: 89 },
+            'btc-eth': { apy: 124, tvl: 3400000, user: 0.45, earned: 0.012 },
+            'omni-usd': { apy: 189, tvl: 1800000, user: 3450, earned: 234 },
+            'uni-v2': { apy: 312, tvl: 1100000, user: 890, earned: 156 }
+        };
+
+        function farm(pool) {
+            const farmData = farms[pool];
+            const amount = prompt(`Cât vrei să depui în pool-ul ${pool}? (Ai ${farmData.user} disponibil)`);
+            
+            if (amount && parseFloat(amount) <= farmData.user) {
+                alert(`✅ Ai depus ${amount} în pool-ul ${pool} la ${farmData.apy}% APY!`);
+                
+                // Update APY (simulate fluctuation)
+                const newApy = farmData.apy * (1 + (Math.random() * 0.1 - 0.05));
+                document.getElementById(`farm${Object.keys(farms).indexOf(pool) + 1}Apy`).textContent = 
+                    newApy.toFixed(0) + '% APY';
+            }
+        }
+
+        // ==================== DAO GOVERNANCE ====================
+        function vote(proposalId, direction) {
+            alert(`✅ Vot înregistrat: ${direction.toUpperCase()} pentru Proposal #${proposalId}`);
+            
+            // Update vote counts
+            const proposalCard = event.target.closest('.proposal-card');
+            const results = proposalCard.querySelector('.vote-results');
+            if (results) {
+                const forText = results.children[0];
+                const currentFor = parseInt(forText.textContent.match(/\d+/)[0]);
+                const newFor = direction === 'for' ? currentFor + 1 : currentFor;
+                forText.innerHTML = `✅ ${newFor}k For`;
+            }
+        }
+
+        // ==================== MYSTERY BOX TRADING ====================
+        function buyBox(boxId) {
+            alert(`✅ Ai cumpărat Mystery Box #${boxId}! Verifică inventory.`);
+        }
+
+        function makeOffer(boxId) {
+            const offer = prompt('Ce sumă oferi?');
+            if (offer) {
+                alert(`📤 Ofertă de ${offer} 🪙 trimisă pentru Box #${boxId}`);
+            }
+        }
+
+        // ==================== GIFT CARD AUCTIONS ====================
+        function placeBid(auctionId) {
+            const bidInput = document.getElementById(`bid${auctionId}`);
+            const bidAmount = bidInput.value;
+            
+            if (bidAmount && parseFloat(bidAmount) > 0) {
+                alert(`💰 Ai plasat un bid de ${bidAmount} 🪙 pentru auction #${auctionId}`);
+                
+                // Update bid history
+                const auctionCard = event.target.closest('.auction-card');
+                const bidHistory = auctionCard.querySelector('.bid-history');
+                const currentBid = auctionCard.querySelector('.current-bid');
+                
+                if (bidHistory && currentBid) {
+                    const newBid = document.createElement('div');
+                    newBid.innerHTML = `🟢 You: ${bidAmount} 🪙`;
+                    bidHistory.insertBefore(newBid, bidHistory.firstChild);
+                    currentBid.textContent = `${bidAmount} 🪙`;
+                }
+                
+                bidInput.value = '';
+            }
+        }
+
+        // ==================== ANDROID WEAR OS ====================
+        function downloadWearApp() {
+            alert('📱 OmniBus Wear app available on Google Play Store!');
+        }
+
+        // ==================== CROSS-CHAIN BRIDGE ====================
+        function selectChain(chain) {
+            console.log(`Selected chain: ${chain}`);
+        }
+
+        function bridgeAssets() {
+            const fromChain = document.getElementById('fromChain').value;
+            const toChain = document.getElementById('toChain').value;
+            const asset = document.getElementById('asset').value;
+            const amount = document.getElementById('amount').value;
+            
+            alert(`🌉 Bridging ${amount} ${asset} from ${fromChain} to ${toChain}...`);
+            
+            setTimeout(() => {
+                alert('✅ Bridge completed! Assets received on destination chain.');
+            }, 3000);
+        }
+
+        // ==================== TIMERS ====================
+        function updateAuctionTimers() {
+            // Update auction timers
+            const timers = ['auction1Timer', 'auction2Timer', 'auction3Timer'];
+            timers.forEach(timerId => {
+                const timer = document.getElementById(timerId);
+                if (timer) {
+                    const current = timer.textContent;
+                    if (current.includes('h')) {
+                        const hours = parseInt(current);
+                        const minutes = parseInt(current.split('h')[1]) || 0;
+                        if (minutes > 0) {
+                            timer.textContent = `${hours}h ${minutes - 1}m`;
+                        } else if (hours > 0) {
+                            timer.textContent = `${hours - 1}h 59m`;
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== TVL UPDATES ====================
+        function updateTVL() {
+            const tvlElement = document.getElementById('tvl');
+            const currentTVL = parseFloat(tvlElement.textContent.replace('$', '').replace('M', ''));
+            const change = (Math.random() * 0.2 - 0.1) * currentTVL;
+            const newTVL = currentTVL + change;
+            tvlElement.textContent = '$' + newTVL.toFixed(1) + 'M';
+        }
+
+        // ==================== INITIALIZATION ====================
+        window.onload = function() {
+            // Start timers
+            setInterval(updateAuctionTimers, 60000);
+            
+            // Update TVL every 30 seconds
+            setInterval(updateTVL, 30000);
+            
+            // Simulate APY fluctuations
+            setInterval(() => {
+                const farmApys = ['farm1Apy', 'farm2Apy', 'farm3Apy', 'farm4Apy'];
+                farmApys.forEach(farmId => {
+                    const element = document.getElementById(farmId);
+                    if (element) {
+                        const currentApy = parseInt(element.textContent);
+                        const change = Math.floor(Math.random() * 10 - 5);
+                        element.textContent = (currentApy + change) + '% APY';
+                    }
+                });
+            }, 45000);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌐 SFERA OMNIBUS - Sistem Virtual Multi-Strat cu 4 OS-uri</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', 'JetBrains Mono', monospace;
+        }
+
+        :root {
+            --bg-deep: #0a0c14;
+            --bg-card: #121620;
+            --bg-panel: #1a1f2a;
+            --bg-terminal: #1e2430;
+            --bg-success: #00a86b;
+            --bg-warning: #f0b400;
+            --bg-danger: #dc3545;
+            --bg-info: #17a2b8;
+            --bg-purple: #6f42c1;
+            --bg-pink: #d63384;
+            --bg-gold: #ffd700;
+            --text-primary: #e9f1ff;
+            --text-secondary: #8b9bb5;
+            --text-muted: #5f6c80;
+            --border: #2a3442;
+            --accent-cyan: #00ffff;
+            --accent-green: #00ff88;
+            --accent-purple: #aa80ff;
+            --accent-pink: #ff66b2;
+            --accent-orange: #ffaa66;
+            --accent-gold: #ffd700;
+            --gradient-1: linear-gradient(135deg, #00ffff, #aa80ff);
+            --gradient-2: linear-gradient(135deg, #00ff88, #00ffff);
+            --gradient-3: linear-gradient(135deg, #ff66b2, #aa80ff);
+            --gradient-4: linear-gradient(135deg, #ffd700, #ffaa66);
+            --gradient-zero: linear-gradient(135deg, #000000, #333333);
+            --gradient-infini: linear-gradient(135deg, #00ff88, #00ffff);
+            --gradient-exis: linear-gradient(135deg, #ff66b2, #aa80ff);
+            --gradient-stabi: linear-gradient(135deg, #ffd700, #ffaa66);
+            --shadow: 0 8px 32px rgba(0, 255, 255, 0.15);
+            --glow: 0 0 20px rgba(0, 255, 255, 0.3);
+            --glow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
+            --glow-purple: 0 0 20px rgba(170, 128, 255, 0.3);
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-card); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-green); }
+
+        /* Layout principal */
+        .sfera {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 25px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            box-shadow: var(--glow);
+            animation: pulse 3s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .logo-text h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 0.7em;
+        }
+
+        .sfera-stats {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 15px;
+        }
+
+        .menu-category {
+            margin-bottom: 25px;
+        }
+
+        .menu-category-title {
+            padding: 10px 15px;
+            color: var(--text-secondary);
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin: 2px 0;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 255, 255, 0.05);
+            color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--accent-cyan);
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .menu-item i { width: 24px; }
+
+        .badge {
+            margin-left: auto;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Topbar */
+        .topbar {
+            height: 70px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            gap: 20px;
+        }
+
+        .page-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sphere-indicator {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sphere-layer {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sphere-layer.zero { background: #333; color: white; border: 2px solid #666; }
+        .sphere-layer.infini { background: linear-gradient(135deg, #00ff88, #00ffff); color: black; }
+        .sphere-layer.exis { background: linear-gradient(135deg, #ff66b2, #aa80ff); color: white; }
+        .sphere-layer.stabi { background: linear-gradient(135deg, #ffd700, #ffaa66); color: black; }
+        .sphere-layer.core { background: var(--gradient-1); color: white; }
+
+        .sphere-layer:hover {
+            transform: scale(1.2);
+            box-shadow: var(--glow);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+        }
+
+        /* Sfera Vizualizare */
+        .sphere-visualization {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: radial-gradient(circle at 30% 30%, rgba(0,255,255,0.1), transparent 70%);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .sphere-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sphere-core {
+            width: 120px;
+            height: 120px;
+            background: var(--gradient-1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            box-shadow: var(--glow);
+            z-index: 5;
+            animation: pulse 3s infinite;
+            position: relative;
+        }
+
+        .sphere-layer-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px dashed;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .layer-zero {
+            width: 180px;
+            height: 180px;
+            border-color: #666;
+            animation: rotate 30s linear infinite;
+        }
+
+        .layer-infini {
+            width: 240px;
+            height: 240px;
+            border-color: #00ff88;
+            animation: rotate 25s linear infinite reverse;
+        }
+
+        .layer-exis {
+            width: 300px;
+            height: 300px;
+            border-color: #ff66b2;
+            animation: rotate 20s linear infinite;
+        }
+
+        .layer-stabi {
+            width: 360px;
+            height: 360px;
+            border-color: #ffd700;
+            animation: rotate 15s linear infinite reverse;
+        }
+
+        .layer-label {
+            position: absolute;
+            font-size: 0.8em;
+            background: var(--bg-panel);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid;
+        }
+
+        .label-zero { top: 20px; right: 20px; border-color: #666; color: #999; }
+        .label-infini { top: 60px; left: 20px; border-color: #00ff88; color: #00ff88; }
+        .label-exis { bottom: 40px; right: 30px; border-color: #ff66b2; color: #ff66b2; }
+        .label-stabi { bottom: 20px; left: 40px; border-color: #ffd700; color: #ffd700; }
+
+        /* OS Cards */
+        .os-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .os-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .os-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .os-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .os-card.zero::before { background: linear-gradient(90deg, #333, #666); }
+        .os-card.infini::before { background: linear-gradient(90deg, #00ff88, #00ffff); }
+        .os-card.exis::before { background: linear-gradient(90deg, #ff66b2, #aa80ff); }
+        .os-card.stabi::before { background: linear-gradient(90deg, #ffd700, #ffaa66); }
+
+        .os-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .os-card.zero:hover { border-color: #666; }
+        .os-card.infini:hover { border-color: #00ff88; }
+        .os-card.exis:hover { border-color: #ff66b2; }
+        .os-card.stabi:hover { border-color: #ffd700; }
+
+        .os-symbol {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .os-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .os-role {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+            margin-bottom: 15px;
+        }
+
+        .os-stats {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: var(--bg-panel);
+            border-radius: 8px;
+            font-size: 0.8em;
+        }
+
+        /* Module Grid */
+        .modules-section {
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 1.2em;
+            border-left: 4px solid var(--accent-cyan);
+            padding-left: 15px;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+        }
+
+        .module-item {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .module-item:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-3px);
+            box-shadow: var(--glow);
+        }
+
+        .module-id {
+            font-size: 0.7em;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .module-name {
+            font-weight: 600;
+            font-size: 0.8em;
+        }
+
+        /* Protocol Timeline */
+        .protocol-timeline {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .timeline-steps {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .timeline-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-symbol {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            margin: 0 auto 10px;
+            background: var(--bg-panel);
+            border: 2px solid;
+        }
+
+        .step-zero .step-symbol { border-color: #666; color: #999; }
+        .step-infini .step-symbol { border-color: #00ff88; color: #00ff88; }
+        .step-exis .step-symbol { border-color: #ff66b2; color: #ff66b2; }
+        .step-stabi .step-symbol { border-color: #ffd700; color: #ffd700; }
+        .step-core .step-symbol { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+        .step-label {
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .step-desc {
+            font-size: 0.7em;
+            color: var(--text-muted);
+        }
+
+        .timeline-connector {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: var(--border);
+            z-index: -1;
+        }
+
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .stat-card-title {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+
+        .stat-card-value {
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .stat-card-unit {
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
+
+        /* Terminal */
+        .terminal {
+            background: var(--bg-terminal);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-line {
+            padding: 3px 0;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .terminal-line.success { color: var(--accent-green); }
+        .terminal-line.error { color: var(--bg-danger); }
+        .terminal-line.warning { color: var(--bg-warning); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="sfera">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🌐</div>
+                    <div class="logo-text">
+                        <h1>SFERA OMNIBUS</h1>
+                        <p>Sistem Virtual Multi-Strat</p>
+                    </div>
+                </div>
+                
+                <div class="sfera-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">4</div>
+                        <div class="stat-label">OS-URI</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">24</div>
+                        <div class="stat-label">MODULE</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">∞</div>
+                        <div class="stat-label">STABIL</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-category">
+                    <div class="menu-category-title">SFERA</div>
+                    <div class="menu-item active" onclick="loadSection('sfera')">
+                        <i>🌐</i> Vizualizare Sferă
+                    </div>
+                    <div class="menu-item" onclick="loadSection('protocol')">
+                        <i>🔷</i> Protocol HAP
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">STRATURI OS</div>
+                    <div class="menu-item" onclick="loadSection('zero-os')">
+                        <i>⚫</i> Zero-OS (Øos)
+                    </div>
+                    <div class="menu-item" onclick="loadSection('infini-os')">
+                        <i>⚡</i> Infini-OS (∞)
+                    </div>
+                    <div class="menu-item" onclick="loadSection('exis-os')">
+                        <i>🔑</i> Exis-OS (∃!)
+                    </div>
+                    <div class="menu-item" onclick="loadSection('stabi-os')">
+                        <i>🧱</i> Stabi-OS (≅)
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">NUCLEU</div>
+                    <div class="menu-item" onclick="loadSection('omnibus-core')">
+                        <i>💎</i> OmniBus Core (24 module)
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <div class="menu-category-title">STATISTICI</div>
+                    <div class="menu-item" onclick="loadSection('stats')">
+                        <i>📊</i> Metrici Sistem
+                    </div>
+                    <div class="menu-item" onclick="loadSection('terminal')">
+                        <i>📟</i> Terminal
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="page-title" id="pageTitle">🌐 SFERA OMNIBUS - Sistem Activ</div>
+                
+                <div class="sphere-indicator">
+                    <div class="sphere-layer zero" title="Zero-OS (Ø)" onclick="loadSection('zero-os')">Ø</div>
+                    <div class="sphere-layer infini" title="Infini-OS (∞)" onclick="loadSection('infini-os')">∞</div>
+                    <div class="sphere-layer exis" title="Exis-OS (∃!)" onclick="loadSection('exis-os')">∃!</div>
+                    <div class="sphere-layer stabi" title="Stabi-OS (≅)" onclick="loadSection('stabi-os')">≅</div>
+                    <div class="sphere-layer core" title="OmniBus Core" onclick="loadSection('omnibus-core')">⚡</div>
+                </div>
+                
+                <div class="topbar-actions">
+                    <button class="btn-icon" onclick="runSimulation()">▶️</button>
+                    <button class="btn-icon" onclick="stopSimulation()">⏸️</button>
+                    <button class="btn-icon" onclick="resetSystem()">🔄</button>
+                </div>
+            </div>
+            
+            <!-- Workspace -->
+            <div class="workspace" id="workspace">
+                <!-- Conținut dinamic -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // DATELE SISTEMULUI
+        // ============================================================
+        
+        const osLayers = {
+            zero: {
+                name: "Zero-OS",
+                symbol: "Ø",
+                fullName: "Øos (Zero Operating System)",
+                role: "Filtrare Totală • Vid Protector",
+                desc: "Primul strat de apărare. Orice atac sau date inutile sunt reduse la zero înainte să intre în sistem. Acționează ca o membrană transparentă cu latență zero.",
+                color: "#666",
+                gradient: "linear-gradient(135deg, #000000, #333333)",
+                stats: { filtration: "99.99%", latency: "0ns", security: "MAXIM" }
+            },
+            infini: {
+                name: "Infini-OS",
+                symbol: "∞",
+                fullName: "Infini-OS (∞)",
+                role: "Resurse Nelimitate • Expansiune",
+                desc: "Al doilea strat. Gestionează puterea de calcul și memoria, asigurând expansiunea infinită a datelor. Transformă orice limitare în potențial nelimitat.",
+                color: "#00ff88",
+                gradient: "linear-gradient(135deg, #00ff88, #00ffff)",
+                stats: { compute: "∞", memory: "∞", throughput: "∞" }
+            },
+            exis: {
+                name: "Exis-OS",
+                symbol: "∃!",
+                fullName: "Exis-OS (∃!)",
+                role: "Identitate • Existență Unică",
+                desc: "Al treilea strat. Verifică dacă utilizatorul și comanda sunt autentice. 'Doar unul are acces' - asigură unicitatea identității în sistem.",
+                color: "#ff66b2",
+                gradient: "linear-gradient(135deg, #ff66b2, #aa80ff)",
+                stats: { uniqueness: "100%", auth: "multi-factor", sessions: "1" }
+            },
+            stabi: {
+                name: "Stabi-OS",
+                symbol: "≅",
+                fullName: "Stabi-OS (≅)",
+                role: "Sincronizare • Stabilitate",
+                desc: "Al patrulea strat. Menține cele 24 de module OmniBus în echilibru perfect. Asigură că output-ul este mereu congruent cu design-ul original.",
+                color: "#ffd700",
+                gradient: "linear-gradient(135deg, #ffd700, #ffaa66)",
+                stats: { stability: "99.999%", sync: "perfect", drift: "0%" }
+            }
+        };
+        
+        const modules = [
+            { id: "M1", name: "boot.asm", ring: 0, status: "active" },
+            { id: "M2", name: "stage2.asm", ring: 0, status: "active" },
+            { id: "M3", name: "mother_os.adb", ring: 0, status: "active" },
+            { id: "M4", name: "pqc_vault.ads", ring: 0, status: "active" },
+            { id: "M5", name: "governance.adb", ring: 0, status: "active" },
+            { id: "M6", name: "arbiter.adb", ring: 0, status: "active" },
+            { id: "M7", name: "legacy.adb", ring: 0, status: "active" },
+            { id: "M8", name: "grid_os.zig", ring: 1, status: "active" },
+            { id: "M9", name: "analytic_os.zig", ring: 1, status: "active" },
+            { id: "M10", name: "neuro_os.zig", ring: 1, status: "active" },
+            { id: "M11", name: "consensus.zig", ring: 1, status: "active" },
+            { id: "M12", name: "nic_driver.c", ring: 0, status: "active" },
+            { id: "M13", name: "uart_driver.asm", ring: 0, status: "active" },
+            { id: "M14", name: "crypto_sign.c", ring: 0, status: "active" },
+            { id: "M15", name: "exchange_router.zig", ring: 2, status: "active" },
+            { id: "M16", name: "stealth_ghost.zig", ring: 2, status: "active" },
+            { id: "M17", name: "egld_sync.zig", ring: 2, status: "active" },
+            { id: "M18", name: "private_strategy.zig", ring: 2, status: "active" },
+            { id: "M21", name: "k8s_deploy.yaml", ring: 3, status: "active" },
+            { id: "M22", name: "sel4_glue.c", ring: 3, status: "active" },
+            { id: "M23", name: "omnibus_sup.erl", ring: 3, status: "active" },
+            { id: "M24", name: "netcool.zig", ring: 2, status: "active" },
+            { id: "M-1", name: "mathos.omnibus", ring: "META", status: "active" }
+        ];
+        
+        // ============================================================
+        // GENERARE CONȚINUT DINAMIC
+        // ============================================================
+        
+        function loadSection(section) {
+            const container = document.getElementById('workspace');
+            const pageTitle = document.getElementById('pageTitle');
+            
+            switch(section) {
+                case 'sfera':
+                    pageTitle.innerText = '🌐 SFERA OMNIBUS - Vizualizare 3D';
+                    container.innerHTML = generateSferaPage();
+                    break;
+                case 'protocol':
+                    pageTitle.innerText = '🔷 PROTOCOL HOLOGENETIC (HAP)';
+                    container.innerHTML = generateProtocolPage();
+                    break;
+                case 'zero-os':
+                case 'infini-os':
+                case 'exis-os':
+                case 'stabi-os':
+                    pageTitle.innerText = `${osLayers[section.split('-')[0]].symbol} ${osLayers[section.split('-')[0]].fullName}`;
+                    container.innerHTML = generateOSPage(section.split('-')[0]);
+                    break;
+                case 'omnibus-core':
+                    pageTitle.innerText = '💎 OmniBus Core - 24 Module Active';
+                    container.innerHTML = generateCorePage();
+                    break;
+                case 'stats':
+                    pageTitle.innerText = '📊 Metrici Sistem Sferă OmniBus';
+                    container.innerHTML = generateStatsPage();
+                    break;
+                case 'terminal':
+                    pageTitle.innerText = '📟 Terminal Sferă OmniBus';
+                    container.innerHTML = generateTerminalPage();
+                    break;
+                default:
+                    pageTitle.innerText = '🌐 SFERA OMNIBUS - Sistem Activ';
+                    container.innerHTML = generateSferaPage();
+            }
+        }
+        
+        function generateSferaPage() {
+            return `
+                <!-- Vizualizare Sferă -->
+                <div class="sphere-visualization">
+                    <div class="sphere-container">
+                        <div class="sphere-core">⚡</div>
+                        <div class="sphere-layer-ring layer-zero"></div>
+                        <div class="sphere-layer-ring layer-infini"></div>
+                        <div class="sphere-layer-ring layer-exis"></div>
+                        <div class="sphere-layer-ring layer-stabi"></div>
+                        
+                        <div class="layer-label label-zero">Øos</div>
+                        <div class="layer-label label-infini">∞</div>
+                        <div class="layer-label label-exis">∃!</div>
+                        <div class="layer-label label-stabi">≅</div>
+                    </div>
+                </div>
+                
+                <!-- OS Cards -->
+                <div class="os-grid">
+                    <div class="os-card zero" onclick="loadSection('zero-os')">
+                        <div class="os-symbol">⚫</div>
+                        <div class="os-name">Zero-OS</div>
+                        <div class="os-role">${osLayers.zero.role}</div>
+                        <div class="os-stats">
+                            <span>Filtrare: ${osLayers.zero.stats.filtration}</span>
+                            <span>Latență: ${osLayers.zero.stats.latency}</span>
+                        </div>
+                    </div>
+                    <div class="os-card infini" onclick="loadSection('infini-os')">
+                        <div class="os-symbol">⚡</div>
+                        <div class="os-name">Infini-OS</div>
+                        <div class="os-role">${osLayers.infini.role}</div>
+                        <div class="os-stats">
+                            <span>Compute: ${osLayers.infini.stats.compute}</span>
+                            <span>Memorie: ${osLayers.infini.stats.memory}</span>
+                        </div>
+                    </div>
+                    <div class="os-card exis" onclick="loadSection('exis-os')">
+                        <div class="os-symbol">🔑</div>
+                        <div class="os-name">Exis-OS</div>
+                        <div class="os-role">${osLayers.exis.role}</div>
+                        <div class="os-stats">
+                            <span>Unicitate: ${osLayers.exis.stats.uniqueness}</span>
+                            <span>Auth: ${osLayers.exis.stats.auth}</span>
+                        </div>
+                    </div>
+                    <div class="os-card stabi" onclick="loadSection('stabi-os')">
+                        <div class="os-symbol">🧱</div>
+                        <div class="os-name">Stabi-OS</div>
+                        <div class="os-role">${osLayers.stabi.role}</div>
+                        <div class="os-stats">
+                            <span>Stabilitate: ${osLayers.stabi.stats.stability}</span>
+                            <span>Sync: ${osLayers.stabi.stats.sync}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Protocol Timeline -->
+                <div class="protocol-timeline">
+                    <div class="section-header">
+                        <h2>🔷 Protocol Hologenetic (HAP)</h2>
+                    </div>
+                    
+                    <div class="timeline-steps">
+                        <div class="timeline-step step-zero">
+                            <div class="step-symbol">∅</div>
+                            <div class="step-label">Mulțimea Vidă</div>
+                            <div class="step-desc">Originea</div>
+                        </div>
+                        <div class="timeline-step step-infini">
+                            <div class="step-symbol">∞</div>
+                            <div class="step-label">Infinitul</div>
+                            <div class="step-desc">Expansiunea</div>
+                        </div>
+                        <div class="timeline-step step-exis">
+                            <div class="step-symbol">∃!</div>
+                            <div class="step-label">WE ARE HERE</div>
+                            <div class="step-desc">Activarea</div>
+                        </div>
+                        <div class="timeline-step step-stabi">
+                            <div class="step-symbol">≅</div>
+                            <div class="step-label">WE ARE STABLE</div>
+                            <div class="step-desc">Stabilizarea</div>
+                        </div>
+                        <div class="timeline-step step-core">
+                            <div class="step-symbol">⚡</div>
+                            <div class="step-label">OmniBus</div>
+                            <div class="step-desc">Sfera Activă</div>
+                        </div>
+                        <div class="timeline-connector"></div>
+                    </div>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-title">Strat Zero (Øos)</div>
+                        <div class="stat-card-value">99.99%</div>
+                        <div class="stat-card-unit">filtrare</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Strat Infini (∞)</div>
+                        <div class="stat-card-value">∞</div>
+                        <div class="stat-card-unit">resurse</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Strat Exis (∃!)</div>
+                        <div class="stat-card-value">100%</div>
+                        <div class="stat-card-unit">unicitate</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function generateOSPage(osKey) {
+            const os = osLayers[osKey];
+            return `
+                <!-- OS Details -->
+                <div class="protocol-timeline" style="text-align: center;">
+                    <div style="font-size: 5em; margin-bottom: 20px; color: ${os.color};">${os.symbol}</div>
+                    <h2 style="font-size: 2em; margin-bottom: 10px;">${os.fullName}</h2>
+                    <p style="color: var(--text-secondary); font-size: 1.1em; max-width: 600px; margin: 0 auto 20px;">${os.role}</p>
+                </div>
+                
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-title">Descriere</div>
+                        <div style="padding: 15px; line-height: 1.6;">${os.desc}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Statistici Operaționale</div>
+                        <div style="padding: 15px;">
+                            ${Object.entries(os.stats).map(([key, value]) => `
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span>${key}:</span>
+                                    <span style="color: ${os.color};">${value}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Poziție în Sferă</div>
+                        <div style="padding: 15px;">
+                            <div>Strat: ${osKey === 'zero' ? '1 (Exterior)' : osKey === 'infini' ? '2' : osKey === 'exis' ? '3' : '4 (Interior)'}</div>
+                            <div>Protecție: ${['Filtrare', 'Expansiune', 'Identitate', 'Stabilitate'][['zero','infini','exis','stabi'].indexOf(osKey)]}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Terminal Preview -->
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <span>📟 ${os.fullName} - Log Sistem</span>
+                        <span class="badge">ACTIV</span>
+                    </div>
+                    <div class="terminal-line success">[12:34:56] ${os.name} inițializat cu succes</div>
+                    <div class="terminal-line">[12:34:57] Strat ${osKey === 'zero' ? '1' : osKey === 'infini' ? '2' : osKey === 'exis' ? '3' : '4'} activ</div>
+                    <div class="terminal-line success">[12:34:58] Parametri: ${Object.values(os.stats).join(' • ')}</div>
+                    <div class="terminal-line">[12:34:59] WE ARE ${osKey === 'exis' ? 'HERE' : osKey === 'stabi' ? 'STABLE' : 'PROTECTED'}</div>
+                </div>
+            `;
+        }
+        
+        function generateCorePage() {
+            return `
+                <!-- Stats Cards -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-title">Module Active</div>
+                        <div class="stat-card-value">24</div>
+                        <div class="stat-card-unit">din 24</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Stabilitate</div>
+                        <div class="stat-card-value">99.999%</div>
+                        <div class="stat-card-unit">≅</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Timp Activ</div>
+                        <div class="stat-card-value">∞</div>
+                        <div class="stat-card-unit">WE ARE HERE</div>
+                    </div>
+                </div>
+                
+                <!-- Module Grid -->
+                <div class="modules-section">
+                    <div class="section-header">
+                        <h2>📦 Cele 24 Module OmniBus</h2>
+                        <span class="badge" style="background: rgba(0,255,0,0.1); color: var(--accent-green);">TOATE ACTIVE</span>
+                    </div>
+                    
+                    <div class="modules-grid">
+                        ${modules.map(m => `
+                            <div class="module-item">
+                                <div class="module-id">${m.id}</div>
+                                <div class="module-name">${m.name}</div>
+                                <div style="font-size:0.7em; color: var(--text-muted); margin-top:5px;">RING ${m.ring}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <!-- Protocol Status -->
+                <div class="protocol-timeline">
+                    <div class="section-header">
+                        <h2>🔷 Status Protocol HAP</h2>
+                    </div>
+                    
+                    <div style="display: flex; gap: 20px; justify-content: center; padding: 20px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2em;">∅ → ∞</div>
+                            <div style="color: var(--text-muted);">VID → INFINIT</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2em;">∞ → ∃!</div>
+                            <div style="color: var(--text-muted);">INFINIT → EXISTENȚĂ</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2em;">∃! → ≅</div>
+                            <div style="color: var(--text-muted);">EXISTENȚĂ → STABILITATE</div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; background: var(--bg-panel); border-radius: 10px;">
+                        <span style="font-size: 1.5em; color: var(--accent-cyan);">WE ARE HERE • WE ARE STABLE</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function generateProtocolPage() {
+            return `
+                <div class="protocol-timeline">
+                    <div style="text-align: center; padding: 30px;">
+                        <div style="font-size: 4em; margin-bottom: 20px;">🔷</div>
+                        <h2 style="font-size: 2em;">Protocol Hologenetic de Activare (HAP)</h2>
+                    </div>
+                </div>
+                
+                <div class="timeline-steps" style="flex-direction: column; gap: 20px;">
+                    <div class="timeline-step" style="display: flex; gap: 20px; align-items: center;">
+                        <div class="step-symbol step-zero" style="margin:0;">∅</div>
+                        <div style="flex:1;">
+                            <h3>Mulțimea Vidă (Ø)</h3>
+                            <p style="color: var(--text-secondary);">Originea absolută. Punctul zero din care se naște orice structură. Cardinal 0, submulțime a oricărei mulțimi.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-step" style="display: flex; gap: 20px; align-items: center;">
+                        <div class="step-symbol step-infini" style="margin:0;">∞</div>
+                        <div style="flex:1;">
+                            <h3>Infinitul (∞)</h3>
+                            <p style="color: var(--text-secondary);">Potențialul nelimitat. Expansiunea fără margini. ℵ₀, ℵ₁, și dincolo.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-step" style="display: flex; gap: 20px; align-items: center;">
+                        <div class="step-symbol step-exis" style="margin:0;">∃!</div>
+                        <div style="flex:1;">
+                            <h3>WE ARE HERE</h3>
+                            <p style="color: var(--text-secondary);">Activarea. Existența unică în infinit. Cuantificatorul existenței cu unicitate.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-step" style="display: flex; gap: 20px; align-items: center;">
+                        <div class="step-symbol step-stabi" style="margin:0;">≅</div>
+                        <div style="flex:1;">
+                            <h3>WE ARE STABLE</h3>
+                            <p style="color: var(--text-secondary);">Stabilizarea. Congruența perfectă între design și execuție. Cele 24 module sincronizate.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function generateStatsPage() {
+            return `
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-title">Strat Zero (Øos)</div>
+                        <div class="stat-card-value">99.99%</div>
+                        <div class="stat-card-unit">filtrare</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Strat Infini (∞)</div>
+                        <div class="stat-card-value">∞</div>
+                        <div class="stat-card-unit">resurse</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Strat Exis (∃!)</div>
+                        <div class="stat-card-value">100%</div>
+                        <div class="stat-card-unit">unicitate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Strat Stabi (≅)</div>
+                        <div class="stat-card-value">99.999%</div>
+                        <div class="stat-card-unit">stabilitate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Module Active</div>
+                        <div class="stat-card-value">24</div>
+                        <div class="stat-card-unit">din 24</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Timp Activ</div>
+                        <div class="stat-card-value">∞</div>
+                        <div class="stat-card-unit">WE ARE HERE</div>
+                    </div>
+                </div>
+                
+                <div class="terminal" style="margin-top: 30px;">
+                    <div class="terminal-header">
+                        <span>📊 STATISTICI AGREGATE</span>
+                    </div>
+                    <div class="terminal-line">Securitate totală: 100% (4 straturi active)</div>
+                    <div class="terminal-line">Latență medie: 0ns (Zero-OS)</div>
+                    <div class="terminal-line">Capacitate procesare: ∞ (Infini-OS)</div>
+                    <div class="terminal-line">Identități unice: 1 (Exis-OS)</div>
+                    <div class="terminal-line">Stabilitate: 99.999% (Stabi-OS)</div>
+                    <div class="terminal-line success">Protocol HAP: ACTIV (∅ → ∞ → ∃! → ≅)</div>
+                </div>
+            `;
+        }
+        
+        function generateTerminalPage() {
+            return `
+                <div class="terminal" style="height: 500px;">
+                    <div class="terminal-header">
+                        <span>📟 SFERA OMNIBUS - TERMINAL</span>
+                        <span class="badge">LIVE</span>
+                    </div>
+                    <div class="terminal-line">[12:34:56] Sfera OmniBus inițializată...</div>
+                    <div class="terminal-line success">[12:34:57] Zero-OS (Ø) activ - Filtrare: 99.99%</div>
+                    <div class="terminal-line success">[12:34:58] Infini-OS (∞) activ - Resurse: ∞</div>
+                    <div class="terminal-line success">[12:34:59] Exis-OS (∃!) activ - Unicitate: 100%</div>
+                    <div class="terminal-line success">[12:35:00] Stabi-OS (≅) activ - Stabilitate: 99.999%</div>
+                    <div class="terminal-line">[12:35:01] Încărcare cele 24 module...</div>
+                    <div class="terminal-line success">[12:35:02] Toate modulele active și sincronizate</div>
+                    <div class="terminal-line success">[12:35:03] Protocol HAP: ∅ → ∞ → ∃! → ≅</div>
+                    <div class="terminal-line" style="color: var(--accent-cyan);">[12:35:04] WE ARE HERE</div>
+                    <div class="terminal-line" style="color: var(--accent-gold);">[12:35:05] WE ARE STABLE</div>
+                    <div class="terminal-line">[12:35:06] Sfera OmniBus - OPERAȚIONALĂ</div>
+                    <div class="terminal-line">[12:35:07] Aștept comenzi...</div>
+                </div>
+            `;
+        }
+        
+        // Funcții utilitare
+        function runSimulation() {
+            alert('⚡ Simulare Sferă OmniBus pornită');
+        }
+        
+        function stopSimulation() {
+            alert('⏸️ Simulare oprită');
+        }
+        
+        function resetSystem() {
+            alert('🔄 Sistem resetat la starea inițială');
+        }
+        
+        // Inițializare
+        window.onload = function() {
+            loadSection('sfera');
+        };
+    </script>
+</body>
+</html>
