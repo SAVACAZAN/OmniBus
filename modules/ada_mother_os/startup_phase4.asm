@@ -706,6 +706,12 @@ ada64_stub_event_loop:
     xor rax, rax
     rep stosq
 
+    ; Proof Checker OS .bss @ 0x4C0100, size 0x100 (256 bytes)
+    mov rdi, 0x4C0100
+    mov rcx, 0x100 / 8
+    xor rax, rax
+    rep stosq
+
     mov al, 'B'
     out dx, al
 
@@ -811,6 +817,9 @@ ada64_stub_event_loop:
 
     ; Cross-Validator OS init_plugin @ 0x4B0100 (Ada/seL4 divergence detection)
     call 0x4B0100
+
+    ; Proof Checker OS init_plugin @ 0x4C0100 (T1-T4 security theorems)
+    call 0x4C0100
 
     ; === SUCCESS ===
     mov al, '!'
@@ -1149,6 +1158,13 @@ scheduler_loop:
     jnz .skip_crossval_dispatch
     call 0x4B0200                       ; CrossValidator: run_validator_cycle
 .skip_crossval_dispatch:
+
+    ; Proof Checker OS dispatch: every 524288 cycles (0x7FFFF) — T1-T4 theorem verification
+    mov rax, r11
+    and rax, 0x7FFFF
+    jnz .skip_proof_dispatch
+    call 0x4C0200                       ; ProofChecker: run_proof_check_cycle
+.skip_proof_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000

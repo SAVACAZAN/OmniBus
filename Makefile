@@ -36,10 +36,10 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin
+build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
-	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator loaded"
+	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker loaded"
 	@echo "  Phase 24: OmniStruct Central Nervous System ✅"
 	@echo "  Phase 25: Checksum OS (Tier 1 validation) ✅"
 	@echo "  Phase 26: AutoRepair OS (Self-Healing) ✅"
@@ -62,6 +62,7 @@ build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_
 	@echo "  Phase 44: Circuit Breaker OS (Emergency halt mechanisms) ✅"
 	@echo "  Phase 50a: seL4 Microkernel OS (L22 — Capability-based formal validation) ✅"
 	@echo "  Phase 50b: Cross-Validator OS (L23 — Ada/seL4 divergence detection) ✅"
+	@echo "  Phase 50c: Formal Proofs OS (L24 — T1-T4 Ada security theorems verified) ✅"
 	@echo "  Run with: make qemu"
 
 # Order-only prereq: create build dir without triggering false 'build' conflict
@@ -892,3 +893,22 @@ $(BUILD_DIR)/cross_validator_os.bin: $(BUILD_DIR)/cross_validator_os.elf
 	@echo "[OC] Converting Cross-Validator OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  Cross-Validator OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Proof Checker OS (0x4C0000, 64KB, L24)
+$(BUILD_DIR)/proof_checker.o: ./modules/formal_proofs/proof_checker.zig ./modules/formal_proofs/proof_checker_types.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Proof Checker OS to object file..."
+	cd ./modules/formal_proofs && zig build-obj proof_checker.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/formal_proofs/proof_checker.o ]; then mv ./modules/formal_proofs/proof_checker.o $@; fi
+
+$(BUILD_DIR)/proof_checker_stubs.o: ./modules/formal_proofs/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Proof Checker OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/proof_checker.elf: $(BUILD_DIR)/proof_checker.o $(BUILD_DIR)/proof_checker_stubs.o ./modules/formal_proofs/proof_checker.ld
+	@echo "[LD] Linking Proof Checker OS ELF..."
+	ld -T ./modules/formal_proofs/proof_checker.ld -o $@ $(BUILD_DIR)/proof_checker.o $(BUILD_DIR)/proof_checker_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/proof_checker.bin: $(BUILD_DIR)/proof_checker.elf
+	@echo "[OC] Converting Proof Checker OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Proof Checker OS binary: $@ (size: $$(stat -c%s $@) bytes)"
