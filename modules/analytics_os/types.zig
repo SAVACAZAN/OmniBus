@@ -118,3 +118,35 @@ pub const DmaRingHeader = extern struct {
 pub const MarketMatrix = extern struct {
     cells: [3][32][30]MatrixCell,
 };
+
+// ============================================================================
+// ORDERBOOK TYPES (for MEV protection and spread analysis)
+// ============================================================================
+
+pub const OrderbookLevel = extern struct {
+    price_cents: u64,    // Price × 100
+    size_sats: u64,      // Size × 1e8
+};
+
+pub const OrderbookSlice = extern struct {
+    exchange_id: u8,      // Source: Kraken=0, Coinbase=1, LCX=2
+    pair_id: u16,         // BTC_USD=0, ETH_USD=1, etc.
+    bid_count: u8,        // Number of active bids (0-20)
+    ask_count: u8,        // Number of active asks (0-20)
+    best_bid: u64,        // Top bid price (cents) or 0
+    best_ask: u64,        // Top ask price (cents) or 0
+    spread_bps: u16,      // Spread in basis points (1/10000)
+    update_tsc: u64,      // TSC when orderbook was updated
+    bids: [20]OrderbookLevel,  // Top 20 bids
+    asks: [20]OrderbookLevel,  // Top 20 asks
+};
+
+// Orderbook state for 3 pairs × 3 exchanges
+pub const OrderbookState = extern struct {
+    slices: [3][3]OrderbookSlice,  // 3 pairs × 3 exchanges
+    cycle_count: u64,               // Total cycles processed
+    updates_received: u32,          // Total orderbook updates
+    stale_count: u32,               // Updates older than 5 seconds
+};
+
+pub const ORDERBOOK_BASE: usize = WORKING_BASE + 0x100;  // Offset in Analytics memory

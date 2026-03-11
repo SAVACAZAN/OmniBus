@@ -9,6 +9,7 @@ const market_matrix = @import("market_matrix.zig");
 const consensus = @import("consensus.zig");
 const price_feed = @import("price_feed.zig");
 const exchange_reader = @import("exchange_reader.zig");
+const orderbook = @import("orderbook.zig");
 
 // Module state
 var initialized: bool = false;
@@ -25,6 +26,7 @@ export fn init_plugin() void {
     market_matrix.init();
     consensus.init();
     dma_ring.reset();
+    orderbook.init();
 
     initialized = true;
 
@@ -134,4 +136,55 @@ export fn test_inject_dma_slot(source_id: u16, pair_id: u16, price: u64) void {
     const idx = ring_header.tail & 0xFF;
     slots[idx] = slot;
     ring_header.tail = (ring_header.tail + 1) & 0xFFFFFFFF;
+}
+
+// ============================================================================
+// ORDERBOOK EXPORTS (for MEV protection and spread analysis)
+// ============================================================================
+
+/// Get best bid price for a pair across all exchanges (in cents)
+export fn get_best_bid(pair_id: u16) u64 {
+    return orderbook.getBestBid(pair_id);
+}
+
+/// Get best ask price for a pair across all exchanges (in cents)
+export fn get_best_ask(pair_id: u16) u64 {
+    return orderbook.getBestAsk(pair_id);
+}
+
+/// Get spread between best bid/ask in basis points
+export fn get_spread_bps(pair_id: u16) u16 {
+    return orderbook.getSpread(pair_id);
+}
+
+/// Check if an exchange's orderbook is fresh (within 5 seconds)
+export fn is_orderbook_fresh(pair_id: u16, exchange_id: u8, current_tsc: u64) u8 {
+    return if (orderbook.isFresh(pair_id, exchange_id, current_tsc)) 1 else 0;
+}
+
+/// Get orderbook slice for specific pair/exchange (returns pointer at ORDERBOOK_BASE + offset if valid)
+export fn get_orderbook(pair_id: u16, exchange_id: u8) u64 {
+    if (orderbook.getOrderbookSlice(pair_id, exchange_id)) |slice| {
+        return @intFromPtr(slice);
+    }
+    return 0;
+}
+
+/// Manually update orderbook (called by feeder or external module)
+export fn update_orderbook_snapshot(
+    pair_id: u16,
+    exchange_id: u8,
+    bids_ptr: [*]const types.OrderbookLevel,
+    bid_count: u8,
+    asks_ptr: [*]const types.OrderbookLevel,
+    ask_count: u8,
+    tsc: u64,
+) void {
+    orderbook.updateOrderbook(pair_id, exchange_id, bids_ptr, bid_count, asks_ptr, ask_count, tsc);
+}
+
+/// Get total orderbook updates received
+export fn get_orderbook_updates() u32 {
+    const state = @as(*volatile types.OrderbookState, @ptrFromInt(types.ORDERBOOK_BASE));
+    return state.updates_received;
 }
