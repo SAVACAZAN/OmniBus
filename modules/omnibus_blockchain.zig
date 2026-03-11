@@ -22,7 +22,7 @@ pub const OmnibusBlock = struct {
     header: OmnibusBlockHeader,
     transactions: [1024]OmnibusTransaction,  // Up to 1024 tx per block
     tx_count: u32,
-    anchor_proof: AnchorProof,               // Proof linked to BTC/ETH/EGLD
+    anchor_proof: AnchorProof,               // Proof linked to BTC/ETH/EGLD/SOL/OPT/BASE
     pq_signatures: [4]OmnibusPQSignature,   // One sig per domain
 };
 
@@ -34,6 +34,9 @@ pub const AnchorChain = enum(u8) {
     BITCOIN = 0,
     ETHEREUM = 1,
     EGLD = 2,
+    SOLANA = 3,
+    OPTIMISM = 4,
+    BASE = 5,                             // Coinbase L2 (OP Stack)
 };
 
 pub const AnchorProof = struct {
@@ -198,7 +201,14 @@ fn omnibus_verify_pq_signature(sig: *const OmnibusPQSignature, msg: anytype, pub
 }
 
 fn omnibus_verify_anchor(anchor: *const AnchorProof) bool {
-    // Verify proof on anchor chain (BTC/ETH/EGLD)
+    // Verify proof on anchor chain (BTC/ETH/EGLD/SOL/OPT/BASE)
+    // For each chain:
+    //   - Bitcoin: Verify OP_RETURN in coinbase or mempool transaction
+    //   - Ethereum: Verify contract log emission
+    //   - EGLD: Verify contract call in smart contract
+    //   - Solana: Verify account data update in PDA
+    //   - Optimism: Verify L2 batch inclusion
+    //   - Base: Verify L2 batch inclusion (OP Stack)
     return true; // Placeholder
 }
 
@@ -252,7 +262,7 @@ pub const OmnibusConsensusRules = struct {
     // Gas model (borrowed from Ethereum)
     gas_per_byte: u64 = 16,
     gas_per_signature: u64 = 21000,    // For PQ signature verification
-    gas_per_anchor: u64 = 100000,      // For anchoring to BTC/ETH/EGLD
+    gas_per_anchor: u64 = 100000,      // For anchoring to BTC/ETH/EGLD/SOL/OPT/BASE
 
     // Rewards
     block_reward_base: u64 = 50_000_000,  // In smallest unit
@@ -295,6 +305,88 @@ pub fn omnibus_bridge_in(
 
 fn omnibus_current_block_height() u64 {
     // Placeholder: query current block height
+    return 0;
+}
+
+// ============================================================================
+// Coinbase Commerce Integration (Fiat On/Off-Ramps)
+// ============================================================================
+
+pub const CoinbaseCharge = struct {
+    charge_id: [64]u8,                  // Unique charge identifier
+    customer_email: [128]u8,            // Customer email for receipt
+    amount: u64,                        // Amount in cents (USD, EUR, GBP)
+    currency: [8]u8,                    // ISO 4217 currency code (USD, EUR, GBP)
+    omni_address: [64]u8,              // OmniBus address to receive OMNI
+    tx_hash: [32]u8,                   // Blockchain transaction hash (when settled)
+    status: u8,                         // 0=pending, 1=confirmed, 2=failed, 3=expired
+    created_at: u64,                   // Unix timestamp
+    expires_at: u64,                   // Expiration time (15 min default)
+    received_amount: u64,              // Actual OMNI amount received
+};
+
+pub const CoinbaseOnRampFlow = struct {
+    flow_id: [32]u8,                   // Flow identifier for this on-ramp session
+    user_omni_address: [64]u8,         // User's OmniBus wallet address
+    fiat_currency: [8]u8,              // Fiat currency (USD, EUR, GBP, JPY, etc.)
+    fiat_amount: u64,                  // Fiat amount in smallest unit
+    omni_amount: u64,                  // OMNI amount to be received
+    exchange_rate: u64,                // Rate: OMNI per 1 unit of fiat (scaled 1e8)
+    payment_method: u8,                // 0=ACH, 1=Card, 2=SEPA, 3=SWIFT, 4=Wire
+    status: u8,                        // 0=initiated, 1=processing, 2=completed
+    created_at: u64,
+    completed_at: u64,
+};
+
+pub const CoinbaseOffRampFlow = struct {
+    flow_id: [32]u8,                   // Flow identifier for off-ramp session
+    user_omni_address: [64]u8,         // User's OmniBus wallet address
+    user_bank_account: [128]u8,        // User's bank account identifier (IBAN/account#)
+    omni_amount: u64,                  // Amount of OMNI to convert to fiat
+    fiat_currency: [8]u8,              // Target fiat currency
+    fiat_amount: u64,                  // Fiat amount to be received (after fees)
+    exchange_rate: u64,                // Rate: fiat per 1 OMNI (scaled 1e8)
+    fee_amount: u64,                   // Coinbase Commerce fee in fiat
+    status: u8,                        // 0=initiated, 1=processing, 2=completed
+    created_at: u64,
+    completed_at: u64,
+};
+
+pub fn omnibus_create_onramp_charge(
+    email: [128]u8,
+    amount_cents: u64,
+    currency: [8]u8,
+    omni_address: [64]u8
+) CoinbaseCharge {
+    var charge: CoinbaseCharge = undefined;
+    @memcpy(&charge.customer_email, &email);
+    @memcpy(&charge.currency, &currency);
+    @memcpy(&charge.omni_address, &omni_address);
+    charge.amount = amount_cents;
+    charge.status = 0; // pending
+    charge.created_at = omnibus_current_timestamp();
+    charge.expires_at = charge.created_at + 900; // 15 minutes
+    return charge;
+}
+
+pub fn omnibus_process_offramp(
+    omni_address: [64]u8,
+    bank_account: [128]u8,
+    omni_amount: u64,
+    fiat_currency: [8]u8
+) CoinbaseOffRampFlow {
+    var flow: CoinbaseOffRampFlow = undefined;
+    @memcpy(&flow.user_omni_address, &omni_address);
+    @memcpy(&flow.user_bank_account, &bank_account);
+    @memcpy(&flow.fiat_currency, &fiat_currency);
+    flow.omni_amount = omni_amount;
+    flow.status = 0; // initiated
+    flow.created_at = omnibus_current_timestamp();
+    return flow;
+}
+
+fn omnibus_current_timestamp() u64 {
+    // Placeholder: query current Unix timestamp
     return 0;
 }
 
