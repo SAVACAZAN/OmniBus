@@ -321,7 +321,7 @@ class DashboardManager {
     }
 
     setupTabSwitching() {
-        """Setup tab click handlers for navigation"""
+        // Setup tab click handlers for navigation// 
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
 
@@ -357,7 +357,7 @@ class DashboardManager {
     }
 
     async loadVisitors() {
-        """Fetch and display recent page visitors"""
+        // Fetch and display recent page visitors// 
         try {
             const response = await fetch('/api/visitors?limit=50');
             const data = await response.json();
@@ -368,7 +368,7 @@ class DashboardManager {
     }
 
     updateVisitorsTable(visitors) {
-        """Display visitors in table"""
+        // Display visitors in table// 
         const tbody = document.getElementById('visitors-body');
         if (!visitors || visitors.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-3 text-gray-400">No recent visitors</td></tr>';
@@ -392,7 +392,7 @@ class DashboardManager {
     }
 
     collectHardwareInfo() {
-        """Collect comprehensive hardware/system fingerprint"""
+        // Collect comprehensive hardware/system fingerprint// 
         return {
             // Network
             "ip": "auto",  // Server will get from request header
@@ -481,7 +481,7 @@ class DashboardManager {
     }
 
     async trackPageView() {
-        """Send page view with hardware fingerprint to backend"""
+        // Send page view with hardware fingerprint to backend// 
         try {
             const hardwareInfo = this.collectHardwareInfo();
             const response = await fetch('/page_view', {
