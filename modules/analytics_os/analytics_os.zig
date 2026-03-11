@@ -188,3 +188,145 @@ export fn get_orderbook_updates() u32 {
     const state = @as(*volatile types.OrderbookState, @ptrFromInt(types.ORDERBOOK_BASE));
     return state.updates_received;
 }
+
+// ============================================================================
+// EXCHANGE READER EXPORTS (fetch prices, volumes, ticker data)
+// ============================================================================
+
+/// Fetch BTC price in cents from primary exchange buffer
+export fn fetch_btc_price() u64 {
+    if (!exchange_reader.isBufferActive()) return 0;
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x140000));
+    return buf.btc_price_cents;
+}
+
+/// Fetch ETH price in cents from primary exchange buffer
+export fn fetch_eth_price() u64 {
+    if (!exchange_reader.isBufferActive()) return 0;
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x140000));
+    return buf.eth_price_cents;
+}
+
+/// Fetch LCX price in cents from primary exchange buffer
+export fn fetch_lcx_price() u64 {
+    if (!exchange_reader.isBufferActive()) return 0;
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x140000));
+    return buf.lcx_price_cents;
+}
+
+/// Fetch BTC volume in satoshis from primary exchange buffer
+export fn fetch_btc_volume() u64 {
+    if (!exchange_reader.isBufferActive()) return 0;
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x140000));
+    return buf.btc_volume_sats;
+}
+
+/// Fetch ETH volume in satoshis from primary exchange buffer
+export fn fetch_eth_volume() u64 {
+    if (!exchange_reader.isBufferActive()) return 0;
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x140000));
+    return buf.eth_volume_sats;
+}
+
+/// Fetch LCX volume in satoshis from primary exchange buffer
+export fn fetch_lcx_volume() u64 {
+    if (!exchange_reader.isBufferActive()) return 0;
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x140000));
+    return buf.lcx_volume_sats;
+}
+
+/// Get exchange flags from primary buffer (0x01=Kraken, 0x02=Coinbase, 0x04=LCX)
+export fn fetch_exchange_flags() u32 {
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x140000));
+    return buf.exchange_flags;
+}
+
+/// Get last update timestamp from primary buffer
+export fn fetch_timestamp() u64 {
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x140000));
+    return buf.timestamp;
+}
+
+/// Get Coinbase BTC price from secondary buffer @ 0x141000
+export fn fetch_coinbase_btc() u64 {
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x141000));
+    if ((buf.exchange_flags & 0x02) == 0) return 0;
+    return buf.btc_price_cents;
+}
+
+/// Get Coinbase ETH price from secondary buffer @ 0x141000
+export fn fetch_coinbase_eth() u64 {
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x141000));
+    if ((buf.exchange_flags & 0x02) == 0) return 0;
+    return buf.eth_price_cents;
+}
+
+/// Get LCX Exchange BTC price from tertiary buffer @ 0x142000
+export fn fetch_lcx_exchange_btc() u64 {
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x142000));
+    if ((buf.exchange_flags & 0x04) == 0) return 0;
+    return buf.btc_price_cents;
+}
+
+/// Get LCX Exchange ETH price from tertiary buffer @ 0x142000
+export fn fetch_lcx_exchange_eth() u64 {
+    const buf = @as(*volatile exchange_reader.ExchangeBuffer, @ptrFromInt(0x142000));
+    if ((buf.exchange_flags & 0x04) == 0) return 0;
+    return buf.eth_price_cents;
+}
+
+/// Get PriceFeedSlot (ticker) for a pair
+export fn fetch_ticker(pair_id: u16) u64 {
+    if (pair_id >= 3) return 0;
+    const slot = @as(*volatile types.PriceFeedSlot, @ptrFromInt(types.WORKING_BASE + pair_id * 128));
+    return slot.consensus_price;
+}
+
+/// Get best bid from ticker (PriceFeedSlot)
+export fn fetch_ticker_bid(pair_id: u16) u64 {
+    if (pair_id >= 3) return 0;
+    const slot = @as(*volatile types.PriceFeedSlot, @ptrFromInt(types.WORKING_BASE + pair_id * 128));
+    return slot.bid_price;
+}
+
+/// Get best ask from ticker (PriceFeedSlot)
+export fn fetch_ticker_ask(pair_id: u16) u64 {
+    if (pair_id >= 3) return 0;
+    const slot = @as(*volatile types.PriceFeedSlot, @ptrFromInt(types.WORKING_BASE + pair_id * 128));
+    return slot.ask_price;
+}
+
+/// Get 24h high for a pair
+export fn fetch_ticker_high_24h(pair_id: u16) u64 {
+    if (pair_id >= 3) return 0;
+    const slot = @as(*volatile types.PriceFeedSlot, @ptrFromInt(types.WORKING_BASE + pair_id * 128));
+    return slot.high_24h;
+}
+
+/// Get 24h low for a pair
+export fn fetch_ticker_low_24h(pair_id: u16) u64 {
+    if (pair_id >= 3) return 0;
+    const slot = @as(*volatile types.PriceFeedSlot, @ptrFromInt(types.WORKING_BASE + pair_id * 128));
+    return slot.low_24h;
+}
+
+/// Get VWAP (volume-weighted average price) for a pair
+export fn fetch_ticker_vwap(pair_id: u16) u64 {
+    if (pair_id >= 3) return 0;
+    const slot = @as(*volatile types.PriceFeedSlot, @ptrFromInt(types.WORKING_BASE + pair_id * 128));
+    return slot.vwap;
+}
+
+/// Get trading volume for a pair
+export fn fetch_ticker_volume(pair_id: u16) u64 {
+    if (pair_id >= 3) return 0;
+    const slot = @as(*volatile types.PriceFeedSlot, @ptrFromInt(types.WORKING_BASE + pair_id * 128));
+    return slot.consensus_volume;
+}
+
+/// Check if ticker is valid (0x01) or stale (0x02)
+export fn fetch_ticker_flags(pair_id: u16) u8 {
+    if (pair_id >= 3) return 0;
+    const slot = @as(*volatile types.PriceFeedSlot, @ptrFromInt(types.WORKING_BASE + pair_id * 128));
+    return slot.flags;
+}
