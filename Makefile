@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin $(BUILD_DIR)/wallet_manager.bin
+build: $(OUTPUT) phase53b-crypto $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin $(BUILD_DIR)/wallet_manager.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker/DomainResolver loaded"
@@ -1430,5 +1430,56 @@ $(BUILD_DIR)/wallet_manager.bin: $(BUILD_DIR)/wallet_manager.elf
 	@echo ""
 	@echo "  Total: 320KB stealth zone (0x530000–0x57FFFF)"
 	@echo "  Addresses: Always visible | Keys: Encrypted + fragmented"
+	@echo ""
+
+
+# ============================================================================
+# PHASE 53B: Cryptographic Implementations + BIP32/BIP39 + Chain Addressing
+# ============================================================================
+
+$(BUILD_DIR)/crypto_primitives.o: modules/crypto_primitives.zig
+	@echo "[ZIG] Compiling Crypto Primitives (SHA256, HMAC, BLAKE2, ECDSA)..."
+	zig build-obj -target x86_64-freestanding \
+		--name crypto_primitives \
+		-O ReleaseSafe \
+		modules/crypto_primitives.zig -fno-llvm -fno-lld
+
+$(BUILD_DIR)/bip32_bip39.o: modules/bip32_bip39.zig
+	@echo "[ZIG] Compiling BIP32/BIP39 (Hierarchical Wallet Derivation)..."
+	zig build-obj -target x86_64-freestanding \
+		--name bip32_bip39 \
+		-O ReleaseSafe \
+		modules/bip32_bip39.zig -fno-llvm -fno-lld
+
+$(BUILD_DIR)/chain_addressing.o: modules/chain_addressing.zig
+	@echo "[ZIG] Compiling Chain Addressing (BTC, ETH, SOL, EGLD)..."
+	zig build-obj -target x86_64-freestanding \
+		--name chain_addressing \
+		-O ReleaseSafe \
+		modules/chain_addressing.zig -fno-llvm -fno-lld
+
+# Update wallet_manager to include crypto modules
+$(BUILD_DIR)/wallet_manager.elf: $(BUILD_DIR)/wallet_manager.o $(BUILD_DIR)/math_formulas.o $(BUILD_DIR)/crypto_primitives.o $(BUILD_DIR)/bip32_bip39.o $(BUILD_DIR)/chain_addressing.o modules/wallet_manager.ld
+	@echo "[LD] Linking Wallet Manager with Crypto Suite..."
+	ld -T modules/wallet_manager.ld \
+		$(BUILD_DIR)/wallet_manager.o \
+		$(BUILD_DIR)/math_formulas.o \
+		$(BUILD_DIR)/crypto_primitives.o \
+		$(BUILD_DIR)/bip32_bip39.o \
+		$(BUILD_DIR)/chain_addressing.o \
+		-o $@
+	@echo "  Wallet Manager ELF (with crypto): $@"
+
+.PHONY: phase53b-crypto
+phase53b-crypto: $(BUILD_DIR)/crypto_primitives.o $(BUILD_DIR)/bip32_bip39.o $(BUILD_DIR)/chain_addressing.o
+	@echo ""
+	@echo "✓ PHASE 53B: CRYPTOGRAPHIC IMPLEMENTATIONS COMPLETE"
+	@echo "  Crypto Primitives: SHA256, HMAC-SHA256, BLAKE2, HKDF, ECDSA secp256k1"
+	@echo "  BIP32/BIP39: Master key derivation + hierarchical child key generation"
+	@echo "  Chain Addressing:"
+	@echo "    - Bitcoin P2WPKH (bc1q...) + Legacy (1...) + Bech32"
+	@echo "    - Ethereum EOA (0x...) + EIP-55 checksum"
+	@echo "    - Solana (Base58) + Ed25519"
+	@echo "    - EGLD (erd1...) + Bech32"
 	@echo ""
 
