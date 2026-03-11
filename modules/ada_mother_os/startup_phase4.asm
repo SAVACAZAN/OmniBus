@@ -1301,6 +1301,13 @@ scheduler_loop:
     call 0x5D0100                       ; MetricsOS: run_metrics_cycle @ 0x5D0100
 .skip_metrics_dispatch:
 
+    ; ReplayOS dispatch: every 65536 cycles (0xFFFF) — Event-driven transaction replay
+    mov rax, r11
+    and rax, 0xFFFF
+    jnz .skip_replay_dispatch
+    call 0x5E0100                       ; ReplayOS: run_replay_cycle @ 0x5E0100
+.skip_replay_dispatch:
+
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000
 busy_wait:
