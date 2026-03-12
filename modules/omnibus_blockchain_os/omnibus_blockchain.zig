@@ -103,13 +103,13 @@ pub const OmnibusPQSignature = struct {
     pubkey_len: u16,
 };
 
-pub fn omnibus_sign_block(block: *OmnibusBlock, privkeys: [4]anytype) void {
+pub fn omnibus_sign_block(block: *OmnibusBlock, privkeys: [4][64]u8) void {
     // Sign the block header with all 4 PQ domain keys
     for (0..4) |i| {
         const msg = block.header;
 
         // Sign with domain i's private key
-        var sig = switch (i) {
+        const sig = switch (i) {
             0 => kyber_sign_block(&msg, privkeys[0]), // LOVE (Kyber)
             1 => falcon_sign_block(&msg, privkeys[1]), // FOOD (Falcon)
             2 => dilithium_sign_block(&msg, privkeys[2]), // RENT (Dilithium)
@@ -122,6 +122,8 @@ pub fn omnibus_sign_block(block: *OmnibusBlock, privkeys: [4]anytype) void {
 }
 
 fn kyber_sign_block(header: anytype, privkey: anytype) OmnibusPQSignature {
+    _ = header;
+    _ = privkey;
     var sig: OmnibusPQSignature = undefined;
     sig.domain = 0; // OMNIBUS_LOVE
     sig.algo = 2;   // KYBER_768
@@ -133,6 +135,8 @@ fn kyber_sign_block(header: anytype, privkey: anytype) OmnibusPQSignature {
 }
 
 fn falcon_sign_block(header: anytype, privkey: anytype) OmnibusPQSignature {
+    _ = header;
+    _ = privkey;
     var sig: OmnibusPQSignature = undefined;
     sig.domain = 1; // OMNIBUS_FOOD
     sig.algo = 7;   // FALCON_512
@@ -144,6 +148,8 @@ fn falcon_sign_block(header: anytype, privkey: anytype) OmnibusPQSignature {
 }
 
 fn dilithium_sign_block(header: anytype, privkey: anytype) OmnibusPQSignature {
+    _ = header;
+    _ = privkey;
     var sig: OmnibusPQSignature = undefined;
     sig.domain = 2; // OMNIBUS_RENT
     sig.algo = 6;   // DILITHIUM_5
@@ -155,6 +161,8 @@ fn dilithium_sign_block(header: anytype, privkey: anytype) OmnibusPQSignature {
 }
 
 fn sphincs_sign_block(header: anytype, privkey: anytype) OmnibusPQSignature {
+    _ = header;
+    _ = privkey;
     var sig: OmnibusPQSignature = undefined;
     sig.domain = 3; // OMNIBUS_VACATION
     sig.algo = 9;   // SPHINCS_SHA256
@@ -169,7 +177,7 @@ fn sphincs_sign_block(header: anytype, privkey: anytype) OmnibusPQSignature {
 // Block Verification
 // ============================================================================
 
-pub fn omnibus_verify_block(block: OmnibusBlock, pubkeys: [4]anytype) bool {
+pub fn omnibus_verify_block(block: OmnibusBlock, pubkeys: [4][64]u8) bool {
     // 1. Verify all 4 PQ signatures match
     for (0..4) |i| {
         if (!omnibus_verify_pq_signature(&block.pq_signatures[i], &block.header, pubkeys[i])) {
@@ -196,11 +204,15 @@ pub fn omnibus_verify_block(block: OmnibusBlock, pubkeys: [4]anytype) bool {
 }
 
 fn omnibus_verify_pq_signature(sig: *const OmnibusPQSignature, msg: anytype, pubkey: anytype) bool {
+    _ = sig;
+    _ = msg;
+    _ = pubkey;
     // Verify PQ signature based on algorithm type
     return true; // Placeholder
 }
 
 fn omnibus_verify_anchor(anchor: *const AnchorProof) bool {
+    _ = anchor;
     // Verify proof on anchor chain (BTC/ETH/EGLD/SOL/OPT/BASE)
     // For each chain:
     //   - Bitcoin: Verify OP_RETURN in coinbase or mempool transaction
@@ -213,12 +225,15 @@ fn omnibus_verify_anchor(anchor: *const AnchorProof) bool {
 }
 
 fn omnibus_verify_merkle_root(txs: []OmnibusTransaction, expected_root: [32]u8) bool {
+    _ = txs;
+    _ = expected_root;
     // Build Merkle tree from transactions
     // Verify root hash matches expected
     return true; // Placeholder
 }
 
 fn omnibus_verify_pow(header: *const OmnibusBlockHeader) bool {
+    _ = header;
     // Verify proof-of-work (hash < difficulty target)
     return true; // Placeholder
 }
@@ -411,6 +426,8 @@ pub fn omnibus_submit_governance_proposal(
     proposal: GovernanceProposal,
     sponsor_address: [64]u8
 ) bool {
+    _ = proposal;
+    _ = sponsor_address;
     // Foundation members can submit proposals
     // Proposal enters voting period (14 days)
     // Requires 75% approval
@@ -418,6 +435,7 @@ pub fn omnibus_submit_governance_proposal(
 }
 
 pub fn omnibus_execute_governance_proposal(proposal: *GovernanceProposal) bool {
+    _ = proposal;
     // After voting period, execute approved changes
     // Changes could include:
     // - Difficulty adjustment parameters

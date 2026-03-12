@@ -131,6 +131,7 @@ pub fn derive_key(
     chain: ChainType,
     timestamp: u64,
 ) bool {
+    _ = timestamp;
     if (wallet.key_count >= 35) return false;
 
     // BIP-44 path: m/44'/506'/domain'/0/0
@@ -251,6 +252,7 @@ fn derive_address_for_chain(key: *WalletKey, chain: ChainType) AddressFormat {
 }
 
 fn format_derivation_path(buf: *[32]u8, domain: DomainType, index: u8) u8 {
+    _ = index;
     const domain_idx = @intFromEnum(domain);
     // Format: "m/44'/506'/X'/0/0" where X = domain index
 
@@ -283,11 +285,12 @@ pub fn sign_transaction(
     key_idx: u32,
     message: [32]u8,
 ) [96]u8 {
+    _ = message;
     if (key_idx >= wallet.key_count) {
         return [_]u8{0} ** 96;
     }
 
-    const key = wallet.keys[key_idx];
+    _ = wallet.keys[key_idx];
 
     // TODO: Implement actual signing
     // Use Ed25519 or secp256k1 depending on chain
@@ -326,6 +329,7 @@ pub fn update_balance(
 // ============================================================================
 
 pub fn get_address(wallet: *const HDWallet, key_idx: u32, chain: ChainType) ?[74]u8 {
+    _ = key_idx;
     for (0..wallet.key_count) |i| {
         if (wallet.keys[i].chain == chain) {
             var result: [74]u8 = undefined;
@@ -405,12 +409,12 @@ pub fn example_wallet_creation() void {
 
 pub fn example_address_lookup(wallet: *const HDWallet) void {
     // Get OmniBus address for OMNI domain
-    if (get_address(wallet, 0, .OMNIBUS)) |addr| {
+    if (get_address(wallet, 0, .OMNIBUS)) |_| {
         // User can use addr to receive OMNI tokens
     }
 
     // Get Bitcoin address
-    if (get_address(wallet, 5, .BITCOIN)) |addr| {
+    if (get_address(wallet, 5, .BITCOIN)) |_| {
         // User can use addr to receive BTC
     }
 

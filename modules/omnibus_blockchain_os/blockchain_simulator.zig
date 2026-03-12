@@ -220,7 +220,7 @@ pub fn adjust_difficulty(current_height: u64) u32 {
     // Every 2016 blocks: adjust based on block time
 
     const adjustment_period: u64 = 2016;
-    const target_block_time: u64 = 600; // 10 minutes in seconds
+    _ = 600; // target_block_time (10 minutes in seconds, reserved for future)
 
     if (current_height < adjustment_period) {
         return 1; // Low difficulty for first period
@@ -437,7 +437,7 @@ pub fn calculate_block_reward(height: u64) u64 {
     const base_reward_sat: u64 = 5_000_000_000; // 50 OMNI
     const halving_interval: u64 = 210000;
 
-    var halvings: u64 = height / halving_interval;
+    const halvings: u64 = height / halving_interval;
 
     // Prevent overflow: cap at 64 halvings
     if (halvings >= 64) {

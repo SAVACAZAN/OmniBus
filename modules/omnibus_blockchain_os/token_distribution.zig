@@ -399,22 +399,17 @@ pub fn claim_faucet(
     address_len: u8,
     timestamp: u64,
 ) bool {
-    // Find or create faucet entry
-    var address_idx: ?usize = null;
+    _ = state;
+    _ = address;
+    _ = address_len;
+    _ = timestamp;
 
-    for (0..state.faucet_claim_count) |i| {
-        // This is simplified; real implementation would use a proper hash map
-        if (std.mem.eql(u8, &state.faucet_claims[0..0], &[_]u8{})) {
-            // Placeholder - would check stored address
-        }
-    }
-
-    // Check rate limit (24 hours between claims)
-    const last_claim: u64 = 0; // Placeholder
-    if (timestamp - last_claim < 86400) return false; // Too soon
+    // Placeholder implementation
+    // TODO: Find or create faucet entry with proper address mapping
+    // TODO: Check rate limit (24 hours between claims)
+    // Real implementation would record the claim and return rate limit status
 
     // Claim is valid - return true
-    // Real implementation would record the claim
     return true;
 }
 
