@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) phase53b-crypto $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin $(BUILD_DIR)/wallet_manager.bin $(BUILD_DIR)/gpu_optimizer_os.bin $(BUILD_DIR)/asic_optimizer_os.bin $(BUILD_DIR)/stratum_v2_gateway.bin
+build: $(OUTPUT) phase53b-crypto $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin $(BUILD_DIR)/wallet_manager.bin $(BUILD_DIR)/gpu_optimizer_os.bin $(BUILD_DIR)/asic_optimizer_os.bin $(BUILD_DIR)/stratum_v2_gateway.bin $(BUILD_DIR)/cloud_federation_os.bin $(BUILD_DIR)/cache_l3_os.bin $(BUILD_DIR)/quantum_detector_os.bin $(BUILD_DIR)/zk_rollups_os.bin $(BUILD_DIR)/ml_inference_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker/DomainResolver loaded"
@@ -1559,4 +1559,100 @@ $(BUILD_DIR)/stratum_v2_gateway.bin: $(BUILD_DIR)/stratum_v2_gateway.elf
 	@echo "[OC] Converting Stratum V2 Gateway to binary..."
 	objcopy -O binary $< $@
 	@echo "  Stratum V2 Gateway binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# ============================================================================
+# PHASE 61: Multi-Cloud Provider Integration (AWS/Azure/GCP/Oracle/VMware)
+# ============================================================================
+
+# Cloud Federation OS (0x5D0000, geographic redundancy + failover)
+$(BUILD_DIR)/cloud_federation_os.o: ./modules/cloud_federation_os/cloud_federation_os.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Cloud Federation OS to object file..."
+	cd ./modules/cloud_federation_os && zig build-obj cloud_federation_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/cloud_federation_os/cloud_federation_os.o ]; then mv ./modules/cloud_federation_os/cloud_federation_os.o $@; fi
+
+$(BUILD_DIR)/cloud_federation_os_stubs.o: ./modules/cloud_federation_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Cloud Federation OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/cloud_federation_os.elf: $(BUILD_DIR)/cloud_federation_os.o $(BUILD_DIR)/cloud_federation_os_stubs.o ./modules/cloud_federation_os/cloud_federation_os.ld
+	@echo "[LD] Linking Cloud Federation OS ELF..."
+	ld -T ./modules/cloud_federation_os/cloud_federation_os.ld -o $@ $(BUILD_DIR)/cloud_federation_os.o $(BUILD_DIR)/cloud_federation_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/cloud_federation_os.bin: $(BUILD_DIR)/cloud_federation_os.elf
+	@echo "[OC] Converting Cloud Federation OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  Cloud Federation OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+
+# ============================================================================
+# PHASE 62: High-Performance L3 Cache (256KB, <5ns latency)
+# ============================================================================
+
+# L3 Cache OS (0x5E0000, 8-way set-associative, LRU/LFU eviction)
+$(BUILD_DIR)/cache_l3_os.o: ./modules/cache_l3_os/cache_l3_os.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling L3 Cache OS to object file..."
+	cd ./modules/cache_l3_os && zig build-obj cache_l3_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/cache_l3_os/cache_l3_os.o ]; then mv ./modules/cache_l3_os/cache_l3_os.o $@; fi
+
+$(BUILD_DIR)/cache_l3_os_stubs.o: ./modules/cache_l3_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling L3 Cache OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/cache_l3_os.elf: $(BUILD_DIR)/cache_l3_os.o $(BUILD_DIR)/cache_l3_os_stubs.o ./modules/cache_l3_os/cache_l3_os.ld
+	@echo "[LD] Linking L3 Cache OS ELF..."
+	ld -T ./modules/cache_l3_os/cache_l3_os.ld -o $@ $(BUILD_DIR)/cache_l3_os.o $(BUILD_DIR)/cache_l3_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/cache_l3_os.bin $(BUILD_DIR)/quantum_detector_os.bin $(BUILD_DIR)/zk_rollups_os.bin $(BUILD_DIR)/ml_inference_os.bin: $(BUILD_DIR)/cache_l3_os.elf
+	@echo "[OC] Converting L3 Cache OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  L3 Cache OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+
+# Phase 63: Quantum Supremacy Detector
+$(BUILD_DIR)/quantum_detector_os.o: ./modules/quantum_detector_os/quantum_detector.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Quantum Detector to object file..."
+	cd ./modules/quantum_detector_os && zig build-obj quantum_detector.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/quantum_detector_os/quantum_detector.o ]; then mv ./modules/quantum_detector_os/quantum_detector.o $@; fi
+
+$(BUILD_DIR)/quantum_detector_os_stubs.o: ./modules/quantum_detector_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/quantum_detector_os.elf: $(BUILD_DIR)/quantum_detector_os.o $(BUILD_DIR)/quantum_detector_os_stubs.o ./modules/quantum_detector_os/quantum_detector.ld
+	ld -T ./modules/quantum_detector_os/quantum_detector.ld -o $@ $(BUILD_DIR)/quantum_detector_os.o $(BUILD_DIR)/quantum_detector_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/quantum_detector_os.bin: $(BUILD_DIR)/quantum_detector_os.elf
+	objcopy -O binary $< $@
+	@echo "  Quantum Detector binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 64: Zero-Knowledge Rollups
+$(BUILD_DIR)/zk_rollups_os.o: ./modules/zk_rollups_os/zk_rollups.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling ZK Rollups to object file..."
+	cd ./modules/zk_rollups_os && zig build-obj zk_rollups.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/zk_rollups_os/zk_rollups.o ]; then mv ./modules/zk_rollups_os/zk_rollups.o $@; fi
+
+$(BUILD_DIR)/zk_rollups_os_stubs.o: ./modules/zk_rollups_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/zk_rollups_os.elf: $(BUILD_DIR)/zk_rollups_os.o $(BUILD_DIR)/zk_rollups_os_stubs.o ./modules/zk_rollups_os/zk_rollups.ld
+	ld -T ./modules/zk_rollups_os/zk_rollups.ld -o $@ $(BUILD_DIR)/zk_rollups_os.o $(BUILD_DIR)/zk_rollups_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/zk_rollups_os.bin: $(BUILD_DIR)/zk_rollups_os.elf
+	objcopy -O binary $< $@
+	@echo "  ZK Rollups binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Phase 65: Machine Learning Inference
+$(BUILD_DIR)/ml_inference_os.o: ./modules/ml_inference_os/ml_inference.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling ML Inference to object file..."
+	cd ./modules/ml_inference_os && zig build-obj ml_inference.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/ml_inference_os/ml_inference.o ]; then mv ./modules/ml_inference_os/ml_inference.o $@; fi
+
+$(BUILD_DIR)/ml_inference_os_stubs.o: ./modules/ml_inference_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/ml_inference_os.elf: $(BUILD_DIR)/ml_inference_os.o $(BUILD_DIR)/ml_inference_os_stubs.o ./modules/ml_inference_os/ml_inference.ld
+	ld -T ./modules/ml_inference_os/ml_inference.ld -o $@ $(BUILD_DIR)/ml_inference_os.o $(BUILD_DIR)/ml_inference_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/ml_inference_os.bin: $(BUILD_DIR)/ml_inference_os.elf
+	objcopy -O binary $< $@
+	@echo "  ML Inference binary: $@ (size: $$(stat -c%s $@) bytes)"
 

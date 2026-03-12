@@ -23,7 +23,7 @@ fn scale_frequency_for_temp(chip_id: u8, current_temp: u8) u16 {
     const state = getASICOptStatePtr();
     const chip = getASICChipPtr(chip_id);
 
-    var new_freq = state.target_frequency;
+    const new_freq = state.target_frequency;
 
     // Temperature-based scaling (hotter = lower freq)
     if (current_temp > 85) {

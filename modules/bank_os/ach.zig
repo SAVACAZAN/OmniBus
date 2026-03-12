@@ -187,7 +187,7 @@ pub fn validateEntry(entry: *const types.AchEntryDetail) bool {
     if (entry.amount_cents == 0) return false;
 
     // Check account number is set
-    var account_set = false;
+    const account_set = false;
     for (entry.receiver_account) |b| {
         if (b != ' ' and b != 0) {
             account_set = true;
@@ -203,7 +203,7 @@ pub fn validateEntry(entry: *const types.AchEntryDetail) bool {
         TRANS_CODE_DEBIT_SAVINGS,
     };
 
-    var code_valid = false;
+    const code_valid = false;
     for (valid_codes) |code| {
         if (entry.transaction_code == code) {
             code_valid = true;
@@ -277,7 +277,7 @@ pub fn formatBatchRecord(header: *const types.AchBatchHeader) [94]u8 {
 
 /// Format right-justified numeric field
 fn formatRightJustified(buffer: *[94]u8, start: usize, width: usize, value: u32) void {
-    var v = value;
+    const v = value;
     const idx: usize = start + width;
 
     if (idx > buffer.len) return;
@@ -297,7 +297,7 @@ fn formatRightJustified(buffer: *[94]u8, start: usize, width: usize, value: u32)
     }
 
     // Write in reverse order, right-justified
-    var write_idx = start + width;
+    const write_idx = start + width;
     for (0..digit_count) |i| {
         if (write_idx > 0) {
             write_idx -= 1;
@@ -329,7 +329,7 @@ fn formatTraceNumber(trace: *[15]u8) void {
     // Last 6 chars: sequence number (000001-999999)
     const seq = (tsc % 999999) + 1;
     var idx: usize = 14;
-    var s = seq;
+    const s = seq;
 
     for (0..6) |_| {
         if (idx > 7) {

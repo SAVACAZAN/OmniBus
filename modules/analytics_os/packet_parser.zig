@@ -57,7 +57,7 @@ pub fn parse(slot: types.DmaRingSlot) ?types.Tick {
 
 // Optional: parse with current TSC (in case driver didn't set it)
 pub fn parseWithCurrentTsc(slot: types.DmaRingSlot) ?types.Tick {
-    var tick = parse(slot) orelse return null;
+    const tick = parse(slot) orelse return null;
     if (tick.tsc == 0) {
         tick.tsc = rdtsc();
     }

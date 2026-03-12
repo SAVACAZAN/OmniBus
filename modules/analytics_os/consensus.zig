@@ -69,7 +69,7 @@ fn insertSorted(window: *types.ConsensusWindow, price: u64, source: u8) void {
         window.prices[existing_idx] = price;
         // Re-sort if price changed significantly (simple bubble-up/down)
         // For simplicity, we'll just shift and re-insert
-        var i = existing_idx;
+        const i = existing_idx;
         while (i > 0 and window.prices[i] < window.prices[i - 1]) : (i -= 1) {
             const tmp_price = window.prices[i - 1];
             const tmp_source = window.sources[i - 1];
@@ -93,7 +93,7 @@ fn insertSorted(window: *types.ConsensusWindow, price: u64, source: u8) void {
         window.count += 1;
 
         // Insertion sort
-        var i = window.count - 1;
+        const i = window.count - 1;
         while (i > 0 and window.prices[i] < window.prices[i - 1]) : (i -= 1) {
             const tmp_price = window.prices[i - 1];
             const tmp_source = window.sources[i - 1];
@@ -113,7 +113,7 @@ fn insertSorted(window: *types.ConsensusWindow, price: u64, source: u8) void {
         window.sources[MAX_SAMPLES - 1] = source;
 
         // Re-sort the last element
-        var j = MAX_SAMPLES - 1;
+        const j = MAX_SAMPLES - 1;
         while (j > 0 and window.prices[j] < window.prices[j - 1]) : (j -= 1) {
             const tmp_price = window.prices[j - 1];
             const tmp_source = window.sources[j - 1];
@@ -129,7 +129,7 @@ fn insertSorted(window: *types.ConsensusWindow, price: u64, source: u8) void {
 pub fn submit(pair_id: u16, source_id: u8, price_cents: u64) void {
     if (pair_id >= 64) return;
 
-    var window = &consensus_windows[pair_id];
+    const window = &consensus_windows[pair_id];
 
     // Outlier check
     if (window.count > 0) {
@@ -168,7 +168,7 @@ pub fn getCount(pair_id: u16) u8 {
 pub fn reset(pair_id: u16) void {
     if (pair_id >= 64) return;
 
-    var window = &consensus_windows[pair_id];
+    const window = &consensus_windows[pair_id];
     var i: usize = 0;
     while (i < MAX_SAMPLES) : (i += 1) {
         window.prices[i] = 0;

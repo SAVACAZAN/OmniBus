@@ -72,7 +72,7 @@ fn hashLabel(label: []const u8) u64 {
 /// Combine parent hash and label hash (for hierarchical naming)
 fn combineHashes(parent: u64, label: u64) u64 {
     // Simple XOR with rotation to avoid patterns
-    var result = parent ^ label;
+    const result = parent ^ label;
     result = (result << 13) | (result >> 51); // Rotate left 13 bits
     result = result *% 0xbf58476d1ce4e5b9;
     return result;

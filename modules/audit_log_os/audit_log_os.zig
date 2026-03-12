@@ -219,7 +219,7 @@ export fn log_trade_event(
     auditlog.grid_events += 1;
 
     // Encode price into details if available
-    var detail_val = trade_id;
+    const detail_val = trade_id;
     if (price != 0) {
         detail_val = (price & 0xFFFF) | ((trade_id & 0xFFFF) << 16);
     }

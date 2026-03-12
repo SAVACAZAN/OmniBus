@@ -110,7 +110,7 @@ pub fn calcProfitCents(buy_price_cents: u64, sell_price_cents: u64, quantity_sat
 pub fn generateBuyLevels(current_price: u64, step_cents: u64, lower_bound: u64, max_levels: usize) [types.MAX_LEVELS]u64 {
     var levels: [types.MAX_LEVELS]u64 = [_]u64{0} ** types.MAX_LEVELS;
     var count: usize = 0;
-    var price = current_price;
+    const price = current_price;
 
     while (price > lower_bound and count < max_levels) {
         levels[count] = price;
@@ -128,7 +128,7 @@ pub fn generateBuyLevels(current_price: u64, step_cents: u64, lower_bound: u64, 
 pub fn generateSellLevels(current_price: u64, step_cents: u64, upper_bound: u64, max_levels: usize) [types.MAX_LEVELS]u64 {
     var levels: [types.MAX_LEVELS]u64 = [_]u64{0} ** types.MAX_LEVELS;
     var count: usize = 0;
-    var price = current_price + step_cents;
+    const price = current_price + step_cents;
 
     while (price < upper_bound and count < max_levels) {
         levels[count] = price;

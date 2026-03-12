@@ -39,7 +39,7 @@ fn check_difficulty(hash: [*]const u8, difficulty: u32) bool {
     var zeros: u32 = 0;
     var i: u8 = 0;
     while (i < 32 and zeros < difficulty) : (i += 1) {
-        var byte = hash[i];
+        const byte = hash[i];
         var bit: u8 = 0;
         while (bit < 8 and zeros < difficulty) : (bit += 1) {
             if ((byte & 0x80) == 0) {
@@ -99,7 +99,7 @@ pub export fn gpu_mine_cycle(gpu_idx: u8, nonce_start: u64, nonce_count: u32) u6
     var hash_result: [32]u8 = undefined;
     var shares_found: u64 = 0;
 
-    var nonce = nonce_start;
+    const nonce = nonce_start;
     var i: u32 = 0;
     while (i < nonce_count) : (i += 1) {
         // Prepare work data (block header + nonce)

@@ -123,7 +123,7 @@ fn mutate_inline(param: f64) f64 {
     // Fast mutation using bit manipulation
     const bits = @bitCast(u64, param);
     const mutated_bits = bits ^ (bits << 13);
-    var mutated = @bitCast(f64, mutated_bits);
+    const mutated = @bitCast(f64, mutated_bits);
 
     // Clamp to valid range
     if (mutated < 10) mutated = 10;

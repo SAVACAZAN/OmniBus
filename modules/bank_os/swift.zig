@@ -198,8 +198,8 @@ pub fn validateSwiftMessage(msg: *const types.SwiftMessage) bool {
     if (currency_count != 3) return false;
 
     // Check accounts are set
-    var sender_set = false;
-    var receiver_set = false;
+    const sender_set = false;
+    const receiver_set = false;
 
     for (msg.sender_account) |b| {
         if (b != 0) {

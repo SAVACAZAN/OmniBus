@@ -1,0 +1,27 @@
+// ADD TO create_wallet_recoverable() after line 128:
+
+    // Add EGLD (4th chain)
+    wallet.wallets[3].seed_hash = sha256(&seed);
+    wallet.wallets[3].master_key_encrypted_f1 = wallet.wallets[0].master_key_encrypted_f1;
+    wallet.wallets[3].master_key_encrypted_f2 = wallet.wallets[0].master_key_encrypted_f2;
+    wallet.wallets[3].master_key_encrypted_f3 = wallet.wallets[0].master_key_encrypted_f3;
+    wallet.wallets[3].master_key_encrypted_f4 = wallet.wallets[0].master_key_encrypted_f4;
+
+// ADD TO generate_chain_addresses() AFTER switch statement:
+            3 => { address = derive_egld_address(&derived_key); },
+
+// ADD NEW FUNCTION:
+
+fn derive_egld_address(key: [*]const u8) [48]u8 {
+    // Placeholder: EGLD address derivation (Bech32 format)
+    var addr: [48]u8 = undefined;
+    @memset(&addr, 0);
+    return addr;
+}
+
+fn derive_egld_address_from_vault(vault_pubkey: [*]const u8) [48]u8 {
+    // Placeholder: EGLD from vault
+    var addr: [48]u8 = undefined;
+    @memset(&addr, 0);
+    return addr;
+}

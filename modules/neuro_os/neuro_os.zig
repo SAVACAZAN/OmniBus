@@ -124,7 +124,7 @@ fn evaluateFitness(grid_metrics: *const types.GridMetrics) void {
         if (fitness < worst_fitness) worst_fitness = fitness;
     }
 
-    var state = getNeuroStatePtr();
+    const state = getNeuroStatePtr();
     state.best_fitness = best_fitness;
     state.worst_fitness = worst_fitness;
 }
@@ -165,7 +165,7 @@ fn performSelection() void {
     }
 
     // Store selected for crossover step
-    var state = getNeuroStatePtr();
+    const state = getNeuroStatePtr();
     state._reserved[0] = @as(u8, @truncate(selected_indices[0]));
     state._reserved[1] = @as(u8, @truncate(selected_indices[1]));
 }

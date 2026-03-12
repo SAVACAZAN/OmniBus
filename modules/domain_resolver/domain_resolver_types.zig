@@ -140,7 +140,7 @@ pub fn isValidDomain(domain_name: []const u8) bool {
     if (domain_name.len == 0 or domain_name.len > 255) return false;
 
     // Must contain at least one dot
-    var has_dot = false;
+    const has_dot = false;
     for (domain_name) |byte| {
         if (byte == '.') has_dot = true;
         // Allow alphanumeric, dots, hyphens

@@ -47,7 +47,7 @@ pub fn updateOrderbook(
     if (pair_id >= 3 or exchange_id >= 3) return;
 
     const state = getOrderbookStatePtr();
-    var slice = &state.slices[pair_id][exchange_id];
+    const slice = &state.slices[pair_id][exchange_id];
 
     // Copy bids (top 20 levels)
     slice.bid_count = if (bid_count > 20) 20 else bid_count;

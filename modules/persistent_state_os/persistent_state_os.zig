@@ -42,11 +42,11 @@ export fn run_checkpoint_cycle() void {
 export fn save_checkpoint() bool {
     const state = getPersistentStatePtr();
 
-    var snapshot_ptr = @as([*]volatile u8, @ptrFromInt(types.SNAPSHOT_BASE));
+    const snapshot_ptr = @as([*]volatile u8, @ptrFromInt(types.SNAPSHOT_BASE));
     var offset: usize = 0;
 
     // Grid OS @ 0x110000 (256B)
-    var src = @as([*]const u8, @ptrFromInt(0x110000));
+    const src = @as([*]const u8, @ptrFromInt(0x110000));
     var i: usize = 0;
     while (i < 256) : (i += 1) {
         snapshot_ptr[offset + i] = src[i];
@@ -116,7 +116,7 @@ export fn restore_checkpoint() bool {
     var offset: usize = 0;
 
     // Grid OS @ 0x110000 (256B)
-    var dst = @as([*]volatile u8, @ptrFromInt(0x110000));
+    const dst = @as([*]volatile u8, @ptrFromInt(0x110000));
     var i: usize = 0;
     while (i < 256) : (i += 1) {
         dst[i] = snapshot_ptr[offset + i];

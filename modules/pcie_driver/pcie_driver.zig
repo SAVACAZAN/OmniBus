@@ -77,7 +77,7 @@ pub fn pci_enumerate(devices: [*]types.PCIeDevice, max_devices: u32) u32 {
                 // 0xFFFF = no device
                 if (vendor_id == 0xFFFF) continue;
 
-                var device = &devices[count];
+                const device = &devices[count];
                 device.bus = @as(u8, @intCast(bus));
                 device.dev = dev;
                 device.func = func;
