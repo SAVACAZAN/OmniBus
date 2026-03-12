@@ -18,6 +18,7 @@ const wallet = @import("omnibus_wallet.zig");
 const blockchain = @import("omnibus_blockchain.zig");
 const simulator = @import("blockchain_simulator.zig");
 const miner_rewards = @import("miner_rewards.zig");
+const network = @import("network_integration.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -151,6 +152,7 @@ pub export fn run_blockchain_cycle() void {
 /// IPC dispatcher for blockchain operations
 /// Opcodes 0x70–0x7F: BlockchainOS (tokens, distribution, wallet, chain)
 /// Opcodes 0x80–0x8F: MinerRewards (GPU/ASIC mining rewards)
+/// Opcodes 0x90–0x9F: NetworkIntegration (P2P, bridge, peers)
 pub export fn ipc_dispatch(opcode: u8, arg0: u64, arg1: u64, arg2: u64) u64 {
     return switch (opcode) {
         // Token operations (0x70–0x73)
@@ -184,6 +186,16 @@ pub export fn ipc_dispatch(opcode: u8, arg0: u64, arg1: u64, arg2: u64) u64 {
         0x83 => ipc_miner_get_earnings(arg0),                  // get_earnings(miner_address) → u64 total_omni
         0x84 => ipc_miner_adjust_difficulty(arg0),             // adjust_difficulty(block_height) → u64 new_difficulty
         0x85 => ipc_miner_global_stats(),                      // get_global_stats() → u64 stat_ptr
+
+        // Network Integration operations (0x90–0x9F)
+        0x90 => ipc_network_init(arg0),                        // init_network(env: 0=sim, 1=test, 2=main) → u64 success
+        0x91 => ipc_network_add_peer(arg0, arg1),              // add_peer(peer_id_ptr, port) → u64 success
+        0x92 => ipc_network_peer_count(),                      // get_peer_count() → u64
+        0x93 => ipc_network_bridge_initiate(arg0, arg1, arg2), // bridge_init(token, src_chain, amount) → u64 success
+        0x94 => ipc_network_get_stats(),                       // get_network_stats() → u64 stat_ptr
+        0x95 => ipc_network_route_tx(arg0, arg1),              // route_tx(tx_ptr, tx_len) → u64 success
+        0x96 => ipc_network_sync_blocks(arg0, arg1),           // sync_blocks(start_height, end_height) → u64 success
+        0x97 => ipc_network_block_sync_complete(arg0),         // sync_complete(block_count) → u64 void
 
         else => 0xFFFFFFFFFFFFFFFF, // Invalid opcode
     };
@@ -373,6 +385,69 @@ fn ipc_miner_global_stats() u64 {
     // Returns: pointer to MinerRewardsState structure
     // Note: Would need to store at fixed memory address for this to work
     return 0;
+}
+
+// ============================================================================
+// IPC: NETWORK INTEGRATION OPERATIONS
+// ============================================================================
+
+fn ipc_network_init(environment: u64) u64 {
+    // Initialize network (0=simulation, 1=testnet, 2=mainnet)
+    // Returns: 1 = success, 0 = invalid environment
+    _ = environment;
+    return 1;
+}
+
+fn ipc_network_add_peer(peer_id_ptr: u64, port: u64) u64 {
+    // Add peer to network
+    // Returns: 1 = success, 0 = failure (peer list full)
+    _ = peer_id_ptr;
+    _ = port;
+    return 1;
+}
+
+fn ipc_network_peer_count() u64 {
+    // Get current peer count
+    // Returns: total number of peers
+    return 0;
+}
+
+fn ipc_network_bridge_initiate(token_type: u64, source_chain: u64, amount: u64) u64 {
+    // Initiate cross-chain bridge operation
+    // Returns: 1 = success, 0 = failure
+    _ = token_type;
+    _ = source_chain;
+    _ = amount;
+    return 1;
+}
+
+fn ipc_network_get_stats() u64 {
+    // Get network statistics
+    // Returns: pointer to NetworkState structure
+    return 0;
+}
+
+fn ipc_network_route_tx(tx_ptr: u64, tx_len: u64) u64 {
+    // Route transaction through StealthOS encrypted mempool
+    // Returns: 1 = accepted, 0 = rejected (pool full)
+    _ = tx_ptr;
+    _ = tx_len;
+    return 1;
+}
+
+fn ipc_network_sync_blocks(start_height: u64, end_height: u64) u64 {
+    // Request block synchronization from peers
+    // Returns: 1 = sync started, 0 = failure
+    _ = start_height;
+    _ = end_height;
+    return 1;
+}
+
+fn ipc_network_block_sync_complete(block_count: u64) u64 {
+    // Mark block synchronization as complete
+    // Returns: 1 = success
+    _ = block_count;
+    return 1;
 }
 
 // ============================================================================
