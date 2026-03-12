@@ -27,7 +27,7 @@ pub const WalletOpcodes = struct {
         );
         _ = wallet;
         
-        var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+        const hasher = std.crypto.hash.sha2.Sha256.init(.{});
         hasher.update(mnemonic[0..]);
         var hash: [32]u8 = undefined;
         hasher.final(&hash);
@@ -87,7 +87,7 @@ pub const WalletOpcodes = struct {
         var tx_hash: [32]u8 = undefined;
         @memset(&tx_hash, 0);
 
-        var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+        const hasher = std.crypto.hash.sha2.Sha256.init(.{});
         hasher.update(&to_address);
         var amount_bytes: [16]u8 = undefined;
         var i: u7 = 0;

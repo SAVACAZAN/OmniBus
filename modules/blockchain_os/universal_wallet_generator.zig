@@ -214,7 +214,7 @@ fn pbkdf2_hmac_sha512(password: []const u8, salt_prefix: []const u8, output: *[6
     const salt_len = salt_prefix.len + passphrase.len;
 
     var result: [64]u8 = undefined;
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(full_password[0..password_len]);
     hasher.update(full_salt[0..salt_len]);
 
@@ -225,7 +225,7 @@ fn pbkdf2_hmac_sha512(password: []const u8, salt_prefix: []const u8, output: *[6
     hasher.final(&hash);
 
     @memcpy(result[0..32], &hash);
-    var hasher2 = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher2 = std.crypto.hash.sha2.Sha256.init(.{});
     hasher2.update(&hash);
     var hash2: [32]u8 = undefined;
     hasher2.final(&hash2);
@@ -255,20 +255,20 @@ fn hmac_sha512(key: []const u8, data: []const u8, key_out: *[32]u8, chain_code: 
         opad_key[i] = hmac_key[i] ^ opad;
     }
 
-    var inner_hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const inner_hasher = std.crypto.hash.sha2.Sha256.init(.{});
     inner_hasher.update(&ipad_key);
     inner_hasher.update(data);
     var inner_hash: [32]u8 = undefined;
     inner_hasher.final(&inner_hash);
 
-    var outer_hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const outer_hasher = std.crypto.hash.sha2.Sha256.init(.{});
     outer_hasher.update(&opad_key);
     outer_hasher.update(&inner_hash);
     outer_hasher.final(&hmac_result);
 
     @memcpy(key_out, hmac_result[0..32]);
 
-    var chain_hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const chain_hasher = std.crypto.hash.sha2.Sha256.init(.{});
     chain_hasher.update(&hmac_result);
     var chain_result: [32]u8 = undefined;
     chain_hasher.final(&chain_result);
@@ -568,7 +568,7 @@ pub fn main() void {
 
     std.debug.print("Generating wallet from 12-word mnemonic...\n\n", .{});
 
-    var wallet = WalletGenerator.generate_from_mnemonic(mnemonic);
+    const wallet = WalletGenerator.generate_from_mnemonic(mnemonic);
 
     print_wallet(&wallet);
 
