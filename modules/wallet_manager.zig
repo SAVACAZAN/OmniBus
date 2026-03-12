@@ -131,7 +131,7 @@ pub fn create_wallet_recoverable(seed: [32]u8) void {
     var frag1 = fragment_1(&master_key);
     var frag2 = fragment_2(&master_key);
     var frag3_xor: [32]u8 = undefined;
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         frag3_xor[i] = master_key[i] ^ frag1[i] ^ frag2[i];
     }
 
@@ -355,7 +355,7 @@ pub fn recover_wallet_from_vault(vault_id: [32]u8, vault_proof: [256]u8) bool {
 
     // Step 1: Find vault by ID
     var vault_index: usize = 999;
-    for (var i = 0; i < 4; i += 1) {
+    for (0..4) |i| {
         if (compare_hashes(&vault_id, &wallet.vaults[i].vault_id, 32)) {
             vault_index = i;
             break;
@@ -427,7 +427,7 @@ fn generate_chain_addresses(chain: u8, master_key: [*]const u8) void {
     var wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
 
     // Derive first 10 addresses
-    for (var i = 0; i < 10; i += 1) {
+    for (0..10) |i| {
         var derived_key = bip32_derive_indexed(master_key, chain, i);
         var address: [48]u8 = undefined;
 
@@ -488,14 +488,14 @@ fn validate_bip39_seed(seed: [*]const u8) bool {
 }
 
 fn compare_hashes(h1: [*]const u8, h2: [*]const u8, len: usize) bool {
-    for (var i = 0; i < len; i += 1) {
+    for (0..len) |i| {
         if (h1[i] != h2[i]) return false;
     }
     return true;
 }
 
 fn compare_addresses(addr1: [*]const u8, addr2: [*]const u8, len: usize) bool {
-    for (var i = 0; i < len; i += 1) {
+    for (0..len) |i| {
         if (addr1[i] != addr2[i]) return false;
     }
     return true;

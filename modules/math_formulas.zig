@@ -13,7 +13,7 @@ pub fn formula_1_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
     var derived = sha256_with_suffix(&seed, "formula_1");
     var result: [32]u8 = undefined;
 
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         result[i] = key[i] ^ derived[i];
     }
 
@@ -24,7 +24,7 @@ pub fn formula_1_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
     var derived = sha256_with_suffix(&seed, "formula_1");
     var result: [32]u8 = undefined;
 
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         result[i] = encrypted[i] ^ derived[i];
     }
 
@@ -42,7 +42,7 @@ pub fn formula_2_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
     var derived = hmac_sha256_timestamp(&seed, timestamp);
     var result: [32]u8 = undefined;
 
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         result[i] = key[i] ^ derived[i];
     }
 
@@ -54,7 +54,7 @@ pub fn formula_2_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
     var derived = hmac_sha256_timestamp(&seed, timestamp);
     var result: [32]u8 = undefined;
 
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         result[i] = encrypted[i] ^ derived[i];
     }
 
@@ -72,7 +72,7 @@ pub fn formula_3_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
     var derived = kdf_from_privkey(&privkey, "formula_3");
     var result: [32]u8 = undefined;
 
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         result[i] = key[i] ^ derived[i];
     }
 
@@ -84,7 +84,7 @@ pub fn formula_3_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
     var derived = kdf_from_privkey(&privkey, "formula_3");
     var result: [32]u8 = undefined;
 
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         result[i] = encrypted[i] ^ derived[i];
     }
 
@@ -106,7 +106,7 @@ pub fn formula_4_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
     var result: [32]u8 = undefined;
 
     // XOR all three hashes
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         result[i] = key[i] ^ h1[i] ^ h2[i] ^ h3[i];
     }
 
@@ -120,7 +120,7 @@ pub fn formula_4_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
     var result: [32]u8 = undefined;
 
     // XOR all three hashes
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         result[i] = encrypted[i] ^ h1[i] ^ h2[i] ^ h3[i];
     }
 

@@ -95,7 +95,7 @@ pub fn ethereum_validate_address(address: [48]u8) bool {
     if (address[0] != '0' or address[1] != 'x') return false;
 
     // Should be 42 characters: 0x + 40 hex chars
-    for (var i = 0; i < 40; i += 1) {
+    for (0..40) |i| {
         var c = address[i + 2];
         if (!is_hex_char(c)) return false;
     }
@@ -175,7 +175,7 @@ fn bech32_encode(hrp: [*:0]const u8, data: [*]const u8, data_len: usize) [48]u8 
     // Concatenate
     @memcpy(address[hrp_len + 1 .. hrp_len + 1 + base32_data.len], &base32_data);
     var final_len = hrp_len + 1 + base32_data.len;
-    for (var i = 0; i < 6; i += 1) {
+    for (0..6) |i| {
         address[final_len + i] = bech32_charset[checksum[i]];
     }
 
@@ -215,7 +215,7 @@ fn base58_encode(data: [*]const u8, data_len: usize) [48]u8 {
     // Placeholder: convert bytes to Base58 alphabet
     const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-    for (var i = 0; i < data_len; i += 1) {
+    for (0..data_len) |i| {
         result[i * 2] = alphabet[data[i] % 58];
         result[i * 2 + 1] = alphabet[(data[i] / 58) % 58];
     }
@@ -258,7 +258,7 @@ fn base32_encode(data: [*]const u8, data_len: usize) [64]u8 {
     var bits_in_buffer: u32 = 0;
     var result_idx: usize = 0;
 
-    for (var i = 0; i < data_len; i += 1) {
+    for (0..data_len) |i| {
         bit_buffer = (bit_buffer << 8) | data[i];
         bits_in_buffer += 8;
 
@@ -317,7 +317,7 @@ fn eip55_encode(address: [20]u8, checksum_hash: [32]u8) [48]u8 {
     result[0] = '0';
     result[1] = 'x';
 
-    for (var i = 0; i < 20; i += 1) {
+    for (0..20) |i| {
         var hex_nibbles = [_]u8{
             (address[i] >> 4) & 0x0F,
             address[i] & 0x0F,

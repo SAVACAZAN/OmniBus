@@ -40,7 +40,7 @@ pub fn sha256(data: [*]const u8, len: usize) [32]u8 {
         @memcpy(message[0..len], data[0..len]);
         message[len] = 0x80;
         // Set message length in bits (big-endian, last 8 bytes)
-        var bit_len = (@as(u64, len) * 8);
+        const bit_len = (@as(u64, len) * 8);
         var i: usize = 56;
         while (i < 64) : (i += 1) {
             message[i + 7] = @as(u8, @truncate(bit_len >> (8 * (7 - (i - 56)))));
@@ -54,8 +54,8 @@ pub fn sha256(data: [*]const u8, len: usize) [32]u8 {
         var w = [_]u32{0} ** 64;
 
         // Break chunk into 16 32-bit big-endian words
-        for (var i = 0; i < 16; i += 1) {
-            var idx = block_idx + (i * 4);
+        for (0..16) |i| {
+            const idx = block_idx + (i * 4);
             w[i] = (@as(u32, message[idx]) << 24) |
                    (@as(u32, message[idx + 1]) << 16) |
                    (@as(u32, message[idx + 2]) << 8) |
@@ -63,9 +63,9 @@ pub fn sha256(data: [*]const u8, len: usize) [32]u8 {
         }
 
         // Extend 16 32-bit words into 64 32-bit words
-        for (var i = 16; i < 64; i += 1) {
-            var s0 = rightrotate(w[i - 15], 7) ^ rightrotate(w[i - 15], 18) ^ (w[i - 15] >> 3);
-            var s1 = rightrotate(w[i - 2], 17) ^ rightrotate(w[i - 2], 19) ^ (w[i - 2] >> 10);
+        for (16..64) |i| {
+            const s0 = rightrotate(w[i - 15], 7) ^ rightrotate(w[i - 15], 18) ^ (w[i - 15] >> 3);
+            const s1 = rightrotate(w[i - 2], 17) ^ rightrotate(w[i - 2], 19) ^ (w[i - 2] >> 10);
             w[i] = w[i - 16] +% s0 +% w[i - 7] +% s1;
         }
 
@@ -80,13 +80,13 @@ pub fn sha256(data: [*]const u8, len: usize) [32]u8 {
         var h = h7;
 
         // Main loop
-        for (var i = 0; i < 64; i += 1) {
-            var S1 = rightrotate(e, 6) ^ rightrotate(e, 11) ^ rightrotate(e, 25);
-            var ch = (e & f) ^ ((~e) & g);
-            var temp1 = h +% S1 +% ch +% K[i] +% w[i];
-            var S0 = rightrotate(a, 2) ^ rightrotate(a, 13) ^ rightrotate(a, 22);
-            var maj = (a & b) ^ (a & c) ^ (b & c);
-            var temp2 = S0 +% maj;
+        for (0..64) |i| {
+            const S1 = rightrotate(e, 6) ^ rightrotate(e, 11) ^ rightrotate(e, 25);
+            const ch = (e & f) ^ ((~e) & g);
+            const temp1 = h +% S1 +% ch +% K[i] +% w[i];
+            const S0 = rightrotate(a, 2) ^ rightrotate(a, 13) ^ rightrotate(a, 22);
+            const maj = (a & b) ^ (a & c) ^ (b & c);
+            const temp2 = S0 +% maj;
 
             h = g;
             g = f;
@@ -132,7 +132,7 @@ pub fn hmac_sha256(key: [32]u8, message: [*]const u8, msg_len: usize) [32]u8 {
     var opad = [_]u8{0x5c} ** 64;
 
     // XOR key with pads
-    for (var i = 0; i < 32; i += 1) {
+    for (0..32) |i| {
         ipad[i] ^= key[i];
         opad[i] ^= key[i];
     }
@@ -149,13 +149,13 @@ pub fn hmac_sha256(key: [32]u8, message: [*]const u8, msg_len: usize) [32]u8 {
     @memcpy(outer_msg[0..64], &opad);
     @memcpy(outer_msg[64..96], &inner_hash);
 
-    var result = sha256(&outer_msg, 96);
+    const result = sha256(&outer_msg, 96);
     return result;
 }
 
 pub fn hmac_sha256_with_timestamp(key: [32]u8, timestamp: u64) [32]u8 {
     var timestamp_bytes: [8]u8 = undefined;
-    for (var i = 0; i < 8; i += 1) {
+    for (0..8) |i| {
         timestamp_bytes[i] = @as(u8, @truncate(timestamp >> (8 * (7 - i))));
     }
     return hmac_sha256(key, &timestamp_bytes, 8);
@@ -189,6 +189,7 @@ pub fn hkdf_extract(salt: [32]u8, ikm: [32]u8) [32]u8 {
 }
 
 pub fn hkdf_expand(prk: [32]u8, info: [*:0]const u8, info_len: usize, length: usize) [32]u8 {
+    _ = length;  // Expand length not used (always 32 bytes)
     // T(1) = HMAC-SHA256(PRK, info || 0x01)
     var message = [_]u8{0} ** 64;
     @memcpy(message[0..info_len], info[0..info_len]);
@@ -197,7 +198,7 @@ pub fn hkdf_expand(prk: [32]u8, info: [*:0]const u8, info_len: usize, length: us
 }
 
 pub fn hkdf(salt: [32]u8, ikm: [32]u8, info: [*:0]const u8, info_len: usize) [32]u8 {
-    var prk = hkdf_extract(salt, ikm);
+    const prk = hkdf_extract(salt, ikm);
     return hkdf_expand(prk, info, info_len, 32);
 }
 
@@ -225,6 +226,9 @@ pub fn ecdsa_sign(message_hash: [32]u8, privkey: [32]u8) [64]u8 {
 }
 
 pub fn ecdsa_verify(message_hash: [32]u8, pubkey: [33]u8, signature: [64]u8) bool {
+    _ = message_hash;  // Stub: would verify signature
+    _ = pubkey;        // Stub: would verify point on curve
+    _ = signature;     // Stub: would verify signature validity
     // Placeholder: ECDSA verification
     // Always return true for now (would verify point is on curve)
     return true;
@@ -259,8 +263,8 @@ pub fn bytes_to_u32(bytes: [4]u8) u32 {
 // ============================================================================
 
 pub fn xor_bytes(a: [*]const u8, b: [*]const u8, len: usize) []u8 {
-    var result = [_]u8{0} ** 256; // Max size
-    for (var i = 0; i < len; i += 1) {
+    const result = [_]u8{0} ** 256; // Max size
+    for (0..len) |i| {
         result[i] = a[i] ^ b[i];
     }
     return result[0..len];
@@ -274,12 +278,12 @@ pub fn secure_zero(buffer: [*]u8, len: usize) void {
     // Secure memory clearing (prevents compiler optimization)
     var i: usize = 0;
     while (i < len) : (i += 1) {
-        @volatileStore(@as(*volatile u8, @ptrCast(buffer + i)), 0);
+        @as(*volatile u8, @ptrCast(buffer + i)).* = 0;
     }
 }
 
 pub fn compare_bytes(a: [*]const u8, b: [*]const u8, len: usize) bool {
-    for (var i = 0; i < len; i += 1) {
+    for (0..len) |i| {
         if (a[i] != b[i]) return false;
     }
     return true;

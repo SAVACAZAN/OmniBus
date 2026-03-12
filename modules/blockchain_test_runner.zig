@@ -106,7 +106,7 @@ fn mine_and_validate_block(
     }
 
     // Execute transactions
-    for (var i = 0; i < block.tx_count; i += 1) {
+    for (0..block.tx_count) |i| {
         if (!execute_transaction(&block.transactions[i], ledger)) {
             return false;
         }
@@ -187,7 +187,7 @@ fn validate_block(block: *const BlockWithTxs, ledger: *const BlockchainLedger) b
     if (block.tx_count > 1024) return false;
 
     // All transactions must be valid
-    for (var i = 0; i < block.tx_count; i += 1) {
+    for (0..block.tx_count) |i| {
         if (!validate_transaction(&block.transactions[i], ledger)) {
             return false;
         }
@@ -200,7 +200,7 @@ fn validate_transaction(tx: *const Transaction, ledger: *const BlockchainLedger)
     // Find sender
     var sender_idx: usize = 0;
     var found = false;
-    for (var i = 0; i < ledger.account_count; i += 1) {
+    for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &tx.from_addr)) {
             sender_idx = i;
             found = true;
@@ -227,7 +227,7 @@ fn validate_transaction(tx: *const Transaction, ledger: *const BlockchainLedger)
 fn execute_transaction(tx: *const Transaction, ledger: *BlockchainLedger) bool {
     // Find sender
     var sender_idx: usize = 0;
-    for (var i = 0; i < ledger.account_count; i += 1) {
+    for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &tx.from_addr)) {
             sender_idx = i;
             break;
@@ -243,7 +243,7 @@ fn execute_transaction(tx: *const Transaction, ledger: *BlockchainLedger) bool {
     // Find/create recipient
     var recipient_idx: usize = 0;
     var found = false;
-    for (var i = 0; i < ledger.account_count; i += 1) {
+    for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &tx.to_addr)) {
             recipient_idx = i;
             found = true;
@@ -292,7 +292,7 @@ fn adjust_difficulty(height: u32) u32 {
 
 fn estimate_block_gas(block: *const BlockWithTxs) u64 {
     var total: u64 = 0;
-    for (var i = 0; i < block.tx_count; i += 1) {
+    for (0..block.tx_count) |i| {
         total +%= 21000; // Base gas per tx
     }
     return total;
@@ -300,7 +300,7 @@ fn estimate_block_gas(block: *const BlockWithTxs) u64 {
 
 fn estimate_block_fees(block: *const BlockWithTxs) u64 {
     var total: u64 = 0;
-    for (var i = 0; i < block.tx_count; i += 1) {
+    for (0..block.tx_count) |i| {
         total +%= block.transactions[i].fee;
     }
     return total;
@@ -345,7 +345,7 @@ fn print_test_results(results: *const TestResults, config: TestConfig) void {
 
     if (results.error_count > 0) {
         print("\n⚠️  Errors ({d}):\n", .{results.error_count});
-        for (var i = 0; i < results.error_count and i < 10; i += 1) {
+        for (0..@min(results.error_count, 10)) |i| {
             print("   Error {d}: {s}\n", .{ i + 1, &results.errors[i] });
         }
     }
@@ -416,7 +416,7 @@ fn initialize_ledger(num_accounts: u32, initial_balance: u64) BlockchainLedger {
     var ledger: BlockchainLedger = undefined;
 
     ledger.account_count = num_accounts;
-    for (var i = 0; i < num_accounts; i += 1) {
+    for (0..num_accounts) |i| {
         var addr: [64]u8 = undefined;
         @memset(&addr, 0);
 

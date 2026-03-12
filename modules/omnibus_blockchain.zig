@@ -105,7 +105,7 @@ pub const OmnibusPQSignature = struct {
 
 pub fn omnibus_sign_block(block: *OmnibusBlock, privkeys: [4]anytype) void {
     // Sign the block header with all 4 PQ domain keys
-    for (var i = 0; i < 4; i += 1) {
+    for (0..4) |i| {
         var msg = block.header;
 
         // Sign with domain i's private key
@@ -171,7 +171,7 @@ fn sphincs_sign_block(header: anytype, privkey: anytype) OmnibusPQSignature {
 
 pub fn omnibus_verify_block(block: OmnibusBlock, pubkeys: [4]anytype) bool {
     // 1. Verify all 4 PQ signatures match
-    for (var i = 0; i < 4; i += 1) {
+    for (0..4) |i| {
         if (!omnibus_verify_pq_signature(&block.pq_signatures[i], &block.header, pubkeys[i])) {
             return false;
         }

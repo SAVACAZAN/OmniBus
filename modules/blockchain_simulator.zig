@@ -162,7 +162,7 @@ pub fn create_block(
 
     // Copy transactions
     @memset(&block.transactions, undefined);
-    for (var i = 0; i < tx_count; i += 1) {
+    for (0..tx_count) |i| {
         block.transactions[i] = transactions[i];
     }
     block.tx_count = tx_count;
@@ -253,7 +253,7 @@ pub fn validate_block(
     }
 
     // 3. Validate transactions
-    for (var i = 0; i < block.tx_count; i += 1) {
+    for (0..block.tx_count) |i| {
         if (!validate_transaction(&block.transactions[i], ledger)) {
             return false;
         }
@@ -272,7 +272,7 @@ pub fn validate_block(
 
     // 6. Validate 3-of-4 PQ signatures (simplified: check at least one is non-empty)
     var sig_count: u8 = 0;
-    for (var i = 0; i < 4; i += 1) {
+    for (0..4) |i| {
         if (block.pq_signatures[i].sig_len > 0) {
             sig_count += 1;
         }
@@ -290,7 +290,7 @@ pub fn validate_transaction(
 ) bool {
     // 1. Check sender exists in ledger
     var sender_account: ?*const LedgerAccount = null;
-    for (var i = 0; i < ledger.account_count; i += 1) {
+    for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &tx.from_addr)) {
             sender_account = &ledger.accounts[i];
             break;
@@ -332,7 +332,7 @@ pub fn execute_transaction(
     // 1. Find sender account
     var sender_idx: usize = 0;
     var found = false;
-    for (var i = 0; i < ledger.account_count; i += 1) {
+    for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &tx.from_addr)) {
             sender_idx = i;
             found = true;
@@ -354,7 +354,7 @@ pub fn execute_transaction(
     // 4. Find or create recipient account
     var recipient_idx: usize = 0;
     found = false;
-    for (var i = 0; i < ledger.account_count; i += 1) {
+    for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &tx.to_addr)) {
             recipient_idx = i;
             found = true;
@@ -397,7 +397,7 @@ pub fn commit_block(
     }
 
     // 2. Execute all transactions
-    for (var i = 0; i < block.tx_count; i += 1) {
+    for (0..block.tx_count) |i| {
         if (!execute_transaction(&block.transactions[i], ledger)) {
             return false;
         }
@@ -552,7 +552,7 @@ pub fn add_account(
 }
 
 pub fn get_account_balance(ledger: *const BlockchainLedger, address: [64]u8) u64 {
-    for (var i = 0; i < ledger.account_count; i += 1) {
+    for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &address)) {
             return ledger.accounts[i].balance;
         }
