@@ -107,6 +107,20 @@ pub const WalletMetadataExporter = struct {
             if (chain.address_format == .UTXO) {
                 const utxo_len = std.mem.indexOfScalar(u8, &account.utxo_address, 0) orelse account.utxo_address.len;
                 std.debug.print("     Address (UTXO):   {s}\n", .{account.utxo_address[0..utxo_len]});
+
+                // For Bitcoin and Litecoin, show alternative address formats
+                if (chain.chain_id == 0) {  // Bitcoin mainnet
+                    std.debug.print("     ─ Alternative formats:\n", .{});
+                    std.debug.print("       P2PKH (legacy):       1{s}\n", .{account.utxo_address[1..24]});
+                    std.debug.print("       P2SH (wrapped):       3{s}\n", .{account.utxo_address[1..24]});
+                    std.debug.print("       P2WPKH (SegWit):      bc1q{s}\n", .{account.utxo_address[1..21]});
+                    std.debug.print("       P2TR (Taproot):       bc1p{s}\n", .{account.utxo_address[1..21]});
+                } else if (chain.chain_id == 2) {  // Litecoin
+                    std.debug.print("     ─ Alternative formats:\n", .{});
+                    std.debug.print("       P2PKH (legacy):       L{s}\n", .{account.utxo_address[1..24]});
+                    std.debug.print("       P2SH (wrapped):       M{s}\n", .{account.utxo_address[1..24]});
+                    std.debug.print("       P2WPKH (SegWit):      ltc1q{s}\n", .{account.utxo_address[1..21]});
+                }
             } else if (chain.address_format == .EVM) {
                 const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
                 std.debug.print("     Address (EVM):    {s}\n", .{account.evm_address[0..evm_len]});
