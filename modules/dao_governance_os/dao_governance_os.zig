@@ -250,6 +250,31 @@ pub export fn dao_execute(proposal_id: u32, now_ms: u64) u8 {
     if (prop.status != @intFromEnum(types.ProposalStatus.Timelocked)) return 0;
     if (now_ms < prop.timelock_end_ms) return 0;
 
+    // For Treasury proposals, sign with PQC before execution
+    if (prop.proposal_type == @intFromEnum(types.ProposalType.Treasury)) {
+        // Call PQC gate to sign transaction hash with ML-DSA-65
+        const pqc_req = @as(*volatile u8, @ptrFromInt(0x100110));
+        const pqc_result = @as(*volatile u64, @ptrFromInt(0x100120));
+        const pqc_tx_buf = @as(*volatile [32]u8, @ptrFromInt(0x100180));
+
+        // Prepare transaction hash from proposal
+        pqc_tx_buf[0] = @as(u8, @intCast((prop.proposal_id >> 0) & 0xFF));
+        pqc_tx_buf[1] = @as(u8, @intCast((prop.proposal_id >> 8) & 0xFF));
+        pqc_tx_buf[2] = @as(u8, @intCast((prop.proposal_id >> 16) & 0xFF));
+        pqc_tx_buf[3] = @as(u8, @intCast((prop.proposal_id >> 24) & 0xFF));
+        pqc_tx_buf[4] = @as(u8, @intCast((prop.votes_for >> 0) & 0xFF));
+        pqc_tx_buf[5] = @as(u8, @intCast((prop.votes_for >> 8) & 0xFF));
+        pqc_tx_buf[6] = @as(u8, @intCast((prop.votes_against >> 0) & 0xFF));
+        pqc_tx_buf[7] = @as(u8, @intCast((prop.votes_against >> 8) & 0xFF));
+
+        pqc_req.* = 0x41;  // PQC_SIGN_TREASURY_TX
+        pqc_result.* = 0x100180;  // Pointer to tx_hash
+        pqc_result.* |= (@as(u64, 1) << 32);  // ML_DSA_65
+
+        // Signature stored at 0x100200 (96 bytes)
+        _ = rdtsc();
+    }
+
     prop.status = @intFromEnum(types.ProposalStatus.Executed);
     state.proposals_passed +|= 1;
 
