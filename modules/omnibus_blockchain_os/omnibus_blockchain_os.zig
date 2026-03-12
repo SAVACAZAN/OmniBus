@@ -17,6 +17,7 @@ const distribution = @import("token_distribution.zig");
 const wallet = @import("omnibus_wallet.zig");
 const blockchain = @import("omnibus_blockchain.zig");
 const simulator = @import("blockchain_simulator.zig");
+const miner_rewards = @import("miner_rewards.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -148,7 +149,8 @@ pub export fn run_blockchain_cycle() void {
 // ============================================================================
 
 /// IPC dispatcher for blockchain operations
-/// Opcodes 0x70–0x7F reserved for OmniBusBlockchainOS
+/// Opcodes 0x70–0x7F: BlockchainOS (tokens, distribution, wallet, chain)
+/// Opcodes 0x80–0x8F: MinerRewards (GPU/ASIC mining rewards)
 pub export fn ipc_dispatch(opcode: u8, arg0: u64, arg1: u64, arg2: u64) u64 {
     return switch (opcode) {
         // Token operations (0x70–0x73)
@@ -174,6 +176,14 @@ pub export fn ipc_dispatch(opcode: u8, arg0: u64, arg1: u64, arg2: u64) u64 {
         0x7D => ipc_account_create(arg0),                      // create_account(address) → u64 success
         0x7E => ipc_balance_query(arg0),                       // query_balance(address) → u64
         0x7F => ipc_stats_get(),                               // get_blockchain_stats() → u64 stat_ptr
+
+        // Miner Rewards operations (0x80–0x8F)
+        0x80 => ipc_miner_register(arg0, arg1, arg2),          // register_miner(addr, type, hashrate) → u64 success
+        0x81 => ipc_miner_award_block(arg0, arg1, arg2),       // award_block(miner, block_height, reward) → u64 success
+        0x82 => ipc_miner_claim_rewards(arg0),                 // claim_rewards(miner_address) → u64 amount
+        0x83 => ipc_miner_get_earnings(arg0),                  // get_earnings(miner_address) → u64 total_omni
+        0x84 => ipc_miner_adjust_difficulty(arg0),             // adjust_difficulty(block_height) → u64 new_difficulty
+        0x85 => ipc_miner_global_stats(),                      // get_global_stats() → u64 stat_ptr
 
         else => 0xFFFFFFFFFFFFFFFF, // Invalid opcode
     };
@@ -312,6 +322,57 @@ fn ipc_stats_get() u64 {
     // Get blockchain statistics
     // Returns: pointer to BlockchainOSState structure
     return BLOCKCHAIN_OS_BASE;
+}
+
+// ============================================================================
+// IPC: MINER REWARDS OPERATIONS
+// ============================================================================
+
+fn ipc_miner_register(address: u64, miner_type: u64, hashrate: u64) u64 {
+    // Register GPU/ASIC miner for reward tracking
+    // Returns: 1 = success, 0 = failure (registry full)
+    _ = address;
+    _ = miner_type;
+    _ = hashrate;
+    return 1;
+}
+
+fn ipc_miner_award_block(miner_address: u64, block_height: u64, reward_amount: u64) u64 {
+    // Award OMNI to miner for finding valid block
+    // Returns: 1 = success, 0 = failure
+    _ = miner_address;
+    _ = block_height;
+    _ = reward_amount;
+    return 1;
+}
+
+fn ipc_miner_claim_rewards(miner_address: u64) u64 {
+    // Claim accumulated mining rewards
+    // Returns: total OMNI earned and ready to claim
+    _ = miner_address;
+    return 0;
+}
+
+fn ipc_miner_get_earnings(miner_address: u64) u64 {
+    // Get total OMNI earned by miner so far
+    // Returns: total OMNI in smallest units
+    _ = miner_address;
+    return 0;
+}
+
+fn ipc_miner_adjust_difficulty(block_height: u64) u64 {
+    // Adjust mining difficulty based on block production rate
+    // Called every difficulty_adjustment_period blocks
+    // Returns: new difficulty target
+    _ = block_height;
+    return 1;
+}
+
+fn ipc_miner_global_stats() u64 {
+    // Get global mining statistics
+    // Returns: pointer to MinerRewardsState structure
+    // Note: Would need to store at fixed memory address for this to work
+    return 0;
 }
 
 // ============================================================================
