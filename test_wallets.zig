@@ -5,13 +5,25 @@ const std = @import("std");
 const WalletGenerator = @import("universal_wallet_generator.zig").WalletGenerator;
 const SUPPORTED_CHAINS = @import("universal_wallet_generator.zig").SUPPORTED_CHAINS;
 
-pub fn main() void {
+fn format_hex(bytes: []const u8, buf: []u8) []u8 {
+    const hex_chars = "0123456789abcdef";
+    var i: usize = 0;
+    for (bytes) |b| {
+        if (i + 1 >= buf.len) break;
+        buf[i] = hex_chars[b >> 4];
+        buf[i + 1] = hex_chars[b & 0xf];
+        i += 2;
+    }
+    return buf[0..i];
+}
+
+pub fn main() !void {
     std.debug.print(
         \\
         \\╔════════════════════════════════════════════════════════════╗
-        \\║  OmniBus Wallet Generation Test - Real Cryptography      ║
+        \\║  OmniBus Wallet Generation Test - Full Metadata Export    ║
         \\║  Bitcoin, Ethereum, Solana, EGLD +                       ║
-        \\║  4 Post-Quantum OmniBus Domains                          ║
+        \\║  4 Post-Quantum OmniBus Domains (with Private Keys)      ║
         \\╚════════════════════════════════════════════════════════════╝
         \\
         , .{});
@@ -33,16 +45,26 @@ pub fn main() void {
     {
         const account = &wallet.chain_accounts[3];  // Bitcoin
         std.debug.print("🪙 Bitcoin (P2PKH - UTXO)\n", .{});
-        std.debug.print("   Path: m/44'/0'/0'/0/0\n", .{});
-        std.debug.print("   Post-Quantum: ", .{});
+        std.debug.print("   Chain ID: 0\n", .{});
+
         const pq_len = std.mem.indexOfScalar(u8, &account.pq_address, 0) orelse account.pq_address.len;
-        std.debug.print("{s}\n", .{account.pq_address[0..pq_len]});
-        std.debug.print("   EVM Format:   ", .{});
+        std.debug.print("   Post-Quantum Address: {s}\n", .{account.pq_address[0..pq_len]});
+
         const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
-        std.debug.print("{s}\n", .{account.evm_address[0..evm_len]});
-        std.debug.print("   UTXO Address: ", .{});
+        std.debug.print("   EVM Format:          {s}\n", .{account.evm_address[0..evm_len]});
+
         const utxo_len = std.mem.indexOfScalar(u8, &account.utxo_address, 0) orelse account.utxo_address.len;
-        std.debug.print("{s}\n", .{account.utxo_address[0..utxo_len]});
+        std.debug.print("   UTXO Address:        {s}\n", .{account.utxo_address[0..utxo_len]});
+
+        var hex_buf: [64]u8 = undefined;
+        const priv_hex = format_hex(account.utxo_private_key[0..], &hex_buf);
+        std.debug.print("   Private Key (hex):   {s}\n", .{priv_hex});
+
+        var pub_hex: [66]u8 = undefined;
+        const pub_hex_str = format_hex(account.utxo_public_key[0..], &pub_hex);
+        std.debug.print("   Public Key (comp):   {s}\n", .{pub_hex_str});
+
+        std.debug.print("   Derivation Path:     m/44'/0'/0'/0/0\n", .{});
         std.debug.print("   Encoding: Secp256k1 + P2PKH\n", .{});
         std.debug.print("   Crypto: PBKDF2 → HMAC-SHA256 → SHA256+RIPEMD160\n\n", .{});
     }
@@ -51,13 +73,23 @@ pub fn main() void {
     {
         const account = &wallet.chain_accounts[4];  // Ethereum
         std.debug.print("🪙 Ethereum (EOA - EVM)\n", .{});
-        std.debug.print("   Path: m/44'/60'/0'/0/0\n", .{});
-        std.debug.print("   Post-Quantum: ", .{});
+        std.debug.print("   Chain ID: 1\n", .{});
+
         const pq_len = std.mem.indexOfScalar(u8, &account.pq_address, 0) orelse account.pq_address.len;
-        std.debug.print("{s}\n", .{account.pq_address[0..pq_len]});
-        std.debug.print("   EVM Address:  ", .{});
+        std.debug.print("   Post-Quantum Address: {s}\n", .{account.pq_address[0..pq_len]});
+
         const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
-        std.debug.print("{s}\n", .{account.evm_address[0..evm_len]});
+        std.debug.print("   EVM Address:          {s}\n", .{account.evm_address[0..evm_len]});
+
+        var hex_buf: [64]u8 = undefined;
+        const priv_hex = format_hex(account.evm_private_key[0..], &hex_buf);
+        std.debug.print("   Private Key (hex):    {s}\n", .{priv_hex});
+
+        var pub_hex: [130]u8 = undefined;
+        const pub_hex_str = format_hex(account.evm_public_key[0..], &pub_hex);
+        std.debug.print("   Public Key (uncomp):  {s}\n", .{pub_hex_str});
+
+        std.debug.print("   Derivation Path:      m/44'/60'/0'/0/0\n", .{});
         std.debug.print("   Encoding: Secp256k1 + Keccak256 (approx SHA256)\n", .{});
         std.debug.print("   Crypto: PBKDF2 → HMAC-SHA256 → Direct encoding\n\n", .{});
     }
@@ -214,4 +246,55 @@ pub fn main() void {
     std.debug.print("  $ omnibus-cli vote --proposal 123 --address OMNI-2c3d-RENT\n\n", .{});
 
     std.debug.print("✅ Test Suite Complete\n\n", .{});
+
+    // Export metadata to JSON file
+    std.debug.print("💾 Exporting wallet metadata to wallet_metadata.json...\n\n", .{});
+
+    var json_buffer: [16384]u8 = undefined;
+    var json_offset: usize = 0;
+
+    const json_header = "{\n  \"mnemonic\": \"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about\",\n  \"chains\": [\n";
+    @memcpy(json_buffer[json_offset..][0..json_header.len], json_header);
+    json_offset += json_header.len;
+
+    // Add Bitcoin metadata
+    {
+        const account = &wallet.chain_accounts[3];
+        var hex_buf: [64]u8 = undefined;
+        const priv_hex = format_hex(account.utxo_private_key[0..], &hex_buf);
+        var pub_hex: [66]u8 = undefined;
+        const pub_hex_str = format_hex(account.utxo_public_key[0..], &pub_hex);
+
+        const utxo_len = std.mem.indexOfScalar(u8, &account.utxo_address, 0) orelse account.utxo_address.len;
+        const entry = std.fmt.bufPrint(json_buffer[json_offset..],
+            "    {{\n      \"chain\": \"Bitcoin\",\n      \"chain_id\": 0,\n      \"address\": \"{s}\",\n      \"private_key_hex\": \"{s}\",\n      \"public_key_hex\": \"{s}\",\n      \"derivation_path\": \"m/44'/0'/0'/0/0\",\n      \"encoding\": \"P2PKH\",\n      \"crypto\": \"PBKDF2-HMAC-SHA256\"\n    }},\n",
+            .{account.utxo_address[0..utxo_len], priv_hex, pub_hex_str}) catch "";
+        json_offset += entry.len;
+    }
+
+    // Add Ethereum metadata
+    {
+        const account = &wallet.chain_accounts[4];
+        var hex_buf: [64]u8 = undefined;
+        const priv_hex = format_hex(account.evm_private_key[0..], &hex_buf);
+        var pub_hex: [130]u8 = undefined;
+        const pub_hex_str = format_hex(account.evm_public_key[0..], &pub_hex);
+
+        const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
+        const entry = std.fmt.bufPrint(json_buffer[json_offset..],
+            "    {{\n      \"chain\": \"Ethereum\",\n      \"chain_id\": 1,\n      \"address\": \"{s}\",\n      \"private_key_hex\": \"{s}\",\n      \"public_key_hex\": \"{s}\",\n      \"derivation_path\": \"m/44'/60'/0'/0/0\",\n      \"encoding\": \"EVM\",\n      \"crypto\": \"PBKDF2-HMAC-SHA256\"\n    }}\n",
+            .{account.evm_address[0..evm_len], priv_hex, pub_hex_str}) catch "";
+        json_offset += entry.len;
+    }
+
+    const json_footer = "  ]\n}\n";
+    @memcpy(json_buffer[json_offset..][0..json_footer.len], json_footer);
+    json_offset += json_footer.len;
+
+    // Write to file
+    const file = try std.fs.cwd().createFile("wallet_metadata.json", .{});
+    defer file.close();
+    try file.writeAll(json_buffer[0..json_offset]);
+
+    std.debug.print("✅ Metadata exported to wallet_metadata.json ({} bytes)\n\n", .{json_offset});
 }

@@ -1,0 +1,25 @@
+{
+  "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+  "chains": [
+    {
+      "chain": "Bitcoin",
+      "chain_id": 0,
+      "address": "1fb81c308d27444ac9ebc19ad345cd37d",
+      "private_key_hex": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "public_key_hex": "fb81c308d27444ac9ebc19ad345cd37d61a6560aeb9453cf192b765c2cc914efaa",
+      "derivation_path": "m/44'/0'/0'/0/0",
+      "encoding": "P2PKH",
+      "crypto": "PBKDF2-HMAC-SHA256"
+    },
+    {
+      "chain": "Ethereum",
+      "chain_id": 1,
+      "address": "0x345cd37d61a6560aeb9453cf192b765c2cc914ef",
+      "private_key_hex": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "public_key_hex": "fb81c308d27444ac9ebc19ad345cd37d61a6560aeb9453cf192b765c2cc914efaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "derivation_path": "m/44'/60'/0'/0/0",
+      "encoding": "EVM",
+      "crypto": "PBKDF2-HMAC-SHA256"
+    }
+  ]
+}
