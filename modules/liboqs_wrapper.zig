@@ -91,7 +91,7 @@ pub fn kyber768_keypair(seed: [32]u8) KyberKeyPair {
     @memset(&keypair.secret_key, 0);
 
     // Derive from seed (deterministic)
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(&seed);
     var hash: [32]u8 = undefined;
     hasher.final(&hash);
@@ -116,7 +116,7 @@ pub fn kyber768_encapsulate(public_key: [KYBER_768_BYTES_PK]u8) KyberCiphertext 
     @memset(&result.shared_secret, 0);
 
     // Placeholder: Deterministic generation from public key
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(&public_key);
     var hash: [32]u8 = undefined;
     hasher.final(&hash);
@@ -144,7 +144,7 @@ pub fn kyber768_decapsulate(
     @memset(&shared_secret, 0);
 
     // Placeholder: Derive from secret key + ciphertext
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(&secret_key);
     hasher.update(&ciphertext);
     hasher.final(&shared_secret);
@@ -176,7 +176,7 @@ pub fn dilithium5_keypair(seed: [32]u8) DilithiumKeyPair {
     @memset(&keypair.secret_key, 0);
 
     // Placeholder: Deterministic derivation from seed
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(&seed);
     var hash: [32]u8 = undefined;
     hasher.final(&hash);
@@ -204,7 +204,7 @@ pub fn dilithium5_sign(
     sig.sig_len = DILITHIUM_5_BYTES_SIG;
 
     // Placeholder: HMAC-based signature
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(&secret_key);
     hasher.update(message);
     var hash: [32]u8 = undefined;
@@ -259,7 +259,7 @@ pub fn falcon512_keypair(seed: [48]u8) FalconKeyPair {
     @memset(&keypair.secret_key, 0);
 
     // Placeholder: Deterministic from seed
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(&seed);
     var hash: [32]u8 = undefined;
     hasher.final(&hash);
@@ -287,7 +287,7 @@ pub fn falcon512_sign(
     sig.sig_len = FALCON_512_BYTES_SIG;
 
     // Placeholder
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(&secret_key);
     hasher.update(message);
     var hash: [32]u8 = undefined;
@@ -337,7 +337,7 @@ pub fn sphincs_keypair(seed: [48]u8) SphincsKeyPair {
     @memset(&keypair.secret_key, 0);
 
     // Placeholder: Hash-based from seed
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(&seed);
     hasher.final(&keypair.public_key);
 
@@ -362,7 +362,7 @@ pub fn sphincs_sign(
     sig.sig_len = SPHINCS_SHA256_128F_BYTES_SIG;
 
     // Placeholder: Hash-based signature
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     hasher.update(&secret_key);
     hasher.update(message);
     var hash: [32]u8 = undefined;

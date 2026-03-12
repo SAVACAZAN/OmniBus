@@ -10,7 +10,7 @@ const std = @import("std");
 // decrypted = encrypted ⊕ SHA256(seed || "formula_1")
 
 pub fn formula_1_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
-    var derived = sha256_with_suffix(&seed, "formula_1");
+    const derived = sha256_with_suffix(&seed, "formula_1");
     var result: [32]u8 = undefined;
 
     for (0..32) |i| {
@@ -21,7 +21,7 @@ pub fn formula_1_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
 }
 
 pub fn formula_1_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
-    var derived = sha256_with_suffix(&seed, "formula_1");
+    const derived = sha256_with_suffix(&seed, "formula_1");
     var result: [32]u8 = undefined;
 
     for (0..32) |i| {
@@ -38,8 +38,8 @@ pub fn formula_1_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
 // decrypted = encrypted ⊕ HMAC-SHA256(seed, timestamp)
 
 pub fn formula_2_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
-    var timestamp = rdtsc();
-    var derived = hmac_sha256_timestamp(&seed, timestamp);
+    const timestamp = rdtsc();
+    const derived = hmac_sha256_timestamp(&seed, timestamp);
     var result: [32]u8 = undefined;
 
     for (0..32) |i| {
@@ -50,8 +50,8 @@ pub fn formula_2_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
 }
 
 pub fn formula_2_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
-    var timestamp = rdtsc();
-    var derived = hmac_sha256_timestamp(&seed, timestamp);
+    const timestamp = rdtsc();
+    const derived = hmac_sha256_timestamp(&seed, timestamp);
     var result: [32]u8 = undefined;
 
     for (0..32) |i| {
@@ -68,8 +68,8 @@ pub fn formula_2_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
 // decrypted = encrypted ⊕ KDF(privkey_from_seed, "formula_3")
 
 pub fn formula_3_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
-    var privkey = seed_to_privkey(&seed);
-    var derived = kdf_from_privkey(&privkey, "formula_3");
+    const privkey = seed_to_privkey(&seed);
+    const derived = kdf_from_privkey(&privkey, "formula_3");
     var result: [32]u8 = undefined;
 
     for (0..32) |i| {
@@ -80,8 +80,8 @@ pub fn formula_3_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
 }
 
 pub fn formula_3_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
-    var privkey = seed_to_privkey(&seed);
-    var derived = kdf_from_privkey(&privkey, "formula_3");
+    const privkey = seed_to_privkey(&seed);
+    const derived = kdf_from_privkey(&privkey, "formula_3");
     var result: [32]u8 = undefined;
 
     for (0..32) |i| {
@@ -100,9 +100,9 @@ pub fn formula_3_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
 //       H3 = BLAKE2(seed||2)
 
 pub fn formula_4_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
-    var h1 = blake2_with_index(&seed, 0);
-    var h2 = blake2_with_index(&seed, 1);
-    var h3 = blake2_with_index(&seed, 2);
+    const h1 = blake2_with_index(&seed, 0);
+    const h2 = blake2_with_index(&seed, 1);
+    const h3 = blake2_with_index(&seed, 2);
     var result: [32]u8 = undefined;
 
     // XOR all three hashes
@@ -114,9 +114,9 @@ pub fn formula_4_encrypt(key: [32]u8, seed: [32]u8) [32]u8 {
 }
 
 pub fn formula_4_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
-    var h1 = blake2_with_index(&seed, 0);
-    var h2 = blake2_with_index(&seed, 1);
-    var h3 = blake2_with_index(&seed, 2);
+    const h1 = blake2_with_index(&seed, 0);
+    const h2 = blake2_with_index(&seed, 1);
+    const h3 = blake2_with_index(&seed, 2);
     var result: [32]u8 = undefined;
 
     // XOR all three hashes

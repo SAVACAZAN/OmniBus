@@ -68,7 +68,7 @@ pub const WalletConfig = packed struct {
 
 pub const StealthWallet = packed struct {
     config: WalletConfig,
-    wallets: [4]HDWallet  // BTC, ETH, SOL, EGLD,               // BTC, ETH, SOL
+    wallets: [4]HDWallet,  // BTC, ETH, SOL, EGLD
 
     // Mode 1: RECOVER
     recovery_code: [40]u8,              // 10-step formula encoding
@@ -96,7 +96,7 @@ pub const StealthWallet = packed struct {
 // ============================================================================
 
 pub fn create_wallet_recoverable(seed: [32]u8) void {
-    var wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
+    const wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
 
     wallet.config.mode = RecoveryMode.RECOVER;
     wallet.config.creation_timestamp = rdtsc();
@@ -109,7 +109,7 @@ pub fn create_wallet_recoverable(seed: [32]u8) void {
     wallet.wallets[2].seed_hash = sha256(&seed);
 
     // Step 2: Generate master key from seed (BIP39)
-    var master_key = bip39_derive(&seed);
+    const master_key = bip39_derive(&seed);
 
     // Step 3: Encrypt with 4 formulas
     wallet.wallets[0].master_key_encrypted_f1 = formula_1_encrypt(&master_key, &seed);
@@ -128,8 +128,8 @@ pub fn create_wallet_recoverable(seed: [32]u8) void {
     wallet.wallets[2].master_key_encrypted_f4 = wallet.wallets[0].master_key_encrypted_f4;
 
     // Step 4: XOR Fragment split
-    var frag1 = fragment_1(&master_key);
-    var frag2 = fragment_2(&master_key);
+    const frag1 = fragment_1(&master_key);
+    const frag2 = fragment_2(&master_key);
     var frag3_xor: [32]u8 = undefined;
     for (0..32) |i| {
         frag3_xor[i] = master_key[i] ^ frag1[i] ^ frag2[i];
@@ -165,7 +165,7 @@ pub fn create_wallet_recoverable(seed: [32]u8) void {
 }
 
 pub fn recover_wallet_10_step(seed: [32]u8) bool {
-    var wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
+    const wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
 
     // Validate mode
     if (wallet.config.mode != RecoveryMode.RECOVER) return false;
@@ -188,23 +188,23 @@ pub fn recover_wallet_10_step(seed: [32]u8) bool {
     }
 
     // Step 2: Compute seed hash
-    var computed_hash = sha256(&seed);
+    const computed_hash = sha256(&seed);
     if (!compare_hashes(&computed_hash, &wallet.wallets[0].seed_hash)) {
         wallet.config.recovery_attempts += 1;
         return false; // Wrong seed
     }
 
     // Step 3: Decrypt with formula_1 (hash-based)
-    var key_f1 = formula_1_decrypt(&wallet.wallets[0].master_key_encrypted_f1, &seed);
+    const key_f1 = formula_1_decrypt(&wallet.wallets[0].master_key_encrypted_f1, &seed);
 
     // Step 4: Decrypt with formula_2 (timestamp-based)
-    var key_f2 = formula_2_decrypt(&wallet.wallets[0].master_key_encrypted_f2, &seed);
+    const key_f2 = formula_2_decrypt(&wallet.wallets[0].master_key_encrypted_f2, &seed);
 
     // Step 5: Decrypt with formula_3 (ECDSA-based)
-    var key_f3 = formula_3_decrypt(&wallet.wallets[0].master_key_encrypted_f3, &seed);
+    const key_f3 = formula_3_decrypt(&wallet.wallets[0].master_key_encrypted_f3, &seed);
 
     // Step 6: Decrypt with formula_4 (Shamir-like)
-    var key_f4 = formula_4_decrypt(&wallet.wallets[0].master_key_encrypted_f4, &seed);
+    const key_f4 = formula_4_decrypt(&wallet.wallets[0].master_key_encrypted_f4, &seed);
 
     // Step 7: Validate consistency
     if (!validate_key_consistency(&key_f1, &key_f2, &key_f3, &key_f4)) {
@@ -222,9 +222,9 @@ pub fn recover_wallet_10_step(seed: [32]u8) bool {
     var sol_key = bip32_derive(&key_f1, 2); // Solana (m/44'/501'/0'/0/0)
 
     // Step 9: Validate addresses
-    var btc_addr = derive_bitcoin_address(&btc_key);
-    var eth_addr = derive_ethereum_address(&eth_key);
-    var sol_addr = derive_solana_address(&sol_key);
+    const btc_addr = derive_bitcoin_address(&btc_key);
+    const eth_addr = derive_ethereum_address(&eth_key);
+    const sol_addr = derive_solana_address(&sol_key);
 
     if (!compare_addresses(&btc_addr, &wallet.wallets[0].public_addresses[0], 48)) {
         wallet.config.recovery_attempts += 1;
@@ -255,14 +255,14 @@ pub fn recover_wallet_10_step(seed: [32]u8) bool {
 // ============================================================================
 
 pub fn create_wallet_no_recovery(entropy: [32]u8) void {
-    var wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
+    const wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
 
     wallet.config.mode = RecoveryMode.NO_RECOVER;
     wallet.config.creation_timestamp = rdtsc();
     wallet.is_recoverable = false;
 
     // Generate master key from entropy (NOT BIP39)
-    var master_key = kdf_no_bip39(&entropy);
+    const master_key = kdf_no_bip39(&entropy);
 
     // Encrypt ONCE with all 4 formulas
     wallet.wallets[0].master_key_encrypted_f1 = formula_1_encrypt(&master_key, &entropy);
@@ -301,7 +301,7 @@ pub fn create_wallet_no_recovery(entropy: [32]u8) void {
 }
 
 pub fn recover_wallet_no_recovery(seed: [32]u8) bool {
-    var wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
+    const wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
 
     if (wallet.config.mode != RecoveryMode.NO_RECOVER) return false;
 
@@ -320,7 +320,7 @@ pub fn recover_wallet_no_recovery(seed: [32]u8) bool {
 // ============================================================================
 
 pub fn create_wallet_vault_backed(vaults: [3]Vault) void {
-    var wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
+    const wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
 
     wallet.config.mode = RecoveryMode.RECOVER_FROM_VAULTS;
     wallet.config.creation_timestamp = rdtsc();
@@ -349,7 +349,7 @@ pub fn create_wallet_vault_backed(vaults: [3]Vault) void {
 }
 
 pub fn recover_wallet_from_vault(vault_id: [32]u8, vault_proof: [256]u8) bool {
-    var wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
+    const wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
 
     if (wallet.config.mode != RecoveryMode.RECOVER_FROM_VAULTS) return false;
 
@@ -364,7 +364,7 @@ pub fn recover_wallet_from_vault(vault_id: [32]u8, vault_proof: [256]u8) bool {
 
     if (vault_index == 999) return false; // Vault not found
 
-    var vault = wallet.vaults[vault_index];
+    const vault = wallet.vaults[vault_index];
 
     // Step 2: Verify vault signature
     if (!verify_vault_signature(&vault.encrypted_key, &vault_proof, &vault.signature)) {
@@ -372,7 +372,7 @@ pub fn recover_wallet_from_vault(vault_id: [32]u8, vault_proof: [256]u8) bool {
     }
 
     // Step 3: Decrypt key from vault
-    var decrypted_key = decrypt_vault_key(&vault.encrypted_key, &vault_proof);
+    const decrypted_key = decrypt_vault_key(&vault.encrypted_key, &vault_proof);
 
     // Step 4: Validate key format
     if (!validate_key_format(&decrypted_key)) {
@@ -381,7 +381,7 @@ pub fn recover_wallet_from_vault(vault_id: [32]u8, vault_proof: [256]u8) bool {
     }
 
     // Step 5: Re-derive address
-    var derived_addr = derive_chain_address_from_key(&decrypted_key, vault_index);
+    const derived_addr = derive_chain_address_from_key(&decrypted_key, vault_index);
 
     // Step 6: Validate address matches stored
     if (!compare_addresses(&derived_addr, &wallet.wallets[vault_index].public_addresses[0], 48)) {
@@ -407,7 +407,7 @@ pub fn sign_transaction_with_vault(
     vault_id: [32]u8,
     vault_proof: [256]u8
 ) [64]u8 {
-    var wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
+    const wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
 
     // Recover key from vault
     if (!recover_wallet_from_vault(vault_id, vault_proof)) {
@@ -424,11 +424,11 @@ pub fn sign_transaction_with_vault(
 // ============================================================================
 
 fn generate_chain_addresses(chain: u8, master_key: [*]const u8) void {
-    var wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
+    const wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
 
     // Derive first 10 addresses
     for (0..10) |i| {
-        var derived_key = bip32_derive_indexed(master_key, chain, i);
+        const derived_key = bip32_derive_indexed(master_key, chain, i);
         var address: [48]u8 = undefined;
 
         switch (chain) {

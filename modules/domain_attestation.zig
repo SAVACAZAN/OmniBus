@@ -255,7 +255,7 @@ pub const AttestationQuery = struct {
 pub fn query_attestations(query: *const AttestationQuery) []DomainAttestation {
     // In real implementation, query blockchain for matching attestations
     // Returns attestations meeting criteria
-    var results = [_]DomainAttestation{};
+    const results = [_]DomainAttestation{};
     return results[0..];
 }
 

@@ -47,7 +47,7 @@ pub fn run_blockchain_tests(config: TestConfig) TestResults {
     print("   Avg transactions per block: {d}\n", .{config.transactions_per_block});
 
     // Initialize blockchain simulator
-    var ledger = initialize_ledger(config.num_accounts, config.initial_balance);
+    const ledger = initialize_ledger(config.num_accounts, config.initial_balance);
 
     print("\n✅ Initialized {} accounts with {} SAT each\n", .{ config.num_accounts, config.initial_balance });
 
@@ -93,7 +93,7 @@ fn mine_and_validate_block(
     results: *TestResults
 ) bool {
     // Create block
-    var block = create_block_with_transactions(block_num, ledger);
+    const block = create_block_with_transactions(block_num, ledger);
 
     // Mine block (find valid nonce)
     if (!mine_block(&block)) {
@@ -199,7 +199,7 @@ fn validate_block(block: *const BlockWithTxs, ledger: *const BlockchainLedger) b
 fn validate_transaction(tx: *const Transaction, ledger: *const BlockchainLedger) bool {
     // Find sender
     var sender_idx: usize = 0;
-    var found = false;
+    const found = false;
     for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &tx.from_addr)) {
             sender_idx = i;
@@ -242,7 +242,7 @@ fn execute_transaction(tx: *const Transaction, ledger: *BlockchainLedger) bool {
 
     // Find/create recipient
     var recipient_idx: usize = 0;
-    var found = false;
+    const found = false;
     for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &tx.to_addr)) {
             recipient_idx = i;
@@ -266,7 +266,7 @@ fn calculate_block_reward(height: u32) u64 {
     const base_reward: u64 = 5_000_000_000; // 50 OMNI in SAT
     const halving_interval: u64 = 210000;
 
-    var halvings = height / halving_interval;
+    const halvings = height / halving_interval;
     if (halvings >= 64) {
         return 0;
     }
@@ -421,7 +421,7 @@ fn initialize_ledger(num_accounts: u32, initial_balance: u64) BlockchainLedger {
         @memset(&addr, 0);
 
         // Simple address: "account_0", "account_1", etc.
-        var addr_str = std.fmt.bufPrint(&addr, "account_{d}", .{i}) catch unreachable;
+        const addr_str = std.fmt.bufPrint(&addr, "account_{d}", .{i}) catch unreachable;
         @memcpy(&ledger.accounts[i].address, addr_str);
 
         ledger.accounts[i].balance = initial_balance;

@@ -314,7 +314,7 @@ pub fn omnibus_derive_domain_seed(master_seed: [64]u8, domain: PQDomain) [64]u8 
 
 pub fn omnibus_generate_domain_address(master_seed: [64]u8, domain: PQDomain) OmnibusAddress {
     // Derive domain-specific seed
-    var domain_seed = omnibus_derive_domain_seed(master_seed, domain);
+    const domain_seed = omnibus_derive_domain_seed(master_seed, domain);
 
     // Select algorithm based on domain
     var algo: PQAlgorithm = switch (domain) {
@@ -334,13 +334,13 @@ pub fn omnibus_generate_domain_address(master_seed: [64]u8, domain: PQDomain) Om
     };
 
     // Hash public key to get address
-    var pubkey_hash = crypto_sha256(&keypair.pk.data, keypair.pk.size);
+    const pubkey_hash = crypto_sha256(&keypair.pk.data, keypair.pk.size);
 
     // Format Bech32 address
-    var bech32_addr = omnibus_format_bech32(pubkey_hash, domain);
+    const bech32_addr = omnibus_format_bech32(pubkey_hash, domain);
 
     // Create short ID
-    var short_id = omnibus_short_id(pubkey_hash, domain);
+    const short_id = omnibus_short_id(pubkey_hash, domain);
 
     var address: OmnibusAddress = undefined;
     address.domain = domain;
@@ -371,7 +371,7 @@ fn omnibus_format_bech32(pubkey_hash: [32]u8, domain: PQDomain) [64]u8 {
     @memcpy(address[0..6], prefix);
 
     // Base32 encode hash
-    var b32 = base32_encode(&pubkey_hash, 32);
+    const b32 = base32_encode(&pubkey_hash, 32);
     @memcpy(address[6..64], b32[0..58]);
 
     return address;
@@ -385,7 +385,7 @@ fn omnibus_short_id(pubkey_hash: [32]u8, domain: PQDomain) [16]u8 {
     short_id[0..5].* = "OMNI-".*;
 
     // First 2 bytes as hex
-    var hex_str = [_]u8{ '0', '0', '0', '0' };
+    const hex_str = [_]u8{ '0', '0', '0', '0' };
     hex_str[0] = hex_digit(pubkey_hash[0] >> 4);
     hex_str[1] = hex_digit(pubkey_hash[0] & 0x0F);
     hex_str[2] = hex_digit(pubkey_hash[1] >> 4);

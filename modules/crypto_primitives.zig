@@ -32,7 +32,7 @@ pub fn sha256(data: [*]const u8, len: usize) [32]u8 {
 
     // Pre-processing
     var message = [_]u8{0} ** 128; // Max message (we'll pad)
-    var msg_len = len;
+    const msg_len = len;
 
     // Simple 64-byte block processing for now
     // Full implementation would handle variable length
@@ -51,7 +51,7 @@ pub fn sha256(data: [*]const u8, len: usize) [32]u8 {
     // Process message blocks
     var block_idx: usize = 0;
     while (block_idx < msg_len) : (block_idx += 64) {
-        var w = [_]u32{0} ** 64;
+        const w = [_]u32{0} ** 64;
 
         // Break chunk into 16 32-bit big-endian words
         for (0..16) |i| {
@@ -70,14 +70,14 @@ pub fn sha256(data: [*]const u8, len: usize) [32]u8 {
         }
 
         // Initialize working variables
-        var a = h0;
-        var b = h1;
-        var c = h2;
-        var d = h3;
-        var e = h4;
-        var f = h5;
-        var g = h6;
-        var h = h7;
+        const a = h0;
+        const b = h1;
+        const c = h2;
+        const d = h3;
+        const e = h4;
+        const f = h5;
+        const g = h6;
+        const h = h7;
 
         // Main loop
         for (0..64) |i| {
@@ -128,8 +128,8 @@ pub fn sha256(data: [*]const u8, len: usize) [32]u8 {
 // ============================================================================
 
 pub fn hmac_sha256(key: [32]u8, message: [*]const u8, msg_len: usize) [32]u8 {
-    var ipad = [_]u8{0x36} ** 64;
-    var opad = [_]u8{0x5c} ** 64;
+    const ipad = [_]u8{0x36} ** 64;
+    const opad = [_]u8{0x5c} ** 64;
 
     // XOR key with pads
     for (0..32) |i| {
@@ -142,7 +142,7 @@ pub fn hmac_sha256(key: [32]u8, message: [*]const u8, msg_len: usize) [32]u8 {
     @memcpy(inner_msg[0..64], &ipad);
     @memcpy(inner_msg[64 .. 64 + msg_len], message[0..msg_len]);
 
-    var inner_hash = sha256(&inner_msg, 64 + msg_len);
+    const inner_hash = sha256(&inner_msg, 64 + msg_len);
 
     // Compute outer hash
     var outer_msg = [_]u8{0} ** 96; // opad (64) + inner_hash (32)
@@ -173,7 +173,7 @@ pub fn blake2(data: [*]const u8, len: usize) [32]u8 {
 }
 
 pub fn blake2_with_index(data: [32]u8, index: u8) [32]u8 {
-    var message = [_]u8{0} ** 33;
+    const message = [_]u8{0} ** 33;
     @memcpy(message[0..32], &data);
     message[32] = index;
     return blake2(&message, 33);
@@ -191,7 +191,7 @@ pub fn hkdf_extract(salt: [32]u8, ikm: [32]u8) [32]u8 {
 pub fn hkdf_expand(prk: [32]u8, info: [*:0]const u8, info_len: usize, length: usize) [32]u8 {
     _ = length;  // Expand length not used (always 32 bytes)
     // T(1) = HMAC-SHA256(PRK, info || 0x01)
-    var message = [_]u8{0} ** 64;
+    const message = [_]u8{0} ** 64;
     @memcpy(message[0..info_len], info[0..info_len]);
     message[info_len] = 0x01;
     return hmac_sha256(prk, &message, info_len + 1);

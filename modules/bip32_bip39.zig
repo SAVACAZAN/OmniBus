@@ -27,7 +27,7 @@ pub fn bip39_mnemonic_to_entropy(mnemonic: [*:0]const u8) [32]u8 {
     }
 
     // Simple hash of mnemonic as fallback
-    var hash = crypto_sha256(mnemonic, i);
+    const hash = crypto_sha256(mnemonic, i);
     @memcpy(&entropy, &hash);
 
     return entropy;
@@ -38,8 +38,8 @@ pub fn entropy_to_bip39_seed(entropy: [32]u8, passphrase: [*:0]const u8) [64]u8 
     // Placeholder: Full PBKDF2 is complex
     // For now, use HMAC-SHA256 twice
 
-    var message = [_]u8{0} ** 128;
-    var phrase = "mnemonic";
+    const message = [_]u8{0} ** 128;
+    const phrase = "mnemonic";
 
     @memcpy(message[0..8], phrase);
     // Append passphrase
@@ -48,8 +48,8 @@ pub fn entropy_to_bip39_seed(entropy: [32]u8, passphrase: [*:0]const u8) [64]u8 
     @memcpy(message[8 .. 8 + pass_len], passphrase[0..pass_len]);
 
     // Hash entropy + message
-    var hash1 = crypto_hmac_sha256(entropy, &message, 8 + pass_len);
-    var hash2 = crypto_hmac_sha256(hash1, &message, 8 + pass_len);
+    const hash1 = crypto_hmac_sha256(entropy, &message, 8 + pass_len);
+    const hash2 = crypto_hmac_sha256(hash1, &message, 8 + pass_len);
 
     var seed: [64]u8 = undefined;
     @memcpy(seed[0..32], &hash1);
@@ -72,10 +72,10 @@ pub const HDKey = struct {
 
 pub fn bip32_master_key(seed: [64]u8) HDKey {
     // BIP32 Master Key: HMAC-SHA512("Bitcoin seed", seed)
-    var hmac_key = [_]u8{0} ** 64;
+    const hmac_key = [_]u8{0} ** 64;
     @memcpy(hmac_key[0..13], "Bitcoin seed");
 
-    var result = crypto_hmac_sha512(&hmac_key, &seed, 64);
+    const result = crypto_hmac_sha512(&hmac_key, &seed, 64);
 
     var key: HDKey = undefined;
     @memcpy(&key.key, result[0..32]);
@@ -108,7 +108,7 @@ pub fn bip32_derive_child(parent: HDKey, index: u32) HDKey {
     data[35] = @as(u8, @truncate(index >> 8));
     data[36] = @as(u8, @truncate(index));
 
-    var hmac_result = crypto_hmac_sha512(parent.chain_code, &data, 37);
+    const hmac_result = crypto_hmac_sha512(parent.chain_code, &data, 37);
 
     var child: HDKey = undefined;
     // Child key = (tweak + parent_key) mod n
@@ -128,7 +128,7 @@ pub fn bip32_derive_child(parent: HDKey, index: u32) HDKey {
 
 pub fn derive_path_bitcoin(master: HDKey) HDKey {
     // m/44'/0'/0'/0/0 (Bitcoin P2WPKH)
-    var key = master;
+    const key = master;
 
     // m/44' (hardened)
     key = bip32_derive_child(key, 0x8000002C);
@@ -150,7 +150,7 @@ pub fn derive_path_bitcoin(master: HDKey) HDKey {
 
 pub fn derive_path_ethereum(master: HDKey) HDKey {
     // m/44'/60'/0'/0/0 (Ethereum EOA)
-    var key = master;
+    const key = master;
 
     // m/44' (hardened)
     key = bip32_derive_child(key, 0x8000002C);
@@ -172,7 +172,7 @@ pub fn derive_path_ethereum(master: HDKey) HDKey {
 
 pub fn derive_path_solana(master: HDKey) HDKey {
     // m/44'/501'/0'/0/0 (Solana)
-    var key = master;
+    const key = master;
 
     // m/44' (hardened)
     key = bip32_derive_child(key, 0x8000002C);
@@ -194,7 +194,7 @@ pub fn derive_path_solana(master: HDKey) HDKey {
 
 pub fn derive_path_egld(master: HDKey) HDKey {
     // m/44'/508'/0'/0/0 (Elrond/EGLD)
-    var key = master;
+    const key = master;
 
     // m/44' (hardened)
     key = bip32_derive_child(key, 0x8000002C);
@@ -216,7 +216,7 @@ pub fn derive_path_egld(master: HDKey) HDKey {
 
 pub fn derive_path_indexed(master: HDKey, chain: u8, index: u32) HDKey {
     // Derive child at specific index (for generating multiple addresses)
-    var key = master;
+    const key = master;
 
     // First 4 steps are same as chain-specific path
     key = bip32_derive_child(key, 0x8000002C);

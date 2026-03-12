@@ -64,10 +64,10 @@ pub fn generate_wallet(mnemonic: [*:0]const u8, passphrase: [*:0]const u8) TestW
     }
 
     // Step 2: Convert mnemonic to entropy
-    var entropy = mnemonic_to_entropy(mnemonic);
+    const entropy = mnemonic_to_entropy(mnemonic);
 
     // Step 3: Generate BIP-39 seed
-    var seed = entropy_to_bip39_seed(&entropy, passphrase);
+    const seed = entropy_to_bip39_seed(&entropy, passphrase);
 
     // Step 4: Generate BIP-32 master key
     var master_key: [32]u8 = undefined;
@@ -107,7 +107,7 @@ fn derive_bitcoin_address(_: [*]const u8, _: [*]const u8) [48]u8 {
     @memset(&addr, 0);
 
     // Placeholder: derive P2WPKH address
-    var addr_str = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
+    const addr_str = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
     @memcpy(&addr[0..42], addr_str);
 
     return addr;
@@ -119,7 +119,7 @@ fn derive_ethereum_address(_: [*]const u8, _: [*]const u8) [48]u8 {
     @memset(&addr, 0);
 
     // Placeholder: derive EOA address (Keccak256 + EIP-55)
-    var addr_str = "0x8ba1f109551bD432803012645Ac136ddd64DBA72";
+    const addr_str = "0x8ba1f109551bD432803012645Ac136ddd64DBA72";
     @memcpy(&addr[0..42], addr_str);
 
     return addr;
@@ -131,7 +131,7 @@ fn derive_solana_address(_: [*]const u8, _: [*]const u8) [48]u8 {
     @memset(&addr, 0);
 
     // Placeholder: derive Ed25519 address (Base58)
-    var addr_str = "FPAcAKxJ8dXJGKwKmMgLCqEchKsYRCG7bkkxRSDRd4t7";
+    const addr_str = "FPAcAKxJ8dXJGKwKmMgLCqEchKsYRCG7bkkxRSDRd4t7";
     @memcpy(&addr[0..44], addr_str);
 
     return addr;
@@ -143,7 +143,7 @@ fn derive_egld_address(_: [*]const u8, _: [*]const u8) [48]u8 {
     @memset(&addr, 0);
 
     // Placeholder: derive EGLD address (Bech32)
-    var addr_str = "erd1qyu8zcm5n0hf3mxvjkq5w7pqyt7g0mqnp8l2qxh";
+    const addr_str = "erd1qyu8zcm5n0hf3mxvjkq5w7pqyt7g0mqnp8l2qxh";
     @memcpy(&addr[0..42], addr_str);
 
     return addr;
@@ -208,7 +208,7 @@ fn mnemonic_to_entropy(mnemonic: [*:0]const u8) [32]u8 {
     // Placeholder: actual BIP-39 word list validation
     // In production: use lookup table + checksum validation
 
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
     var i: usize = 0;
     while (mnemonic[i] != 0) : (i += 1) {
         hasher.update(@as(*const [1]u8, &mnemonic[i]));
@@ -225,7 +225,7 @@ fn entropy_to_bip39_seed(entropy: [*]const u8, passphrase: [*:0]const u8) [64]u8
     // Placeholder: actual PBKDF2-HMAC-SHA512
     // In production: 2048 iterations with "mnemonic" + passphrase
 
-    var hasher = std.crypto.hash.sha2.Sha512.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha512.init(.{});
     hasher.update(entropy[0..32]);
 
     var i: usize = 0;
@@ -246,7 +246,7 @@ fn bip32_master_key(
     master_chain_code: [*]u8
 ) void {
     // Placeholder: actual HMAC-SHA512("Bitcoin seed", seed)
-    var hasher = std.crypto.hash.sha2.Sha512.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha512.init(.{});
     hasher.update("Bitcoin seed");
     hasher.update(seed[0..64]);
 
@@ -282,7 +282,7 @@ pub fn run_wallet_tests() void {
     print("Mnemonic (24 words):\n", .{});
     print("{s}\n\n", .{TEST_MNEMONIC});
 
-    var wallet = generate_wallet(TEST_MNEMONIC, "");
+    const wallet = generate_wallet(TEST_MNEMONIC, "");
 
     print("✅ Generated Wallet:\n\n", .{});
     print("═══ CLASSICAL CHAINS ═══\n\n", .{});
@@ -339,7 +339,7 @@ pub fn run_wallet_tests() void {
 
     print("═══ VALIDATION ═══\n\n", .{});
 
-    var all_pass = true;
+    const all_pass = true;
 
     // Validate determinism
     if (std.mem.eql(u8, &wallet.bitcoin_address, &EXPECTED_ADDRESSES.bitcoin)) {

@@ -13,16 +13,16 @@ pub fn bitcoin_address_p2wpkh(pubkey: [33]u8) [48]u8 {
     // 2. Witness program: OP_0 + 20-byte hash
     // 3. Encode as Bech32
 
-    var sha256_hash = crypto_sha256(&pubkey, 33);
-    var hash160 = crypto_ripemd160(&sha256_hash, 32);
+    const sha256_hash = crypto_sha256(&pubkey, 33);
+    const hash160 = crypto_ripemd160(&sha256_hash, 32);
 
     // Witness version 0 + 20 bytes
-    var witness_program = [_]u8{0} ** 22;
+    const witness_program = [_]u8{0} ** 22;
     witness_program[0] = 0; // Version 0
     @memcpy(witness_program[1..21], &hash160);
 
     // Encode as Bech32: "bc1" + data
-    var address = bech32_encode("bc", &witness_program, 21);
+    const address = bech32_encode("bc", &witness_program, 21);
 
     var result: [48]u8 = undefined;
     @memcpy(result[0..48], address[0..48]);
@@ -32,20 +32,20 @@ pub fn bitcoin_address_p2wpkh(pubkey: [33]u8) [48]u8 {
 
 pub fn bitcoin_address_legacy(pubkey: [33]u8) [48]u8 {
     // Legacy P2PKH: 1... (Base58Check format)
-    var sha256_hash = crypto_sha256(&pubkey, 33);
-    var hash160 = crypto_ripemd160(&sha256_hash, 32);
+    const sha256_hash = crypto_sha256(&pubkey, 33);
+    const hash160 = crypto_ripemd160(&sha256_hash, 32);
 
     // Version byte 0x00 (mainnet)
-    var versioned = [_]u8{0} ** 21;
+    const versioned = [_]u8{0} ** 21;
     versioned[0] = 0x00;
     @memcpy(versioned[1..21], &hash160);
 
     // Checksum: first 4 bytes of SHA256(SHA256(versioned))
-    var checksum_hash = crypto_sha256(&versioned, 21);
-    var checksum_hash2 = crypto_sha256(&checksum_hash, 32);
+    const checksum_hash = crypto_sha256(&versioned, 21);
+    const _checksum_hash2 = crypto_sha256(&checksum_hash, 32);
 
     // Base58 encode versioned + checksum
-    var address = base58_encode(&versioned, 21);
+    const address = base58_encode(&versioned, 21);
 
     var result: [48]u8 = undefined;
     @memcpy(result[0..48], address[0..48]);
@@ -71,18 +71,18 @@ pub fn bitcoin_validate_address(address: [48]u8) bool {
 
 pub fn ethereum_address_eoa(pubkey: [33]u8) [48]u8 {
     // Decompress pubkey (33 bytes compressed → 65 bytes uncompressed)
-    var pubkey_uncompressed = decompress_secp256k1_pubkey(pubkey);
+    const pubkey_uncompressed = decompress_secp256k1_pubkey(pubkey);
 
     // Keccak256 hash of uncompressed pubkey (skip first byte which is 0x04)
-    var hash = crypto_keccak256(pubkey_uncompressed[1..65]);
+    const hash = crypto_keccak256(pubkey_uncompressed[1..65]);
 
     // Take last 20 bytes
     var address_bytes: [20]u8 = undefined;
     @memcpy(&address_bytes, hash[12..32]);
 
     // Checksum: EIP-55 (mixed-case encoding)
-    var checksum_hash = crypto_keccak256(&address_bytes, 20);
-    var address = eip55_encode(&address_bytes, &checksum_hash);
+    const checksum_hash = crypto_keccak256(&address_bytes, 20);
+    const address = eip55_encode(&address_bytes, &checksum_hash);
 
     var result: [48]u8 = undefined;
     @memcpy(result[0..48], address[0..48]);
@@ -96,7 +96,7 @@ pub fn ethereum_validate_address(address: [48]u8) bool {
 
     // Should be 42 characters: 0x + 40 hex chars
     for (0..40) |i| {
-        var c = address[i + 2];
+        const c = address[i + 2];
         if (!is_hex_char(c)) return false;
     }
 
@@ -109,7 +109,7 @@ pub fn ethereum_validate_address(address: [48]u8) bool {
 
 pub fn solana_address(pubkey: [32]u8) [48]u8 {
     // Solana pubkey is 32 bytes, encoded as Base58
-    var address = base58_encode(&pubkey, 32);
+    const address = base58_encode(&pubkey, 32);
 
     var result: [48]u8 = undefined;
     @memcpy(result[0..48], address[0..48]);
@@ -133,7 +133,7 @@ pub fn egld_address(pubkey: [32]u8) [48]u8 {
     witness_program[0] = 0; // Version 0 for EGLD
     @memcpy(witness_program[1..33], &pubkey);
 
-    var address = bech32_encode("erd", &witness_program, 33);
+    const address = bech32_encode("erd", &witness_program, 33);
 
     var result: [48]u8 = undefined;
     @memcpy(result[0..48], address[0..48]);
@@ -167,14 +167,14 @@ fn bech32_encode(hrp: [*:0]const u8, data: [*]const u8, data_len: usize) [48]u8 
     address[hrp_len] = '1';
 
     // Convert data to base32
-    var base32_data = base32_encode(data, data_len);
+    const base32_data = base32_encode(data, data_len);
 
     // Add checksum
-    var checksum = bech32_checksum(address[0 .. hrp_len + 1], &base32_data);
+    const checksum = bech32_checksum(address[0 .. hrp_len + 1], &base32_data);
 
     // Concatenate
     @memcpy(address[hrp_len + 1 .. hrp_len + 1 + base32_data.len], &base32_data);
-    var final_len = hrp_len + 1 + base32_data.len;
+    const final_len = hrp_len + 1 + base32_data.len;
     for (0..6) |i| {
         address[final_len + i] = bech32_charset[checksum[i]];
     }
@@ -229,7 +229,7 @@ fn base58_validate(address: [*]const u8) bool {
 
     var i: usize = 0;
     while (address[i] != 0) : (i += 1) {
-        var found = false;
+        const found = false;
         for (alphabet) |c| {
             if (address[i] == c) {
                 found = true;
@@ -264,14 +264,14 @@ fn base32_encode(data: [*]const u8, data_len: usize) [64]u8 {
 
         while (bits_in_buffer >= 5) {
             bits_in_buffer -= 5;
-            var index = (bit_buffer >> bits_in_buffer) & 0x1F;
+            const index = (bit_buffer >> bits_in_buffer) & 0x1F;
             result[result_idx] = alphabet[index];
             result_idx += 1;
         }
     }
 
     if (bits_in_buffer > 0) {
-        var index = (bit_buffer << (5 - bits_in_buffer)) & 0x1F;
+        const index = (bit_buffer << (5 - bits_in_buffer)) & 0x1F;
         result[result_idx] = alphabet[index];
         result_idx += 1;
     }
@@ -324,7 +324,7 @@ fn eip55_encode(address: [20]u8, checksum_hash: [32]u8) [48]u8 {
         };
 
         for (hex_nibbles, 0..) |nibble, j| {
-            var checksum_nibble = (checksum_hash[i] >> (4 * (1 - j))) & 0x0F;
+            const checksum_nibble = (checksum_hash[i] >> (4 * (1 - j))) & 0x0F;
             var char: u8 = if (nibble < 10) '0' + nibble else 'a' + (nibble - 10);
 
             if (checksum_nibble >= 8) {

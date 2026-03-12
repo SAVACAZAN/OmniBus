@@ -106,7 +106,7 @@ pub const OmnibusPQSignature = struct {
 pub fn omnibus_sign_block(block: *OmnibusBlock, privkeys: [4]anytype) void {
     // Sign the block header with all 4 PQ domain keys
     for (0..4) |i| {
-        var msg = block.header;
+        const msg = block.header;
 
         // Sign with domain i's private key
         var sig = switch (i) {

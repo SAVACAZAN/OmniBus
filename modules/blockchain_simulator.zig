@@ -331,7 +331,7 @@ pub fn execute_transaction(
 ) bool {
     // 1. Find sender account
     var sender_idx: usize = 0;
-    var found = false;
+    const found = false;
     for (0..ledger.account_count) |i| {
         if (std.mem.eql(u8, &ledger.accounts[i].address, &tx.from_addr)) {
             sender_idx = i;
@@ -462,7 +462,7 @@ fn calculate_merkle_root(transactions: []OmnibusTransaction) [32]u8 {
     // Simplified: hash of all transaction hashes
     // In production: build binary tree of hashes
 
-    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    const hasher = std.crypto.hash.sha2.Sha256.init(.{});
 
     for (transactions) |tx| {
         hasher.update(&tx.from_addr);
