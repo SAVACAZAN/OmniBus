@@ -132,6 +132,8 @@ pub fn formula_4_decrypt(encrypted: [32]u8, seed: [32]u8) [32]u8 {
 // ============================================================================
 
 fn sha256(data: [*]const u8, len: usize) [32]u8 {
+    _ = data;
+    _ = len;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     // TODO: Implement SHA256
@@ -139,6 +141,8 @@ fn sha256(data: [*]const u8, len: usize) [32]u8 {
 }
 
 fn sha256_with_suffix(seed: [32]u8, suffix: [*:0]const u8) [32]u8 {
+    _ = seed;
+    _ = suffix;
     // Concatenate seed + suffix, then SHA256
     var result: [32]u8 = undefined;
     @memset(&result, 0);
@@ -147,6 +151,9 @@ fn sha256_with_suffix(seed: [32]u8, suffix: [*:0]const u8) [32]u8 {
 }
 
 fn hmac_sha256(key: [32]u8, message: [*]const u8, msg_len: usize) [32]u8 {
+    _ = key;
+    _ = message;
+    _ = msg_len;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     // TODO: Implement HMAC-SHA256
@@ -154,6 +161,8 @@ fn hmac_sha256(key: [32]u8, message: [*]const u8, msg_len: usize) [32]u8 {
 }
 
 fn hmac_sha256_timestamp(seed: [32]u8, timestamp: u64) [32]u8 {
+    _ = seed;
+    _ = timestamp;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     // TODO: Implement HMAC-SHA256(seed, timestamp_bytes)
@@ -161,6 +170,8 @@ fn hmac_sha256_timestamp(seed: [32]u8, timestamp: u64) [32]u8 {
 }
 
 fn blake2(data: [*]const u8, len: usize) [32]u8 {
+    _ = data;
+    _ = len;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     // TODO: Implement BLAKE2
@@ -168,6 +179,8 @@ fn blake2(data: [*]const u8, len: usize) [32]u8 {
 }
 
 fn blake2_with_index(seed: [32]u8, index: u8) [32]u8 {
+    _ = seed;
+    _ = index;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     // TODO: Implement BLAKE2(seed || index)
@@ -180,6 +193,8 @@ fn seed_to_privkey(seed: [32]u8) [32]u8 {
 }
 
 fn kdf_from_privkey(privkey: [32]u8, suffix: [*:0]const u8) [32]u8 {
+    _ = privkey;
+    _ = suffix;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     // TODO: Implement HKDF(privkey, suffix)

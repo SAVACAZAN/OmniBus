@@ -223,8 +223,6 @@ pub fn recover_wallet_10_step(seed: [32]u8) bool {
 
     // Step 9: Validate addresses
     const btc_addr = derive_bitcoin_address(&btc_key);
-    const eth_addr = derive_ethereum_address(&eth_key);
-    const sol_addr = derive_solana_address(&sol_key);
 
     if (!compare_addresses(&btc_addr, &wallet.wallets[0].public_addresses[0], 48)) {
         wallet.config.recovery_attempts += 1;
@@ -407,7 +405,8 @@ pub fn sign_transaction_with_vault(
     vault_id: [32]u8,
     vault_proof: [256]u8
 ) [64]u8 {
-    const wallet = @as(*StealthWallet, @ptrFromInt(STEALTH_ZONE_BASE));
+    _ = tx_data;
+    _ = tx_len;
 
     // Recover key from vault
     if (!recover_wallet_from_vault(vault_id, vault_proof)) {
@@ -448,6 +447,7 @@ fn generate_chain_addresses(chain: u8, master_key: [*]const u8) void {
 }
 
 fn sha256(data: [*]const u8) [32]u8 {
+    _ = data;
     // Placeholder: actual SHA256 implementation
     var result: [32]u8 = undefined;
     @memset(&result, 0);
@@ -455,6 +455,7 @@ fn sha256(data: [*]const u8) [32]u8 {
 }
 
 fn bip39_derive(seed: [*]const u8) [32]u8 {
+    _ = seed;
     // Placeholder: BIP39 to master key derivation
     var key: [32]u8 = undefined;
     @memset(&key, 0);
@@ -462,6 +463,8 @@ fn bip39_derive(seed: [*]const u8) [32]u8 {
 }
 
 fn bip32_derive(master_key: [*]const u8, chain: u8) [32]u8 {
+    _ = master_key;
+    _ = chain;
     // Placeholder: BIP32 child key derivation
     var key: [32]u8 = undefined;
     @memset(&key, 0);
@@ -469,6 +472,9 @@ fn bip32_derive(master_key: [*]const u8, chain: u8) [32]u8 {
 }
 
 fn bip32_derive_indexed(master_key: [*]const u8, chain: u8, index: u32) [32]u8 {
+    _ = master_key;
+    _ = chain;
+    _ = index;
     // Placeholder: BIP32 child key at index
     var key: [32]u8 = undefined;
     @memset(&key, 0);
@@ -476,6 +482,7 @@ fn bip32_derive_indexed(master_key: [*]const u8, chain: u8, index: u32) [32]u8 {
 }
 
 fn kdf_no_bip39(entropy: [*]const u8) [32]u8 {
+    _ = entropy;
     // Placeholder: Non-BIP39 KDF
     var key: [32]u8 = undefined;
     @memset(&key, 0);
@@ -483,6 +490,7 @@ fn kdf_no_bip39(entropy: [*]const u8) [32]u8 {
 }
 
 fn validate_bip39_seed(seed: [*]const u8) bool {
+    _ = seed;
     // Placeholder: BIP39 seed validation
     return true;
 }
@@ -502,11 +510,16 @@ fn compare_addresses(addr1: [*]const u8, addr2: [*]const u8, len: usize) bool {
 }
 
 fn validate_key_consistency(k1: [*]const u8, k2: [*]const u8, k3: [*]const u8, k4: [*]const u8) bool {
+    _ = k1;
+    _ = k2;
+    _ = k3;
+    _ = k4;
     // Placeholder: Validate all 4 decrypted keys match
     return true;
 }
 
 fn fragment_1(key: [*]const u8) [32]u8 {
+    _ = key;
     // Placeholder: Fragment generation
     var frag: [32]u8 = undefined;
     @memset(&frag, 0);
@@ -514,6 +527,7 @@ fn fragment_1(key: [*]const u8) [32]u8 {
 }
 
 fn fragment_2(key: [*]const u8) [32]u8 {
+    _ = key;
     // Placeholder: Fragment generation
     var frag: [32]u8 = undefined;
     @memset(&frag, 0);
@@ -521,11 +535,13 @@ fn fragment_2(key: [*]const u8) [32]u8 {
 }
 
 fn crc32_metadata(wallet: [*]const HDWallet) u32 {
+    _ = wallet;
     // Placeholder: CRC32 checksum
     return 0xDEADBEEF;
 }
 
 fn derive_bitcoin_address(key: [*]const u8) [48]u8 {
+    _ = key;
     // Placeholder: Bitcoin address derivation
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
@@ -533,6 +549,7 @@ fn derive_bitcoin_address(key: [*]const u8) [48]u8 {
 }
 
 fn derive_ethereum_address(key: [*]const u8) [48]u8 {
+    _ = key;
     // Placeholder: Ethereum address derivation
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
@@ -540,6 +557,7 @@ fn derive_ethereum_address(key: [*]const u8) [48]u8 {
 }
 
 fn derive_solana_address(key: [*]const u8) [48]u8 {
+    _ = key;
     // Placeholder: Solana address derivation
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
@@ -547,6 +565,7 @@ fn derive_solana_address(key: [*]const u8) [48]u8 {
 }
 
 fn derive_bitcoin_address_from_vault(vault_pubkey: [*]const u8) [48]u8 {
+    _ = vault_pubkey;
     // Placeholder
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
@@ -554,6 +573,7 @@ fn derive_bitcoin_address_from_vault(vault_pubkey: [*]const u8) [48]u8 {
 }
 
 fn derive_ethereum_address_from_vault(vault_pubkey: [*]const u8) [48]u8 {
+    _ = vault_pubkey;
     // Placeholder
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
@@ -561,6 +581,7 @@ fn derive_ethereum_address_from_vault(vault_pubkey: [*]const u8) [48]u8 {
 }
 
 fn derive_solana_address_from_vault(vault_pubkey: [*]const u8) [48]u8 {
+    _ = vault_pubkey;
     // Placeholder
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
@@ -568,6 +589,8 @@ fn derive_solana_address_from_vault(vault_pubkey: [*]const u8) [48]u8 {
 }
 
 fn derive_chain_address_from_key(key: [*]const u8, chain: u8) [48]u8 {
+    _ = key;
+    _ = chain;
     // Placeholder
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
@@ -575,16 +598,22 @@ fn derive_chain_address_from_key(key: [*]const u8, chain: u8) [48]u8 {
 }
 
 fn validate_key_format(key: [*]const u8) bool {
+    _ = key;
     // Placeholder: Validate key format
     return true;
 }
 
 fn verify_vault_signature(key: [*]const u8, proof: [*]const u8, sig: [*]const u8) bool {
+    _ = key;
+    _ = proof;
+    _ = sig;
     // Placeholder: ECDSA signature verification
     return true;
 }
 
 fn decrypt_vault_key(encrypted_key: [*]const u8, proof: [*]const u8) [32]u8 {
+    _ = encrypted_key;
+    _ = proof;
     // Placeholder: Decrypt vault key
     var key: [32]u8 = undefined;
     @memset(&key, 0);
@@ -592,6 +621,7 @@ fn decrypt_vault_key(encrypted_key: [*]const u8, proof: [*]const u8) [32]u8 {
 }
 
 fn encode_recovery_code(seed: [*]const u8) [40]u8 {
+    _ = seed;
     // Placeholder: Encode recovery code
     var code: [40]u8 = undefined;
     @memset(&code, 0);
@@ -599,6 +629,7 @@ fn encode_recovery_code(seed: [*]const u8) [40]u8 {
 }
 
 fn encode_vault_recovery_code(vaults: [*]const Vault) [40]u8 {
+    _ = vaults;
     // Placeholder: Encode vault recovery code
     var code: [40]u8 = undefined;
     @memset(&code, 0);
@@ -606,6 +637,8 @@ fn encode_vault_recovery_code(vaults: [*]const Vault) [40]u8 {
 }
 
 fn formula_1_encrypt(key: [*]const u8, seed: [*]const u8) [32]u8 {
+    _ = key;
+    _ = seed;
     // Placeholder: Formula 1 encryption
     var result: [32]u8 = undefined;
     @memset(&result, 0);
@@ -613,6 +646,8 @@ fn formula_1_encrypt(key: [*]const u8, seed: [*]const u8) [32]u8 {
 }
 
 fn formula_1_decrypt(encrypted: [*]const u8, seed: [*]const u8) [32]u8 {
+    _ = encrypted;
+    _ = seed;
     // Placeholder: Formula 1 decryption
     var result: [32]u8 = undefined;
     @memset(&result, 0);
@@ -620,36 +655,48 @@ fn formula_1_decrypt(encrypted: [*]const u8, seed: [*]const u8) [32]u8 {
 }
 
 fn formula_2_encrypt(key: [*]const u8, seed: [*]const u8) [32]u8 {
+    _ = key;
+    _ = seed;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
 }
 
 fn formula_2_decrypt(encrypted: [*]const u8, seed: [*]const u8) [32]u8 {
+    _ = encrypted;
+    _ = seed;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
 }
 
 fn formula_3_encrypt(key: [*]const u8, seed: [*]const u8) [32]u8 {
+    _ = key;
+    _ = seed;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
 }
 
 fn formula_3_decrypt(encrypted: [*]const u8, seed: [*]const u8) [32]u8 {
+    _ = encrypted;
+    _ = seed;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
 }
 
 fn formula_4_encrypt(key: [*]const u8, seed: [*]const u8) [32]u8 {
+    _ = key;
+    _ = seed;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
 }
 
 fn formula_4_decrypt(encrypted: [*]const u8, seed: [*]const u8) [32]u8 {
+    _ = encrypted;
+    _ = seed;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
