@@ -106,11 +106,15 @@ pub const HDWallet = struct {
     master_chain_code: [32]u8,
 
     pub fn init(mnemonic: []const u8) HDWallet {
+        return init_with_passphrase(mnemonic, "");
+    }
+
+    pub fn init_with_passphrase(mnemonic: []const u8, passphrase: []const u8) HDWallet {
         var wallet: HDWallet = undefined;
 
         // Step 1: BIP-39 → Master Seed (PBKDF2-SHA512)
-        const password = "";  // Standard BIP-39 uses empty password
-        _ = pbkdf2_hmac_sha512(mnemonic, "TREZOR", &wallet.master_seed, password);
+        // Password = mnemonic, Salt = "TREZOR" + passphrase (BIP-39 standard)
+        _ = pbkdf2_hmac_sha512(mnemonic, "TREZOR", &wallet.master_seed, passphrase);
 
         // Step 2: BIP-32 → Master Key (HMAC-SHA512)
         const hmac_key = "Bitcoin seed";
@@ -192,9 +196,8 @@ pub const HDWallet = struct {
     }
 };
 
-fn pbkdf2_hmac_sha512(password: []const u8, salt: []const u8, output: *[64]u8, custom_pass: []const u8) u64 {
+fn pbkdf2_hmac_sha512(password: []const u8, salt_prefix: []const u8, output: *[64]u8, passphrase: []const u8) u64 {
     // Real BIP-39 PBKDF2: password="BIP39"+mnemonic, salt="TREZOR"+passphrase, 2048 iterations
-    _ = custom_pass;
 
     var full_password: [512]u8 = undefined;
     var full_salt: [128]u8 = undefined;
@@ -205,11 +208,10 @@ fn pbkdf2_hmac_sha512(password: []const u8, salt: []const u8, output: *[64]u8, c
     @memcpy(full_password[bip39_prefix.len..bip39_prefix.len + password.len], password);
     const password_len = bip39_prefix.len + password.len;
 
-    // Salt = "TREZOR" + passphrase
-    const trezor_prefix = "TREZOR";
-    @memcpy(full_salt[0..trezor_prefix.len], trezor_prefix);
-    @memcpy(full_salt[trezor_prefix.len..trezor_prefix.len + salt.len], salt);
-    const salt_len = trezor_prefix.len + salt.len;
+    // Salt = "TREZOR" + passphrase (BIP-39: salt is "TREZOR" + user passphrase, default passphrase is empty)
+    @memcpy(full_salt[0..salt_prefix.len], salt_prefix);
+    @memcpy(full_salt[salt_prefix.len..salt_prefix.len + passphrase.len], passphrase);
+    const salt_len = salt_prefix.len + passphrase.len;
 
     var result: [64]u8 = undefined;
     var hasher = std.crypto.hash.sha2.Sha256.init(.{});
@@ -281,14 +283,19 @@ fn hmac_sha512(key: []const u8, data: []const u8, key_out: *[32]u8, chain_code: 
 
 pub const WalletGenerator = struct {
     pub fn generate_from_mnemonic(mnemonic: []const u8) WalletAccount {
+        // Call with empty passphrase (default BIP-39 behavior)
+        return generate_from_mnemonic_with_passphrase(mnemonic, "");
+    }
+
+    pub fn generate_from_mnemonic_with_passphrase(mnemonic: []const u8, passphrase: []const u8) WalletAccount {
         var wallet: WalletAccount = undefined;
 
         // Copy mnemonic
         @memcpy(wallet.mnemonic[0..mnemonic.len], mnemonic);
         wallet.mnemonic_len = @intCast(mnemonic.len);
 
-        // Initialize HD wallet
-        const hd = HDWallet.init(mnemonic);
+        // Initialize HD wallet with passphrase
+        const hd = HDWallet.init_with_passphrase(mnemonic, passphrase);
         wallet.master_seed = hd.master_seed;
         wallet.master_key = hd.master_key;
 
