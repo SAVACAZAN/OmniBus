@@ -23,6 +23,24 @@ pub const NodeDescriptor = extern struct {
     _pad2: [6]u8 = [_]u8{0} ** 6,
 };
 
+pub const CloudProvider = enum(u8) {
+    aws = 0,
+    azure = 1,
+    gcp = 2,
+    oracle = 3,
+    onprem = 4,
+};
+
+pub const CloudNodeDescriptor = extern struct {
+    node_id: u32 = 0,
+    region_hash: u64 = 0,           // FNV hash of region name (e.g. "us-east-1")
+    provider: u8 = 0,               // CloudProvider enum
+    is_primary: u8 = 0,             // 1 if primary region
+    latency_cycles: u64 = 0,        // Measured round-trip TSC delta
+    last_heartbeat: u64 = 0,        // TSC timestamp
+    _pad: [6]u8 = [_]u8{0} ** 6,
+};
+
 pub const MNFState = extern struct {
     magic: u32 = 0x4D4E4644,
     flags: u8 = 0x01,
@@ -38,5 +56,15 @@ pub const MNFState = extern struct {
     split_brain_detected: u8 = 0,
     _pad3: [3]u8 = [_]u8{0} ** 3,
     last_quorum_cycle: u64 = 0,
-    _pad4: [61]u8 = [_]u8{0} ** 61,
+
+    // Cloud federation state
+    cloud_node_count: u8 = 0,
+    geo_redundancy_enabled: u8 = 0,
+    _pad4: [2]u8 = [_]u8{0} ** 2,
+    primary_region_hash: u64 = 0,
+    failover_region_hash: u64 = 0,
+    _pad5: [32]u8 = [_]u8{0} ** 32,
 };
+
+pub const CLOUD_NODES_BASE: usize = MNF_BASE + 0x200;
+pub const MAX_CLOUD_NODES: usize = 8;
