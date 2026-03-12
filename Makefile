@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) phase53b-crypto $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin $(BUILD_DIR)/wallet_manager.bin
+build: $(OUTPUT) phase53b-crypto $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin $(BUILD_DIR)/wallet_manager.bin $(BUILD_DIR)/gpu_optimizer_os.bin $(BUILD_DIR)/asic_optimizer_os.bin $(BUILD_DIR)/stratum_v2_gateway.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker/DomainResolver loaded"
@@ -1498,4 +1498,65 @@ universal_wallet_generator: universal_wallet_generator.zig
 	@echo "[ZIG] Compiling Universal Wallet Generator..."
 	zig build-exe universal_wallet_generator.zig
 	@echo "✓ Compiled: universal_wallet_generator"
+
+# ============================================================================
+# PHASE 59: Mining Optimization & Network Efficiency (GPU/ASIC/Stratum V2)
+# ============================================================================
+
+# GPU Optimizer OS (0x590000, SIMD Keccak, adaptive difficulty, thermal)
+$(BUILD_DIR)/gpu_optimizer_os.o: ./modules/gpu_optimizer_os/gpu_optimizer_os.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling GPU Optimizer OS to object file..."
+	cd ./modules/gpu_optimizer_os && zig build-obj gpu_optimizer_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/gpu_optimizer_os/gpu_optimizer_os.o ]; then mv ./modules/gpu_optimizer_os/gpu_optimizer_os.o $@; fi
+
+$(BUILD_DIR)/gpu_optimizer_os_stubs.o: ./modules/gpu_optimizer_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling GPU Optimizer OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/gpu_optimizer_os.elf: $(BUILD_DIR)/gpu_optimizer_os.o $(BUILD_DIR)/gpu_optimizer_os_stubs.o ./modules/gpu_optimizer_os/gpu_optimizer_os.ld
+	@echo "[LD] Linking GPU Optimizer OS ELF..."
+	ld -T ./modules/gpu_optimizer_os/gpu_optimizer_os.ld -o $@ $(BUILD_DIR)/gpu_optimizer_os.o $(BUILD_DIR)/gpu_optimizer_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/gpu_optimizer_os.bin: $(BUILD_DIR)/gpu_optimizer_os.elf
+	@echo "[OC] Converting GPU Optimizer OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  GPU Optimizer OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# ASIC Optimizer OS (0x5A0000, frequency scaling, voltage tuning, power profiling)
+$(BUILD_DIR)/asic_optimizer_os.o: ./modules/asic_optimizer_os/asic_optimizer_os.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling ASIC Optimizer OS to object file..."
+	cd ./modules/asic_optimizer_os && zig build-obj asic_optimizer_os.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/asic_optimizer_os/asic_optimizer_os.o ]; then mv ./modules/asic_optimizer_os/asic_optimizer_os.o $@; fi
+
+$(BUILD_DIR)/asic_optimizer_os_stubs.o: ./modules/asic_optimizer_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling ASIC Optimizer OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/asic_optimizer_os.elf: $(BUILD_DIR)/asic_optimizer_os.o $(BUILD_DIR)/asic_optimizer_os_stubs.o ./modules/asic_optimizer_os/asic_optimizer_os.ld
+	@echo "[LD] Linking ASIC Optimizer OS ELF..."
+	ld -T ./modules/asic_optimizer_os/asic_optimizer_os.ld -o $@ $(BUILD_DIR)/asic_optimizer_os.o $(BUILD_DIR)/asic_optimizer_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/asic_optimizer_os.bin: $(BUILD_DIR)/asic_optimizer_os.elf
+	@echo "[OC] Converting ASIC Optimizer OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  ASIC Optimizer OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# Stratum V2 Gateway (0x5B0000, direct protocol, work distribution, share aggregation)
+$(BUILD_DIR)/stratum_v2_gateway.o: ./modules/stratum_v2_gateway/stratum_v2_gateway.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Stratum V2 Gateway to object file..."
+	cd ./modules/stratum_v2_gateway && zig build-obj stratum_v2_gateway.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/stratum_v2_gateway/stratum_v2_gateway.o ]; then mv ./modules/stratum_v2_gateway/stratum_v2_gateway.o $@; fi
+
+$(BUILD_DIR)/stratum_v2_gateway_stubs.o: ./modules/stratum_v2_gateway/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling Stratum V2 Gateway libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/stratum_v2_gateway.elf: $(BUILD_DIR)/stratum_v2_gateway.o $(BUILD_DIR)/stratum_v2_gateway_stubs.o ./modules/stratum_v2_gateway/stratum_v2_gateway.ld
+	@echo "[LD] Linking Stratum V2 Gateway ELF..."
+	ld -T ./modules/stratum_v2_gateway/stratum_v2_gateway.ld -o $@ $(BUILD_DIR)/stratum_v2_gateway.o $(BUILD_DIR)/stratum_v2_gateway_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/stratum_v2_gateway.bin: $(BUILD_DIR)/stratum_v2_gateway.elf
+	@echo "[OC] Converting Stratum V2 Gateway to binary..."
+	objcopy -O binary $< $@
+	@echo "  Stratum V2 Gateway binary: $@ (size: $$(stat -c%s $@) bytes)"
 
