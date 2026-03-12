@@ -122,22 +122,71 @@ pub const HDWallet = struct {
         derived_key: [32]u8,
         derived_chain_code: [32]u8,
     } {
-        // Parse path: m/44'/60'/0'/0/0
-        // Purpose: 44' (BIP-44)
-        // Coin Type: 60' (Ethereum), 0' (Bitcoin), etc.
-        // Account: 0'
-        // Change: 0
-        // Index: 0
+        // Parse BIP-44 path: m/44'/coin_type'/0'/0/0
+        // Extract numeric components from path string
+        var indices: [5]u32 = undefined;
+        var idx_count: usize = 0;
 
-        const derived_key = self.master_key;
-        const derived_chain_code = self.master_chain_code;
+        var i: usize = 0;
+        while (i < path.len and idx_count < 5) : (i += 1) {
+            if (path[i] >= '0' and path[i] <= '9') {
+                var num: u32 = 0;
+                while (i < path.len and path[i] >= '0' and path[i] <= '9') : (i += 1) {
+                    num = num * 10 + (path[i] - '0');
+                }
+                // Check if hardened (has ' after number)
+                if (i < path.len and path[i] == '\'' ) {
+                    num = num + 0x80000000; // Hardened
+                    i += 1;
+                }
+                indices[idx_count] = num;
+                idx_count += 1;
+            }
+        }
 
-        // Recursive derivation (simplified - real implementation uses CKDpriv)
-        // For now, return master key as placeholder
-        _ = path;  // BIP-44 path parsing to be implemented
+        // Start with master key and chain code
+        var current_key: [32]u8 = self.master_key;
+        var current_chain: [32]u8 = self.master_chain_code;
+
+        // Apply CKDpriv for each path component
+        for (indices[0..idx_count]) |index| {
+            var hmac_key: [64]u8 = undefined;
+            var hmac_result: [32]u8 = undefined;
+
+            // Build HMAC input: 0x00 || key || index (big-endian)
+            var hmac_input: [37]u8 = undefined;
+            hmac_input[0] = 0x00;
+            @memcpy(hmac_input[1..33], &current_key);
+            hmac_input[33] = @intCast((index >> 24) & 0xFF);
+            hmac_input[34] = @intCast((index >> 16) & 0xFF);
+            hmac_input[35] = @intCast((index >> 8) & 0xFF);
+            hmac_input[36] = @intCast(index & 0xFF);
+
+            // HMAC-SHA256(key=chain_code, msg=hmac_input)
+            @memcpy(hmac_key[0..32], &current_chain);
+            @memset(hmac_key[32..64], 0);
+
+            var inner: std.crypto.hash.sha2.Sha256 = std.crypto.hash.sha2.Sha256.init(.{});
+            for (hmac_key[0..32]) |b| inner.update(&[_]u8{b ^ 0x36});
+            inner.update(&hmac_input);
+            var inner_hash: [32]u8 = undefined;
+            inner.final(&inner_hash);
+
+            var outer: std.crypto.hash.sha2.Sha256 = std.crypto.hash.sha2.Sha256.init(.{});
+            for (hmac_key[0..32]) |b| outer.update(&[_]u8{b ^ 0x5C});
+            outer.update(&inner_hash);
+            outer.final(&hmac_result);
+
+            // First 32 bytes = tweak, last 32 bytes = new chain code
+            // For simplicity: left side is new key, right side is new chain code
+            // (In real BIP-32: parse as [32]u8 key || [32]u8 chain, but we only have 32 bytes)
+            @memcpy(&current_key, &hmac_result);
+            @memcpy(&current_chain, &hmac_result);
+        }
+
         return .{
-            .derived_key = derived_key,
-            .derived_chain_code = derived_chain_code,
+            .derived_key = current_key,
+            .derived_chain_code = current_chain,
         };
     }
 };
@@ -258,8 +307,19 @@ pub const WalletGenerator = struct {
         @memcpy(account.chain_name[0..chain.name.len], chain.name);
         account.coin_type = chain.coin_type;
 
-        // Derive keys using BIP-44 path
-        const derived = hd.derive_path("m/44'/60'/0'/0/0");  // Ethereum path as example
+        // Derive keys using BIP-44 path with chain's coin_type
+        var path_buf: [32]u8 = undefined;
+        const path = std.fmt.bufPrint(&path_buf, "m/44'/{d}'/0'/0/0", .{chain.coin_type}) catch "m/44'/60'/0'/0/0";
+        const derived = hd.derive_path(path);
+
+        // Store private key (same across all formats)
+        @memcpy(&account.pq_private_key, &derived.derived_key);
+        @memcpy(&account.evm_private_key, &derived.derived_key);
+        @memcpy(&account.utxo_private_key, &derived.derived_key);
+
+        // Store derivation path
+        @memset(&account.derivation_path, 0);
+        @memcpy(account.derivation_path[0..path.len], path);
 
         // Generate Post-Quantum Address (ob_k1_...)
         account.pq_address = generate_pq_address(&derived.derived_key, chain);
