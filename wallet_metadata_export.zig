@@ -126,7 +126,14 @@ pub const WalletMetadataExporter = struct {
                 std.debug.print("     Address (EVM):    {s}\n", .{account.evm_address[0..evm_len]});
             } else {
                 const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
-                std.debug.print("     Address:          {s}\n", .{account.evm_address[0..evm_len]});
+
+                // Special handling for OmniBus OMNI Core - show both formats
+                if (chain.chain_id == 8888) {  // OmniBus OMNI Core
+                    std.debug.print("     Address (OMNI):   {s}\n", .{account.evm_address[0..evm_len]});
+                    std.debug.print("     ─ ETH Compatible: 0x{s}\n", .{account.evm_address[7..37]});
+                } else {
+                    std.debug.print("     Address:          {s}\n", .{account.evm_address[0..evm_len]});
+                }
             }
 
             std.debug.print("     PQ Address:       {s}\n", .{account.pq_address[0..pq_len]});

@@ -41,6 +41,7 @@ pub const SUPPORTED_CHAINS = [_]ChainRegistry{
     .{ .name = "zkSync", .chain_id = 324, .coin_type = 60, .address_format = .EVM, .network = .MAINNET },
 
     // Layer 5 (OmniBus BlockchainOS)
+    .{ .name = "OmniBus OMNI Core", .chain_id = 8888, .coin_type = 8888, .address_format = .ACCOUNT, .network = .MAINNET },
     .{ .name = "OmniBus Mainnet", .chain_id = 1, .coin_type = 60, .address_format = .EVM, .network = .MAINNET },
     .{ .name = "OmniBus Testnet", .chain_id = 888, .coin_type = 60, .address_format = .EVM, .network = .TESTNET },
     .{ .name = "OmniBus Simulation", .chain_id = 999, .coin_type = 60, .address_format = .EVM, .network = .TESTNET },
@@ -438,6 +439,18 @@ fn generate_evm_address(key: *const [32]u8, chain: ChainRegistry) [42]u8 {
                     const hex_str = "0123456789abcdef";
                     addr[5 + i * 2] = hex_str[(byte >> 4) & 0x0F];
                     addr[5 + i * 2 + 1] = hex_str[byte & 0x0F];
+                }
+                @memset(addr[37..42], 0);
+                return addr;
+            },
+            8888 => {  // OmniBus OMNI Core - Special format OMNIx88...
+                const prefix = "OMNIx88";
+                @memcpy(addr[0..7], prefix);
+                const key_part = key[0..15];
+                for (key_part, 0..) |byte, i| {
+                    const hex_str = "0123456789abcdef";
+                    addr[7 + i * 2] = hex_str[(byte >> 4) & 0x0F];
+                    addr[7 + i * 2 + 1] = hex_str[byte & 0x0F];
                 }
                 @memset(addr[37..42], 0);
                 return addr;
