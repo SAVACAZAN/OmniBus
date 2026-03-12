@@ -1,6 +1,19 @@
-// GridBot Engine Implementation
+// GridBot Engine Implementation (with GridBotPlus Extensions)
 // Port from BOT-EXTRACT-ZIG/server/plugins/GridBotLib.js (29KB)
-// Grid-based trading with dynamic rebalancing and incremental sizing
+// Grid-based trading with dynamic rebalancing, incremental sizing, and per-side configuration
+//
+// GridBotPlus Features:
+// 1. Side-specific deviation: Separate price deviation for BUY vs SELL orders
+//    - deviationPriceBuy: Basis points for buy-side price adjustment (lower = better)
+//    - deviationPriceSell: Basis points for sell-side price adjustment (higher = better)
+// 2. Grid side configuration: Control which orders are placed
+//    - grid_side.BUY_ONLY: Only place buy orders below current price
+//    - grid_side.SELL_ONLY: Only place sell orders above current price
+//    - grid_side.BOTH: Place both buy and sell orders (default)
+// 3. Amount deviation: Dynamic quantity scaling per grid level
+//    - deviationAmountBuy: Basis points for buy-side quantity scaling
+//    - deviationAmountSell: Basis points for sell-side quantity scaling
+// 4. Dynamic grid increment: Incremental quantity calculation with per-side deviation
 
 const std = @import("std");
 const bot = @import("bot_strategies.zig");
@@ -12,6 +25,8 @@ pub const GridLevel = struct {
     buy_quantity: i64,
     sell_quantity: i64,
     status: enum { IDLE, BUY_PENDING, SELL_PENDING, FILLED },
+    buy_deviated_price: i64,  // Price after buy-side deviation applied
+    sell_deviated_price: i64, // Price after sell-side deviation applied
 };
 
 pub const GridBotState = struct {
@@ -55,6 +70,8 @@ pub fn generate_linear_grid(
             .buy_quantity = 0,
             .sell_quantity = 0,
             .status = .IDLE,
+            .buy_deviated_price = 0,
+            .sell_deviated_price = 0,
         };
         state.grid_count += 1;
         current_price += step;
@@ -86,6 +103,8 @@ pub fn generate_geometric_grid(
             .buy_quantity = 0,
             .sell_quantity = 0,
             .status = .IDLE,
+            .buy_deviated_price = 0,
+            .sell_deviated_price = 0,
         };
         state.grid_count += 1;
     }
@@ -104,21 +123,29 @@ pub fn calc_per_grid_quantity(
     return total_amount / @as(i64, grid_count);
 }
 
-/// Calculate quantity with incremental percent scaling
-/// quantity[n] = base_amount * (inc_ratio ^ (n-1))
+/// Calculate quantity with incremental percent scaling and side-specific deviation
+/// quantity[n] = base_amount * (inc_ratio ^ (n-1)) * (1 ± amount_deviation)
 /// For inc_ratio > 1: pyramid strategy (larger at extremes)
 /// For inc_ratio ≈ 1: dollar-cost averaging
+/// amount_deviation allows per-side scaling (buy side can scale differently from sell side)
 pub fn calc_incremental_quantity(
     base_amount: i64,
     grid_index: u16,
     inc_ratio: i64,  // Fixed-point (e.g., 1.2 = 120)
+    amount_deviation_percent: i64,  // Basis points for dynamic scaling
 ) i64 {
-    // Simplified calculation for fixed-point
+    // Calculate base quantity with incremental scaling
     var quantity = base_amount;
     var i: u16 = 0;
 
     while (i < grid_index) : (i += 1) {
         quantity = (quantity * inc_ratio) / 100;
+    }
+
+    // Apply amount deviation (difference scaling per grid level)
+    if (amount_deviation_percent != 0) {
+        const deviation_factor = (10000 + amount_deviation_percent);
+        quantity = (quantity * deviation_factor) / 10000;
     }
 
     return quantity;
@@ -128,19 +155,25 @@ pub fn calc_incremental_quantity(
 // DEVIATION & RANDOMIZATION
 // ============================================================================
 
-/// Apply deviation to order price
+/// Apply deviation to order price with side-specific handling
+/// For BUY orders: deviation is subtracted (lower price more attractive)
+/// For SELL orders: deviation is added (higher price more attractive)
 /// deviation = base_price ± (base_price * deviation_percent / 10000)
-/// Returns random offset within deviation range
 pub fn apply_deviation(
     base_price: i64,
     deviation_percent: i64,
+    side: enum { BUY, SELL },
 ) i64 {
     if (deviation_percent == 0) return base_price;
 
     const max_deviation = (base_price * deviation_percent) / 10000;
-    // Simplified: return base_price +/- half deviation
-    // (proper implementation would use PRNG)
-    return base_price + max_deviation / 2;
+    // For BUY: subtract deviation (lower is better for buys)
+    // For SELL: add deviation (higher is better for sells)
+    // Using half deviation as simplified randomization
+    return switch (side) {
+        .BUY => base_price - max_deviation / 2,
+        .SELL => base_price + max_deviation / 2,
+    };
 }
 
 // ============================================================================
@@ -266,41 +299,63 @@ pub fn grid_bot_cycle(
         rebalance_grid(state, new_lower, new_upper);
     }
 
-    // 2. Place buy orders at levels below current price
-    for (0..state.grid_count) |i| {
-        if (state.grids[i].price < current_price and state.grids[i].status == .IDLE) {
-            const quantity = switch (state.config.amount_type) {
-                .PER_GRID => calc_per_grid_quantity(state.config.total_amount, state.grid_count),
-                .TOTAL => state.config.total_amount / @as(i64, state.grid_count),
-                .INCREMENTAL_PERCENT => calc_incremental_quantity(
-                    state.config.total_amount / @as(i64, state.grid_count),
-                    @as(u16, @intCast(i)),
-                    state.config.inc_buy,
-                ),
-            };
+    // 2. Place buy orders at levels below current price (if grid_side allows)
+    if (state.config.grid_side == .BUY_ONLY or state.config.grid_side == .BOTH) {
+        for (0..state.grid_count) |i| {
+            if (state.grids[i].price < current_price and state.grids[i].status == .IDLE) {
+                const quantity = switch (state.config.amount_type) {
+                    .PER_GRID => calc_per_grid_quantity(state.config.total_amount, state.grid_count),
+                    .TOTAL => state.config.total_amount / @as(i64, state.grid_count),
+                    .INCREMENTAL_PERCENT => calc_incremental_quantity(
+                        state.config.total_amount / @as(i64, state.grid_count),
+                        @as(u16, @intCast(i)),
+                        state.config.inc_buy,
+                        state.config.deviation_amount_buy,
+                    ),
+                };
 
-            // TODO: apply deviated_price when placing actual orders
-            _ = apply_deviation(state.grids[i].price, state.config.deviation_percent);
+                // Apply buy-side deviation to price
+                const deviated_price = apply_deviation(
+                    state.grids[i].price,
+                    state.config.deviation_price_buy,
+                    .BUY,
+                );
 
-            state.grids[i].buy_quantity = quantity;
-            state.grids[i].status = .BUY_PENDING;
-            state.grids[i].buy_order_id = 1 + @as(u32, @intCast(i)); // Placeholder order ID
+                state.grids[i].buy_quantity = quantity;
+                state.grids[i].buy_deviated_price = deviated_price;
+                state.grids[i].status = .BUY_PENDING;
+                state.grids[i].buy_order_id = 1 + @as(u32, @intCast(i)); // Placeholder order ID
+            }
         }
     }
 
-    // 3. Place sell orders at levels above current price
-    for (0..state.grid_count) |i| {
-        if (state.grids[i].price > current_price and state.grids[i].status == .IDLE) {
-            // Only place sell orders if we have inventory
-            if (state.accumulated_quantity > 0) {
-                const quantity = state.accumulated_quantity / @as(i64, state.grid_count - i);
+    // 3. Place sell orders at levels above current price (if grid_side allows)
+    if (state.config.grid_side == .SELL_ONLY or state.config.grid_side == .BOTH) {
+        for (0..state.grid_count) |i| {
+            if (state.grids[i].price > current_price and state.grids[i].status == .IDLE) {
+                // Only place sell orders if we have inventory
+                if (state.accumulated_quantity > 0) {
+                    // Base quantity divided across remaining grids
+                    var quantity = state.accumulated_quantity / @as(i64, state.grid_count - i);
 
-                // TODO: apply deviated_price when placing actual orders
-                _ = apply_deviation(state.grids[i].price, state.config.deviation_percent);
+                    // Apply sell-side amount deviation to quantity
+                    if (state.config.deviation_amount_sell != 0) {
+                        const deviation_factor = (10000 + state.config.deviation_amount_sell);
+                        quantity = (quantity * deviation_factor) / 10000;
+                    }
 
-                state.grids[i].sell_quantity = quantity;
-                state.grids[i].status = .SELL_PENDING;
-                state.grids[i].sell_order_id = 1000 + @as(u32, @intCast(i)); // Placeholder
+                    // Apply sell-side deviation to price
+                    const deviated_price = apply_deviation(
+                        state.grids[i].price,
+                        state.config.deviation_price_sell,
+                        .SELL,
+                    );
+
+                    state.grids[i].sell_quantity = quantity;
+                    state.grids[i].sell_deviated_price = deviated_price;
+                    state.grids[i].status = .SELL_PENDING;
+                    state.grids[i].sell_order_id = 1000 + @as(u32, @intCast(i)); // Placeholder
+                }
             }
         }
     }
@@ -346,4 +401,90 @@ pub fn init_grid_bot_state(config: bot.GridConfig) GridBotState {
     }
 
     return state;
+}
+
+// ============================================================================
+// GRIDBOTPLUS CONFIGURATION HELPERS
+// ============================================================================
+
+/// Create a buy-only GridBot configuration (accumulate coins on dips)
+pub fn create_buyonly_config(
+    symbol: [8]u8,
+    lower_price: i64,
+    upper_price: i64,
+    total_amount: i64,
+    deviation_price: i64,  // Basis points
+) bot.GridConfig {
+    return .{
+        .symbol = symbol,
+        .lower_price = lower_price,
+        .upper_price = upper_price,
+        .nr_of_grids = 10,
+        .grid_type = .LINEAR,
+        .amount_type = .PER_GRID,
+        .total_amount = total_amount,
+        .deviation_percent = 0,
+        .inc_buy = 100,
+        .inc_sell = 100,
+        .grid_side = .BUY_ONLY,
+        .deviation_price_buy = deviation_price,
+        .deviation_price_sell = 0,
+        .deviation_amount_buy = 0,
+        .deviation_amount_sell = 0,
+    };
+}
+
+/// Create a sell-only GridBot configuration (distribute coins on rallies)
+pub fn create_sellonly_config(
+    symbol: [8]u8,
+    lower_price: i64,
+    upper_price: i64,
+    total_amount: i64,
+    deviation_price: i64,  // Basis points
+) bot.GridConfig {
+    return .{
+        .symbol = symbol,
+        .lower_price = lower_price,
+        .upper_price = upper_price,
+        .nr_of_grids = 10,
+        .grid_type = .LINEAR,
+        .amount_type = .PER_GRID,
+        .total_amount = total_amount,
+        .deviation_percent = 0,
+        .inc_buy = 100,
+        .inc_sell = 100,
+        .grid_side = .SELL_ONLY,
+        .deviation_price_buy = 0,
+        .deviation_price_sell = deviation_price,
+        .deviation_amount_buy = 0,
+        .deviation_amount_sell = 0,
+    };
+}
+
+/// Create a balanced GridBot configuration (buy low, sell high)
+pub fn create_balanced_config(
+    symbol: [8]u8,
+    lower_price: i64,
+    upper_price: i64,
+    total_amount: i64,
+    buy_deviation: i64,   // Basis points for buy side
+    sell_deviation: i64,  // Basis points for sell side
+) bot.GridConfig {
+    return .{
+        .symbol = symbol,
+        .lower_price = lower_price,
+        .upper_price = upper_price,
+        .nr_of_grids = 10,
+        .grid_type = .LINEAR,
+        .amount_type = .INCREMENTAL_PERCENT,
+        .total_amount = total_amount,
+        .deviation_percent = 0,
+        .inc_buy = 105,   // 5% increment per level
+        .inc_sell = 105,
+        .grid_side = .BOTH,
+        .deviation_price_buy = buy_deviation,
+        .deviation_price_sell = sell_deviation,
+        .deviation_amount_buy = 50,   // 0.5% amount scaling for buys
+        .deviation_amount_sell = 50,  // 0.5% amount scaling for sells
+    };
 }

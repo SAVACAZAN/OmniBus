@@ -112,9 +112,15 @@ pub const GridConfig = struct {
     grid_type: enum { LINEAR, GEOMETRIC },
     amount_type: enum { PER_GRID, TOTAL, INCREMENTAL_PERCENT },
     total_amount: i64,
-    deviation_percent: i64,  // In basis points
+    deviation_percent: i64,  // In basis points (legacy, single-sided)
     inc_buy: i64,             // Incremental multiplier (fixed-point)
     inc_sell: i64,
+    // GridBotPlus extensions
+    grid_side: enum { BUY_ONLY, SELL_ONLY, BOTH } = .BOTH,
+    deviation_price_buy: i64,   // Basis points for buy-side price deviation
+    deviation_price_sell: i64,  // Basis points for sell-side price deviation
+    deviation_amount_buy: i64,  // Basis points for buy-side amount scaling
+    deviation_amount_sell: i64, // Basis points for sell-side amount scaling
 };
 
 // ============================================================================
