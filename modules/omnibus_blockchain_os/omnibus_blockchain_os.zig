@@ -20,6 +20,7 @@ const simulator = @import("blockchain_simulator.zig");
 const miner_rewards = @import("miner_rewards.zig");
 const network = @import("network_integration.zig");
 const token_registry = @import("token_registry.zig");
+const oracle_consensus = @import("oracle_consensus.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -121,6 +122,9 @@ pub export fn init_plugin() void {
     state.wallet_initialized = 1;
     state.blockchain_initialized = 1;
 
+    // Phase 64: Initialize Oracle Consensus (4/6 validator voting)
+    oracle_consensus.init_oracle_consensus();
+
     initialized = true;
 }
 
@@ -183,6 +187,38 @@ pub export fn run_blockchain_cycle() void {
 
     // Inject latest oracle prices from WebSocket buffers
     inject_oracle_prices();
+
+    // Phase 64: Oracle Consensus Integration
+    // Create a new price snapshot every cycle
+    const snapshot = oracle_consensus.create_price_snapshot();
+
+    // Populate snapshot with current prices from State Trie
+    // In real implementation, read from 0x250040–0x250C80 (50 tokens)
+    // For now, the snapshot is pre-populated by previous inject_oracle_prices() call
+
+    // Submit votes from all 6 validators (in real system, these would be distributed)
+    // Each validator computes hash and submits agreement
+    var i: usize = 0;
+    while (i < 6) : (i += 1) {
+        // Compute snapshot hash based on validator's view
+        const vote_hash = oracle_consensus.compute_snapshot_hash(snapshot);
+
+        // Submit the vote
+        const votes = oracle_consensus.submit_validator_vote(@intCast(i), vote_hash, state.timestamp);
+        _ = votes; // Track vote submission
+    }
+
+    // Check if quorum (4/6) has been achieved
+    const agreement_count = oracle_consensus.check_quorum(snapshot);
+
+    if (agreement_count >= 4) {
+        // Commit the price snapshot
+        const success = oracle_consensus.commit_price_snapshot(snapshot);
+        if (success == 1) {
+            // Snapshot committed and immutable – update blockchain height
+            state.block_height += 1;
+        }
+    }
 
     // Process pending blockchain operations
     // - Check for new transactions in queue
@@ -257,6 +293,13 @@ pub export fn ipc_dispatch(opcode: u8, arg0: u64, arg1: u64, arg2: u64) u64 {
         0xA7 => ipc_explorer_circulating_supply(),             // get_circulating_supply() → u64
         0xA8 => ipc_explorer_tx_count(),                       // get_tx_count() → u64
         0xA9 => ipc_explorer_price_snapshot(),                 // get_price_snapshot() → prices_ptr
+
+        // Oracle Consensus operations (0xC0–0xC4) – Phase 64
+        0xC0 => ipc_oracle_create_snapshot(),                  // oracle_create_snapshot() → snapshot_id
+        0xC1 => ipc_oracle_submit_vote(arg0, arg1),            // oracle_submit_vote(validator_id, block_height) → u8
+        0xC2 => ipc_oracle_check_quorum(arg0),                 // oracle_check_quorum(snapshot_idx) → u8 (0/1)
+        0xC3 => ipc_oracle_get_validator(arg0),                // oracle_get_validator(id) → ValidatorInfo_ptr
+        0xC4 => ipc_oracle_get_quorum_stats(),                 // oracle_get_quorum_stats() → (success, fail, rate)
 
         else => 0xFFFFFFFFFFFFFFFF, // Invalid opcode
     };
@@ -583,4 +626,54 @@ fn ipc_explorer_price_snapshot() u64 {
     // Returns: pointer to price snapshot (Kraken, LCX, Coinbase)
     // Would query lightweight_miner_os at 0x670000
     return 0;
+}
+
+// ============================================================================
+// IPC: ORACLE CONSENSUS OPERATIONS (Phase 64)
+// ============================================================================
+
+fn ipc_oracle_create_snapshot() u64 {
+    // Create new price snapshot for voting
+    // Returns: pointer to PriceSnapshot in memory
+    const snapshot = oracle_consensus.create_price_snapshot();
+    return @intFromPtr(snapshot);
+}
+
+fn ipc_oracle_submit_vote(validator_id: u64, block_height: u64) u64 {
+    // Submit validator vote on current price snapshot
+    // validator_id: 0-5 (which validator)
+    // block_height: current blockchain height (for timestamping)
+    // Returns: number of votes received so far
+    if (validator_id >= 6) return 0xFFFFFFFF;
+
+    const snapshot = oracle_consensus.get_latest_snapshot() orelse return 0;
+    const vote_hash = oracle_consensus.compute_snapshot_hash(snapshot);
+
+    return oracle_consensus.submit_validator_vote(@intCast(validator_id), vote_hash, @intCast(block_height));
+}
+
+fn ipc_oracle_check_quorum(snapshot_idx: u64) u64 {
+    // Check if 4/6 validators agree on snapshot
+    // snapshot_idx: index in circular buffer (0-9)
+    // Returns: 1 if quorum achieved, 0 if not
+    _ = snapshot_idx;
+    const snapshot = oracle_consensus.get_latest_snapshot() orelse return 0;
+    const agreement = oracle_consensus.check_quorum(snapshot);
+    return if (agreement >= 4) 1 else 0;
+}
+
+fn ipc_oracle_get_validator(validator_id: u64) u64 {
+    // Get validator information
+    // validator_id: 0-5
+    // Returns: pointer to ValidatorInfo structure in OracleConsensusState
+    if (validator_id >= 6) return 0;
+    const info_ptr = oracle_consensus.get_validator_info_ptr(@intCast(validator_id));
+    return @intFromPtr(info_ptr);
+}
+
+fn ipc_oracle_get_quorum_stats() u64 {
+    // Get oracle consensus statistics
+    // Returns: (success_count << 32) | fail_count in single u64
+    const stats = oracle_consensus.get_quorum_status();
+    return (@as(u64, stats.success) << 32) | @as(u64, stats.fail);
 }
