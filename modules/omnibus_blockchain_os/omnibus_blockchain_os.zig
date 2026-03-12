@@ -19,6 +19,7 @@ const blockchain = @import("omnibus_blockchain.zig");
 const simulator = @import("blockchain_simulator.zig");
 const miner_rewards = @import("miner_rewards.zig");
 const network = @import("network_integration.zig");
+const token_registry = @import("token_registry.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -127,6 +128,51 @@ pub export fn init_plugin() void {
 // MAIN CYCLE
 // ============================================================================
 
+// ============================================================================
+// ORACLE PRICE INJECTION (From WebSocket Buffers)
+// ============================================================================
+
+/// External exchange buffer structure (matches analytics_os/exchange_reader.zig)
+const ExchangeBuffer = struct {
+    timestamp: u64,
+    btc_price_cents: u64,
+    btc_volume_sats: u64,
+    eth_price_cents: u64,
+    eth_volume_sats: u64,
+    exchange_flags: u32,
+    _reserved: u32,
+    last_tsc: u64,
+    lcx_price_cents: u64,
+    lcx_volume_sats: u64,
+};
+
+/// Read prices from exchange buffers and inject into State Trie
+/// Called once per blockchain cycle from lightweight_miner_os
+pub fn inject_oracle_prices() void {
+    // Read from shared memory buffers (populated by external WebSocket feeders)
+    const kraken_buf = @as(*volatile ExchangeBuffer, @ptrFromInt(0x140000));
+    const coinbase_buf = @as(*volatile ExchangeBuffer, @ptrFromInt(0x141000));
+
+    // Get token mappings
+    const btc_map = token_registry.lookupBySymbol("BTC") orelse return;
+    const eth_map = token_registry.lookupBySymbol("ETH") orelse return;
+
+    // === Inject BTC prices (write to State Trie slot from Kraken) ===
+    if (kraken_buf.btc_price_cents > 0) {
+        const btc_price_slot = @as(*volatile u64, @ptrFromInt(btc_map.state_trie_slot));
+        btc_price_slot.* = kraken_buf.btc_price_cents;
+    }
+
+    // === Inject ETH prices (write to State Trie slot from Coinbase) ===
+    if (coinbase_buf.eth_price_cents > 0) {
+        const eth_price_slot = @as(*volatile u64, @ptrFromInt(eth_map.state_trie_slot));
+        eth_price_slot.* = coinbase_buf.eth_price_cents;
+    }
+
+    // === Timestamp marker ===
+    state.timestamp = rdtsc();
+}
+
 pub export fn run_blockchain_cycle() void {
     if (!initialized) {
         init_plugin();
@@ -134,6 +180,9 @@ pub export fn run_blockchain_cycle() void {
 
     state.cycle_count += 1;
     state.timestamp = rdtsc();
+
+    // Inject latest oracle prices from WebSocket buffers
+    inject_oracle_prices();
 
     // Process pending blockchain operations
     // - Check for new transactions in queue
