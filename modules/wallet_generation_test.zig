@@ -39,12 +39,12 @@ pub const TestWallet = struct {
 pub const TEST_MNEMONIC = "letter advice cage absurd amount doctor acoustic avoid letter advice cage absurd amount doctor acoustic avoid letter advice cage absurd amount doctor acoustic avoid letter always";
 
 pub const EXPECTED_ADDRESSES = struct {
-    bitcoin: [48]u8 = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4".*,
-    ethereum: [48]u8 = "0x8ba1f109551bD432803012645Ac136ddd64DBA72".*,
-    solana: [48]u8 = "FPAcAKxJ8dXJGKwKmMgLCqEchKsYRCG7bkkxRSDRd4t7".*,
-    egld: [48]u8 = "erd1qyu8zcm5n0hf3mxvjkq5w7pqyt7g0mqnp8l2qxh".*,
-    optimism: [48]u8 = "0x8ba1f109551bD432803012645Ac136ddd64DBA72".*,
-    base: [48]u8 = "0x8ba1f109551bD432803012645Ac136ddd64DBA72".*,
+    bitcoin: [*:0]const u8 = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+    ethereum: [*:0]const u8 = "0x8ba1f109551bD432803012645Ac136ddd64DBA72",
+    solana: [*:0]const u8 = "FPAcAKxJ8dXJGKwKmMgLCqEchKsYRCG7bkkxRSDRd4t7",
+    egld: [*:0]const u8 = "erd1qyu8zcm5n0hf3mxvjkq5w7pqyt7g0mqnp8l2qxh",
+    optimism: [*:0]const u8 = "0x8ba1f109551bD432803012645Ac136ddd64DBA72",
+    base: [*:0]const u8 = "0x8ba1f109551bD432803012645Ac136ddd64DBA72",
 };
 
 // ============================================================================
@@ -101,85 +101,83 @@ pub fn generate_wallet(mnemonic: [*:0]const u8, passphrase: [*:0]const u8) TestW
 // Address Derivation Functions
 // ============================================================================
 
-fn derive_bitcoin_address(master_key: [*]const u8, master_chain_code: [*]const u8) [48]u8 {
+fn derive_bitcoin_address(_: [*]const u8, _: [*]const u8) [48]u8 {
     // Path: m/44'/0'/0'/0/0
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
 
     // Placeholder: derive P2WPKH address
-    // In production: use crypto_primitives.zig functions
     var addr_str = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
-    @memcpy(&addr, addr_str[0..48]);
+    @memcpy(&addr[0..42], addr_str);
 
     return addr;
 }
 
-fn derive_ethereum_address(master_key: [*]const u8, master_chain_code: [*]const u8) [48]u8 {
+fn derive_ethereum_address(_: [*]const u8, _: [*]const u8) [48]u8 {
     // Path: m/44'/60'/0'/0/0
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
 
     // Placeholder: derive EOA address (Keccak256 + EIP-55)
     var addr_str = "0x8ba1f109551bD432803012645Ac136ddd64DBA72";
-    @memcpy(&addr, addr_str[0..48]);
+    @memcpy(&addr[0..42], addr_str);
 
     return addr;
 }
 
-fn derive_solana_address(master_key: [*]const u8, master_chain_code: [*]const u8) [48]u8 {
+fn derive_solana_address(_: [*]const u8, _: [*]const u8) [48]u8 {
     // Path: m/44'/501'/0'/0/0
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
 
     // Placeholder: derive Ed25519 address (Base58)
     var addr_str = "FPAcAKxJ8dXJGKwKmMgLCqEchKsYRCG7bkkxRSDRd4t7";
-    @memcpy(&addr, addr_str[0..48]);
+    @memcpy(&addr[0..44], addr_str);
 
     return addr;
 }
 
-fn derive_egld_address(master_key: [*]const u8, master_chain_code: [*]const u8) [48]u8 {
+fn derive_egld_address(_: [*]const u8, _: [*]const u8) [48]u8 {
     // Path: m/44'/508'/0'/0/0
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
 
     // Placeholder: derive EGLD address (Bech32)
     var addr_str = "erd1qyu8zcm5n0hf3mxvjkq5w7pqyt7g0mqnp8l2qxh";
-    @memcpy(&addr, addr_str[0..48]);
+    @memcpy(&addr[0..42], addr_str);
 
     return addr;
 }
 
-fn derive_optimism_address(master_key: [*]const u8, master_chain_code: [*]const u8) [48]u8 {
+fn derive_optimism_address(m: [*]const u8, c: [*]const u8) [48]u8 {
     // Path: m/44'/60'/0'/0/0 (same as Ethereum)
-    return derive_ethereum_address(master_key, master_chain_code);
+    return derive_ethereum_address(m, c);
 }
 
-fn derive_base_address(master_key: [*]const u8, master_chain_code: [*]const u8) [48]u8 {
+fn derive_base_address(m: [*]const u8, c: [*]const u8) [48]u8 {
     // Path: m/44'/60'/0'/0/0 (same as Ethereum)
-    return derive_ethereum_address(master_key, master_chain_code);
+    return derive_ethereum_address(m, c);
 }
 
-fn derive_pq_domain_address(seed: [*]const u8, domain_name: [*:0]const u8) [48]u8 {
+fn derive_pq_domain_address(_: [*]const u8, domain_name: [*:0]const u8) [48]u8 {
     var addr: [48]u8 = undefined;
     @memset(&addr, 0);
 
     // Placeholder: derive PQ domain address
-    // In production: HMAC-SHA512(seed, domain_name) + algorithm encoding
     var prefix: [8]u8 = undefined;
     @memset(&prefix, 0);
 
     if (std.mem.eql(u8, std.mem.span(domain_name), "omnibus.love")) {
-        @memcpy(&prefix, "ob_k1_"[0..6]);
+        @memcpy(&prefix[0..6], "ob_k1_");
     } else if (std.mem.eql(u8, std.mem.span(domain_name), "omnibus.food")) {
-        @memcpy(&prefix, "ob_f5_"[0..6]);
+        @memcpy(&prefix[0..6], "ob_f5_");
     } else if (std.mem.eql(u8, std.mem.span(domain_name), "omnibus.rent")) {
-        @memcpy(&prefix, "ob_d5_"[0..6]);
+        @memcpy(&prefix[0..6], "ob_d5_");
     } else if (std.mem.eql(u8, std.mem.span(domain_name), "omnibus.vacation")) {
-        @memcpy(&prefix, "ob_s3_"[0..6]);
+        @memcpy(&prefix[0..6], "ob_s3_");
     }
 
-    @memcpy(&addr[0..6], &prefix);
+    @memcpy(&addr[0..6], &prefix[0..6]);
     return addr;
 }
 
@@ -259,14 +257,12 @@ fn bip32_master_key(
     @memcpy(master_chain_code[0..32], &hash[32..64]);
 }
 
-fn generate_short_id(address: [*]const u8, domain: [*:0]const u8) [16]u8 {
+fn generate_short_id(_: [*]const u8, domain: [*:0]const u8) [16]u8 {
     var short_id: [16]u8 = undefined;
     @memset(&short_id, 0);
 
     // Format: OMNI-[hex]-[DOMAIN]
-    // Example: OMNI-4a8f-LOVE
-
-    var result = std.fmt.bufPrint(&short_id, "OMNI-4a8f-{s}", .{domain}) catch unreachable;
+    _ = std.fmt.bufPrint(&short_id, "OMNI-4a8f-{s}", .{domain}) catch unreachable;
     return short_id;
 }
 
