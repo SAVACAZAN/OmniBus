@@ -1727,6 +1727,16 @@ $(BUILD_DIR)/order_router.o: ./modules/bot_strategies/order_router.zig | $(BUILD
 	cd ./modules/bot_strategies && zig build-obj order_router.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
 	@if [ -f ./modules/bot_strategies/order_router.o ]; then mv ./modules/bot_strategies/order_router.o $@; fi
 
+$(BUILD_DIR)/order_placement.o: ./modules/bot_strategies/order_placement.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Order Placement API to object file..."
+	cd ./modules/bot_strategies && zig build-obj order_placement.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/order_placement.o ]; then mv ./modules/bot_strategies/order_placement.o $@; fi
+
+$(BUILD_DIR)/arbitrage_execution.o: ./modules/bot_strategies/arbitrage_execution.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Arbitrage Execution to object file..."
+	cd ./modules/bot_strategies && zig build-obj arbitrage_execution.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/arbitrage_execution.o ]; then mv ./modules/bot_strategies/arbitrage_execution.o $@; fi
+
 $(BUILD_DIR)/bot_strategies_stubs.o: ./modules/bot_strategies/libc_stubs.asm | $(BUILD_DIR)/.keep
 	@echo "[AS] Assembling Bot Strategies libc stubs..."
 	nasm -f elf64 -o $@ $<
@@ -1735,9 +1745,9 @@ $(BUILD_DIR)/bot_strategies_entry.o: ./modules/bot_strategies/entry.asm | $(BUIL
 	@echo "[AS] Assembling Bot Strategies entry..."
 	nasm -f elf64 -o $@ $<
 
-$(BUILD_DIR)/bot_strategies.elf: $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/dca_bot.o $(BUILD_DIR)/dex_interface.o $(BUILD_DIR)/unified_orderbook.o $(BUILD_DIR)/omni_arbitrage.o $(BUILD_DIR)/local_orderbook.o $(BUILD_DIR)/cex_orderbook.o $(BUILD_DIR)/dex_orderbook.o $(BUILD_DIR)/order_router.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o ./modules/bot_strategies/bot_strategies.ld
+$(BUILD_DIR)/bot_strategies.elf: $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/dca_bot.o $(BUILD_DIR)/dex_interface.o $(BUILD_DIR)/unified_orderbook.o $(BUILD_DIR)/omni_arbitrage.o $(BUILD_DIR)/local_orderbook.o $(BUILD_DIR)/cex_orderbook.o $(BUILD_DIR)/dex_orderbook.o $(BUILD_DIR)/order_router.o $(BUILD_DIR)/order_placement.o $(BUILD_DIR)/arbitrage_execution.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o ./modules/bot_strategies/bot_strategies.ld
 	@echo "[LD] Linking Bot Strategies ELF..."
-	ld -T ./modules/bot_strategies/bot_strategies.ld -o $@ $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/dca_bot.o $(BUILD_DIR)/dex_interface.o $(BUILD_DIR)/unified_orderbook.o $(BUILD_DIR)/omni_arbitrage.o $(BUILD_DIR)/local_orderbook.o $(BUILD_DIR)/cex_orderbook.o $(BUILD_DIR)/dex_orderbook.o $(BUILD_DIR)/order_router.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o 2>&1 | grep -v "warning:" || true
+	ld -T ./modules/bot_strategies/bot_strategies.ld -o $@ $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/dca_bot.o $(BUILD_DIR)/dex_interface.o $(BUILD_DIR)/unified_orderbook.o $(BUILD_DIR)/omni_arbitrage.o $(BUILD_DIR)/local_orderbook.o $(BUILD_DIR)/cex_orderbook.o $(BUILD_DIR)/dex_orderbook.o $(BUILD_DIR)/order_router.o $(BUILD_DIR)/order_placement.o $(BUILD_DIR)/arbitrage_execution.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o 2>&1 | grep -v "warning:" || true
 
 $(BUILD_DIR)/bot_strategies.bin: $(BUILD_DIR)/bot_strategies.elf
 	@echo "[OC] Converting Bot Strategies to binary..."
