@@ -1,7 +1,0 @@
-// Ineficient
-function getPrice(address exchange) external view returns (uint) {
-    return prices[exchange];
-}
-
-// Eficient (pentru apeluri frecvente)
-mapping(address => uint) public prices;  // Direct storage access
