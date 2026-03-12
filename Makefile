@@ -1483,3 +1483,19 @@ phase53b-crypto: $(BUILD_DIR)/crypto_primitives.o $(BUILD_DIR)/bip32_bip39.o $(B
 	@echo "    - EGLD (erd1...) + Bech32"
 	@echo ""
 
+# ============================================================================
+# Utility Targets: Universal Wallet Generator
+# ============================================================================
+
+.PHONY: wallet-generator
+wallet-generator: universal_wallet_generator
+	@echo "✓ Universal Wallet Generator compiled: $<"
+	@echo "  Usage: ./universal_wallet_generator"
+	@echo "  Generates addresses for 50+ chains from single BIP-39 seed"
+	@echo "  Output formats: Post-Quantum (ob_k1_...) + EVM (0x...) + UTXO (1/3/bc1)"
+
+universal_wallet_generator: universal_wallet_generator.zig
+	@echo "[ZIG] Compiling Universal Wallet Generator..."
+	zig build-exe universal_wallet_generator.zig
+	@echo "✓ Compiled: universal_wallet_generator"
+
