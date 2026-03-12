@@ -1662,6 +1662,11 @@ $(BUILD_DIR)/bot_strategies.o: ./modules/bot_strategies/bot_strategies.zig | $(B
 	cd ./modules/bot_strategies && zig build-obj bot_strategies.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
 	@if [ -f ./modules/bot_strategies/bot_strategies.o ]; then mv ./modules/bot_strategies/bot_strategies.o $@; fi
 
+$(BUILD_DIR)/gridbot_engine.o: ./modules/bot_strategies/gridbot_engine.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling GridBot Engine to object file..."
+	cd ./modules/bot_strategies && zig build-obj gridbot_engine.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/gridbot_engine.o ]; then mv ./modules/bot_strategies/gridbot_engine.o $@; fi
+
 $(BUILD_DIR)/bot_strategies_stubs.o: ./modules/bot_strategies/libc_stubs.asm | $(BUILD_DIR)/.keep
 	@echo "[AS] Assembling Bot Strategies libc stubs..."
 	nasm -f elf64 -o $@ $<
@@ -1670,9 +1675,9 @@ $(BUILD_DIR)/bot_strategies_entry.o: ./modules/bot_strategies/entry.asm | $(BUIL
 	@echo "[AS] Assembling Bot Strategies entry..."
 	nasm -f elf64 -o $@ $<
 
-$(BUILD_DIR)/bot_strategies.elf: $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o ./modules/bot_strategies/bot_strategies.ld
+$(BUILD_DIR)/bot_strategies.elf: $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o ./modules/bot_strategies/bot_strategies.ld
 	@echo "[LD] Linking Bot Strategies ELF..."
-	ld -T ./modules/bot_strategies/bot_strategies.ld -o $@ $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o 2>&1 | grep -v "warning:" || true
+	ld -T ./modules/bot_strategies/bot_strategies.ld -o $@ $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o 2>&1 | grep -v "warning:" || true
 
 $(BUILD_DIR)/bot_strategies.bin: $(BUILD_DIR)/bot_strategies.elf
 	@echo "[OC] Converting Bot Strategies to binary..."
