@@ -36,7 +36,7 @@ help:
 # BUILD: Compile Assembly sources
 # ============================================================================
 
-build: $(OUTPUT) phase53b-crypto $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/omnibus_blockchain_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin $(BUILD_DIR)/wallet_manager.bin $(BUILD_DIR)/gpu_optimizer_os.bin $(BUILD_DIR)/asic_optimizer_os.bin $(BUILD_DIR)/stratum_v2_gateway.bin $(BUILD_DIR)/cloud_federation_os.bin $(BUILD_DIR)/cache_l3_os.bin $(BUILD_DIR)/quantum_detector_os.bin $(BUILD_DIR)/zk_rollups_os.bin $(BUILD_DIR)/ml_inference_os.bin $(BUILD_DIR)/bot_strategies.bin $(BUILD_DIR)/rpc_state_os.bin $(BUILD_DIR)/lightweight_miner_os.bin
+build: $(OUTPUT) phase53b-crypto $(BUILD_DIR)/grid_os.bin $(BUILD_DIR)/execution_os.bin $(BUILD_DIR)/analytics_os.bin $(BUILD_DIR)/blockchain_os.bin $(BUILD_DIR)/omnibus_blockchain_os.bin $(BUILD_DIR)/omnibus_network_os.bin $(BUILD_DIR)/neuro_os.bin $(BUILD_DIR)/bank_os.bin $(BUILD_DIR)/stealth_os.bin $(BUILD_DIR)/report_os.bin $(BUILD_DIR)/checksum_os.bin $(BUILD_DIR)/autorepair_os.bin $(BUILD_DIR)/zorin_os.bin $(BUILD_DIR)/audit_log_os.bin $(BUILD_DIR)/parameter_tuning_os.bin $(BUILD_DIR)/historical_analytics_os.bin $(BUILD_DIR)/alert_system_os.bin $(BUILD_DIR)/consensus_engine_os.bin $(BUILD_DIR)/federation_os.bin $(BUILD_DIR)/mev_guard_os.bin $(BUILD_DIR)/cross_chain_bridge_os.bin $(BUILD_DIR)/dao_governance_os.bin $(BUILD_DIR)/performance_profiler_os.bin $(BUILD_DIR)/disaster_recovery_os.bin $(BUILD_DIR)/compliance_reporter_os.bin $(BUILD_DIR)/liquid_staking_os.bin $(BUILD_DIR)/slashing_protection_os.bin $(BUILD_DIR)/orderflow_auction_os.bin $(BUILD_DIR)/circuit_breaker_os.bin $(BUILD_DIR)/flash_loan_protection_os.bin $(BUILD_DIR)/l2_rollup_bridge_os.bin $(BUILD_DIR)/quantum_resistant_crypto_os.bin $(BUILD_DIR)/pqc_gate_os.bin $(BUILD_DIR)/sel4_microkernel.bin $(BUILD_DIR)/cross_validator_os.bin $(BUILD_DIR)/proof_checker.bin $(BUILD_DIR)/convergence_test_os.bin $(BUILD_DIR)/domain_resolver_os.bin $(BUILD_DIR)/logging_os.bin $(BUILD_DIR)/database_os.bin $(BUILD_DIR)/cassandra_os.bin $(BUILD_DIR)/metrics_os.bin $(BUILD_DIR)/replay_os.bin $(BUILD_DIR)/microsoft_os.bin $(BUILD_DIR)/oracle_os.bin $(BUILD_DIR)/aws_os.bin $(BUILD_DIR)/vmware_os.bin $(BUILD_DIR)/gcp_os.bin $(BUILD_DIR)/savaos.bin $(BUILD_DIR)/cazanos.bin $(BUILD_DIR)/savacazanos.bin $(BUILD_DIR)/vortex_bridge.bin $(BUILD_DIR)/triage_system.bin $(BUILD_DIR)/consensus_core.bin $(BUILD_DIR)/zen_os.bin $(BUILD_DIR)/wallet_manager.bin $(BUILD_DIR)/gpu_optimizer_os.bin $(BUILD_DIR)/asic_optimizer_os.bin $(BUILD_DIR)/stratum_v2_gateway.bin $(BUILD_DIR)/cloud_federation_os.bin $(BUILD_DIR)/cache_l3_os.bin $(BUILD_DIR)/quantum_detector_os.bin $(BUILD_DIR)/zk_rollups_os.bin $(BUILD_DIR)/ml_inference_os.bin $(BUILD_DIR)/bot_strategies.bin $(BUILD_DIR)/rpc_state_os.bin $(BUILD_DIR)/lightweight_miner_os.bin
 	@echo "✓ OmniBus built successfully!"
 	@echo "  Image: $(OUTPUT)"
 	@echo "  Modules: Grid/Exec/Analytics/BlockchainOS/OmniBusBlockchainOS/NeuroOS/BankOS/StealthOS/Report/Checksum/AutoRepair/Zorin/AuditLog/ParamTuning/HistAnalytics/Alert/Consensus/Federation/MEVGuard/CrossChain/DAO/Profiler/Recovery/Compliance/Staking/Slashing/Auction/Breaker/FlashLoan/L2Rollup/Quantum/PQC/seL4/CrossValidator/ProofChecker/DomainResolver loaded"
@@ -234,6 +234,25 @@ $(BUILD_DIR)/omnibus_blockchain_os.bin: $(BUILD_DIR)/omnibus_blockchain_os.elf
 	@echo "[OC] Converting OmniBus Blockchain OS to binary..."
 	objcopy -O binary $< $@
 	@echo "  OmniBus Blockchain OS binary: $@ (size: $$(stat -c%s $@) bytes)"
+
+# OmniBus Network OS (0x5E0000, 64KB) — Phase 66 Network Protocol Layer
+$(BUILD_DIR)/omnibus_network_os.o: ./modules/omnibus_network_os/network_layer.zig ./modules/omnibus_network_os/peer_management.zig ./modules/omnibus_network_os/gossip.zig ./modules/omnibus_network_os/packet_validator.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling OmniBus Network OS to object file..."
+	cd ./modules/omnibus_network_os && zig build-obj network_layer.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/omnibus_network_os/network_layer.o ]; then cp ./modules/omnibus_network_os/network_layer.o $(BUILD_DIR)/omnibus_network_os.o; fi
+
+$(BUILD_DIR)/omnibus_network_os_stubs.o: ./modules/omnibus_network_os/libc_stubs.asm | $(BUILD_DIR)/.keep
+	@echo "[AS] Assembling OmniBus Network OS libc stubs..."
+	nasm -f elf64 -o $@ $<
+
+$(BUILD_DIR)/omnibus_network_os.elf: $(BUILD_DIR)/omnibus_network_os.o $(BUILD_DIR)/omnibus_network_os_stubs.o ./modules/omnibus_network_os/omnibus_network_os.ld
+	@echo "[LD] Linking OmniBus Network OS ELF..."
+	ld -T ./modules/omnibus_network_os/omnibus_network_os.ld -o $@ $(BUILD_DIR)/omnibus_network_os.o $(BUILD_DIR)/omnibus_network_os_stubs.o 2>&1 | grep -v "warning:" || true
+
+$(BUILD_DIR)/omnibus_network_os.bin: $(BUILD_DIR)/omnibus_network_os.elf
+	@echo "[OC] Converting OmniBus Network OS to binary..."
+	objcopy -O binary $< $@
+	@echo "  OmniBus Network OS binary: $@ (size: $$(stat -c%s $@) bytes)"
 
 # Lightweight Miner OS (0x670000, 64KB) — Phase 61A
 # Price keeper + block validator (NO expensive PoW)
