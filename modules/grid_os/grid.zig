@@ -41,7 +41,7 @@ fn generateBuyLevels(
     out_levels: [*]volatile types.GridLevel,
 ) u32 {
     var count: u32 = 0;
-    const price = current_price;
+    var price = current_price;
 
     while (count < max_count and price > lower_bound) {
         if (step_cents > price) break;
@@ -74,7 +74,7 @@ fn generateSellLevels(
     offset: u32,
 ) u32 {
     var count: u32 = 0;
-    const price = current_price + step_cents;
+    var price = current_price + step_cents;
 
     while (count < max_count and price < upper_bound) {
         out_levels[offset + count] = .{
@@ -113,8 +113,8 @@ pub fn calculateGrid(
     if (current_price < lower_bound or current_price > upper_bound) return 0;
 
     const levels = getLevelBase();
-    const buy_count = calcBuyLevelCount(current_price, lower_bound, step_cents);
-    const sell_count = calcSellLevelCount(current_price, upper_bound, step_cents);
+    var buy_count = calcBuyLevelCount(current_price, lower_bound, step_cents);
+    var sell_count = calcSellLevelCount(current_price, upper_bound, step_cents);
 
     // Generate buy levels
     buy_count = generateBuyLevels(current_price, lower_bound, step_cents, buy_count, levels);

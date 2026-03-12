@@ -69,7 +69,7 @@ fn insertSorted(window: *types.ConsensusWindow, price: u64, source: u8) void {
         window.prices[existing_idx] = price;
         // Re-sort if price changed significantly (simple bubble-up/down)
         // For simplicity, we'll just shift and re-insert
-        const i = existing_idx;
+        var i = existing_idx;
         while (i > 0 and window.prices[i] < window.prices[i - 1]) : (i -= 1) {
             const tmp_price = window.prices[i - 1];
             const tmp_source = window.sources[i - 1];
@@ -93,7 +93,7 @@ fn insertSorted(window: *types.ConsensusWindow, price: u64, source: u8) void {
         window.count += 1;
 
         // Insertion sort
-        const i = window.count - 1;
+        var i = window.count - 1;
         while (i > 0 and window.prices[i] < window.prices[i - 1]) : (i -= 1) {
             const tmp_price = window.prices[i - 1];
             const tmp_source = window.sources[i - 1];
@@ -113,7 +113,7 @@ fn insertSorted(window: *types.ConsensusWindow, price: u64, source: u8) void {
         window.sources[MAX_SAMPLES - 1] = source;
 
         // Re-sort the last element
-        const j = MAX_SAMPLES - 1;
+        var j = MAX_SAMPLES - 1;
         while (j > 0 and window.prices[j] < window.prices[j - 1]) : (j -= 1) {
             const tmp_price = window.prices[j - 1];
             const tmp_source = window.sources[j - 1];

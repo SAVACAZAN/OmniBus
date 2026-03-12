@@ -128,7 +128,7 @@ pub fn bip32_derive_child(parent: HDKey, index: u32) HDKey {
 
 pub fn derive_path_bitcoin(master: HDKey) HDKey {
     // m/44'/0'/0'/0/0 (Bitcoin P2WPKH)
-    const key = master;
+    var key = master;
 
     // m/44' (hardened)
     key = bip32_derive_child(key, 0x8000002C);
@@ -150,7 +150,7 @@ pub fn derive_path_bitcoin(master: HDKey) HDKey {
 
 pub fn derive_path_ethereum(master: HDKey) HDKey {
     // m/44'/60'/0'/0/0 (Ethereum EOA)
-    const key = master;
+    var key = master;
 
     // m/44' (hardened)
     key = bip32_derive_child(key, 0x8000002C);
@@ -172,7 +172,7 @@ pub fn derive_path_ethereum(master: HDKey) HDKey {
 
 pub fn derive_path_solana(master: HDKey) HDKey {
     // m/44'/501'/0'/0/0 (Solana)
-    const key = master;
+    var key = master;
 
     // m/44' (hardened)
     key = bip32_derive_child(key, 0x8000002C);
@@ -194,7 +194,7 @@ pub fn derive_path_solana(master: HDKey) HDKey {
 
 pub fn derive_path_egld(master: HDKey) HDKey {
     // m/44'/508'/0'/0/0 (Elrond/EGLD)
-    const key = master;
+    var key = master;
 
     // m/44' (hardened)
     key = bip32_derive_child(key, 0x8000002C);
@@ -216,13 +216,13 @@ pub fn derive_path_egld(master: HDKey) HDKey {
 
 pub fn derive_path_indexed(master: HDKey, chain: u8, index: u32) HDKey {
     // Derive child at specific index (for generating multiple addresses)
-    const key = master;
+    var key = master;
 
     // First 4 steps are same as chain-specific path
     key = bip32_derive_child(key, 0x8000002C);
 
     // Coin type depends on chain
-    var coin_type: u32 = switch (chain) {
+    const coin_type: u32 = switch (chain) {
         0 => 0x80000000, // Bitcoin
         1 => 0x8000003C, // Ethereum
         2 => 0x800001F5, // Solana
@@ -247,21 +247,29 @@ pub fn derive_path_indexed(master: HDKey, chain: u8, index: u32) HDKey {
 // Placeholder Crypto Functions (imported from crypto_primitives.zig)
 // ============================================================================
 
-fn crypto_sha256(data: [*]const u8, len: usize) [32]u8 {
+fn crypto_sha256(_data: [*]const u8, _len: usize) [32]u8 {
+    _ = _data;
+    _ = _len;
     // Placeholder: would import from crypto_primitives
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
 }
 
-fn crypto_hmac_sha256(key: [32]u8, message: [*]const u8, msg_len: usize) [32]u8 {
+fn crypto_hmac_sha256(_key: [32]u8, _message: [*]const u8, _msg_len: usize) [32]u8 {
+    _ = _key;
+    _ = _message;
+    _ = _msg_len;
     // Placeholder: would import from crypto_primitives
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
 }
 
-fn crypto_hmac_sha512(key: [32]u8, message: [*]const u8, msg_len: usize) [64]u8 {
+fn crypto_hmac_sha512(_key: [32]u8, _message: [*]const u8, _msg_len: usize) [64]u8 {
+    _ = _key;
+    _ = _message;
+    _ = _msg_len;
     // Placeholder: HMAC-SHA512
     var result: [64]u8 = undefined;
     @memset(&result, 0);

@@ -171,7 +171,7 @@ export fn cast_vote(proposal_id: u16, module_id: u8, vote: u8) u8 {
     const proposals = getProposalBuffer();
 
     // Find proposal
-    const found = false;
+    var found = false;
     var prop_idx: u16 = 0;
     while (prop_idx < types.MAX_PROPOSALS) : (prop_idx += 1) {
         if (proposals[prop_idx].proposal_id == proposal_id) {

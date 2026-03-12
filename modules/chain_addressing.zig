@@ -42,7 +42,7 @@ pub fn bitcoin_address_legacy(pubkey: [33]u8) [48]u8 {
 
     // Checksum: first 4 bytes of SHA256(SHA256(versioned))
     const checksum_hash = crypto_sha256(&versioned, 21);
-    const _checksum_hash2 = crypto_sha256(&checksum_hash, 32);
+    _ = crypto_sha256(&checksum_hash, 32);
 
     // Base58 encode versioned + checksum
     const address = base58_encode(&versioned, 21);
@@ -182,7 +182,8 @@ fn bech32_encode(hrp: [*:0]const u8, data: [*]const u8, data_len: usize) [48]u8 
     return address;
 }
 
-fn bech32_validate(hrp: [*:0]const u8, address: [*]const u8) bool {
+fn bech32_validate(_hrp: [*:0]const u8, address: [*]const u8) bool {
+    _ = _hrp;
     // Find separator '1'
     var sep_idx: usize = 0;
     while (address[sep_idx] != 0 and address[sep_idx] != '1') : (sep_idx += 1) {}
@@ -193,7 +194,9 @@ fn bech32_validate(hrp: [*:0]const u8, address: [*]const u8) bool {
     return true;
 }
 
-fn bech32_checksum(hrp_and_sep: [*]const u8, data: [*]const u8) [6]u8 {
+fn bech32_checksum(_hrp_and_sep: [*]const u8, _data: [*]const u8) [6]u8 {
+    _ = _hrp_and_sep;
+    _ = _data;
     // Bech32 checksum algorithm
     var checksum: [6]u8 = undefined;
     @memset(&checksum, 0);
@@ -229,7 +232,7 @@ fn base58_validate(address: [*]const u8) bool {
 
     var i: usize = 0;
     while (address[i] != 0) : (i += 1) {
-        const found = false;
+        var found = false;
         for (alphabet) |c| {
             if (address[i] == c) {
                 found = true;
@@ -283,19 +286,25 @@ fn base32_encode(data: [*]const u8, data_len: usize) [64]u8 {
 // Cryptographic Functions (Placeholders)
 // ============================================================================
 
-fn crypto_sha256(data: [*]const u8, len: usize) [32]u8 {
+fn crypto_sha256(_data: [*]const u8, _len: usize) [32]u8 {
+    _ = _data;
+    _ = _len;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
 }
 
-fn crypto_ripemd160(data: [*]const u8, len: usize) [20]u8 {
+fn crypto_ripemd160(_data: [*]const u8, _len: usize) [20]u8 {
+    _ = _data;
+    _ = _len;
     var result: [20]u8 = undefined;
     @memset(&result, 0);
     return result;
 }
 
-fn crypto_keccak256(data: [*]const u8, len: usize) [32]u8 {
+fn crypto_keccak256(_data: [*]const u8, _len: usize) [32]u8 {
+    _ = _data;
+    _ = _len;
     var result: [32]u8 = undefined;
     @memset(&result, 0);
     return result;
@@ -318,7 +327,7 @@ fn eip55_encode(address: [20]u8, checksum_hash: [32]u8) [48]u8 {
     result[1] = 'x';
 
     for (0..20) |i| {
-        var hex_nibbles = [_]u8{
+        const hex_nibbles = [_]u8{
             (address[i] >> 4) & 0x0F,
             address[i] & 0x0F,
         };

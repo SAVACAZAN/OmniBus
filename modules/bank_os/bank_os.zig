@@ -398,7 +398,7 @@ export fn request_ach_settlement(
     while (i < types.MAX_ACH_BATCHES) : (i += 1) {
         const slot = getAchBatchPtr(i);
         if (slot.status == 0) {
-            const batch = ach.createBatchHeader(amount_cents, i + 1, [_]u8{0} ** 10);
+            var batch = ach.createBatchHeader(amount_cents, i + 1, [_]u8{0} ** 10);
 
             // Copy routing
             @memcpy(batch.receiving_bank_routing[0..9], receiver_routing[0..9]);
