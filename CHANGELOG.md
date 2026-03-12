@@ -4,6 +4,32 @@ All notable changes to the OmniBus cryptocurrency arbitrage system are documente
 
 ---
 
+## [2.0.1] – 2026-03-12
+
+**Status**: IN DEVELOPMENT
+**Focus**: Phase 53C Universal Wallet + Cross-Chain Integration
+
+### What's New
+
+#### Phase 53C: Universal Wallet Generator
+- ✅ **universal_wallet_generator.zig** (356 lines)
+  - Single BIP-39 mnemonic → addresses for 50+ blockchains
+  - Three address formats generated simultaneously:
+    * **Post-Quantum**: `ob_k1_...` format (Kyber-768 based)
+    * **EVM**: `0x...` format (Ethereum-compatible, Secp256k1)
+    * **UTXO**: Bitcoin-compatible (P2PKH: 1, P2SH: 3, Bech32: bc1)
+  - Supported chains (20+ major, expandable to 50+):
+    - L0: Polkadot, Cosmos, Avalanche
+    - L1: Bitcoin, Ethereum, Solana, BNB, XRP, TRON, Cardano, Litecoin, Dogecoin, Aptos
+    - L2: Optimism, Arbitrum, Polygon, zkSync
+    - L5: OmniBus Mainnet, Testnet, Simulation
+  - BIP-39/BIP-32/BIP-44 hierarchical deterministic derivation
+  - ChainRegistry architecture (extensible)
+  - Integration ready: Phase 54 testnet deployment
+- ✅ **Makefile Integration**: `make wallet-generator` target for standalone compilation
+
+---
+
 ## [2.0.0] – 2026-03-11
 
 **Status**: RELEASED ✅
