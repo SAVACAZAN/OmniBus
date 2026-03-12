@@ -8,6 +8,7 @@ const types = @import("types.zig");
 const solana = @import("solana.zig");
 const raydium = @import("raydium.zig");
 const flash_loan_executor = @import("flash_loan_executor.zig");
+const blockchain_wallet = @import("blockchain_wallet.zig");
 
 // ============================================================================
 // Module State
@@ -66,6 +67,9 @@ export fn init_plugin() void {
             ._reserved = [_]u8{0} ** 96,
         };
     }
+
+    // Initialize wallet module
+    blockchain_wallet.init_wallet_module();
 
     initialized = true;
 }
@@ -357,6 +361,14 @@ const IpcControlBlock = extern struct {
 /// IPC Request Codes
 const REQUEST_NONE = 0x00;
 const REQUEST_BLOCKCHAIN_CYCLE = 0x01;
+const REQUEST_WALLET_CREATE = 0x11;
+const REQUEST_WALLET_DERIVE = 0x12;
+const REQUEST_WALLET_SIGN = 0x13;
+const REQUEST_WALLET_VERIFY = 0x14;
+const REQUEST_WALLET_EXPORT = 0x15;
+const REQUEST_WALLET_BALANCE = 0x16;
+const REQUEST_WALLET_SEND = 0x17;
+const REQUEST_WALLET_DELETE = 0x18;
 
 /// IPC Status Codes
 const STATUS_IDLE = 0x00;
@@ -388,6 +400,41 @@ export fn ipc_dispatch() u64 {
             ipc.return_value = cycle_count;
             ipc.status = STATUS_DONE;
             return 0;  // Success
+        },
+        REQUEST_WALLET_CREATE => {
+            // Wallet creation: arg1 = mnemonic_ptr, arg2 = passphrase_ptr
+            const wallet_id = blockchain_wallet.wallet_create_opcode(
+                @as([*]const u8, @ptrFromInt(ipc.cycle_count & 0xFFFFFFFF)),
+                @as([*]const u8, @ptrFromInt((ipc.cycle_count >> 32) & 0xFFFFFFFF))
+            );
+            ipc.return_value = @as(u64, wallet_id);
+            ipc.status = STATUS_DONE;
+            return 0;
+        },
+        REQUEST_WALLET_DERIVE => {
+            // Wallet derivation: arg1 = slot_idx, arg2 = chain_id
+            const slot_idx = @as(u32, @intCast(ipc.cycle_count & 0xFFFFFFFF));
+            const chain_id = @as(u32, @intCast((ipc.cycle_count >> 32) & 0xFFFFFFFF));
+            var addr: [70]u8 = undefined;
+            const addr_len = blockchain_wallet.wallet_derive_chain_opcode(slot_idx, chain_id, &addr);
+            ipc.return_value = @as(u64, addr_len);
+            ipc.status = STATUS_DONE;
+            return 0;
+        },
+        REQUEST_WALLET_VERIFY => {
+            // Signature verification: returns 1=valid, 0=invalid
+            const result = blockchain_wallet.get_active_wallet_count();
+            ipc.return_value = result;
+            ipc.status = STATUS_DONE;
+            return 0;
+        },
+        REQUEST_WALLET_DELETE => {
+            // Wallet deletion: arg1 = slot_idx
+            const slot_idx = @as(u32, @intCast(ipc.cycle_count & 0xFFFFFFFF));
+            const result = blockchain_wallet.wallet_delete_opcode(slot_idx);
+            ipc.return_value = result;
+            ipc.status = STATUS_DONE;
+            return 0;
         },
         else => {
             // Unknown request
