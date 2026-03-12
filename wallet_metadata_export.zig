@@ -49,15 +49,24 @@ pub const WalletMetadataExporter = struct {
             var pub_hex: [256]u8 = undefined;
             const pub_hex_str = format_hex(account.evm_public_key[0..], &pub_hex);
 
-            const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
             const pq_len = std.mem.indexOfScalar(u8, &account.pq_address, 0) orelse account.pq_address.len;
+
+            // Select native address based on chain type
+            var native_addr: []const u8 = "";
+            if (chain.address_format == .UTXO) {
+                const utxo_len = std.mem.indexOfScalar(u8, &account.utxo_address, 0) orelse account.utxo_address.len;
+                native_addr = account.utxo_address[0..utxo_len];
+            } else {
+                const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
+                native_addr = account.evm_address[0..evm_len];
+            }
 
             const comma = if (idx < SUPPORTED_CHAINS.len - 1) ",\n" else "\n";
 
             const entry = std.fmt.bufPrint(json_buffer[json_offset..],
-                "    {{\n      \"index\": {d},\n      \"chain\": \"{s}\",\n      \"chain_id\": {d},\n      \"coin_type\": {d},\n      \"address_evm\": \"{s}\",\n      \"address_pq\": \"{s}\",\n      \"private_key_hex\": \"{s}\",\n      \"public_key_hex\": \"{s}\",\n      \"derivation_path\": \"m/44'/{d}'/0'/0/0\",\n      \"encoding\": \"{s}\",\n      \"network\": \"{s}\",\n      \"crypto\": \"PBKDF2-HMAC-SHA256\"\n    }}{s}",
+                "    {{\n      \"index\": {d},\n      \"chain\": \"{s}\",\n      \"chain_id\": {d},\n      \"coin_type\": {d},\n      \"address\": \"{s}\",\n      \"address_pq\": \"{s}\",\n      \"private_key_hex\": \"{s}\",\n      \"public_key_hex\": \"{s}\",\n      \"derivation_path\": \"m/44'/{d}'/0'/0/0\",\n      \"encoding\": \"{s}\",\n      \"network\": \"{s}\",\n      \"crypto\": \"PBKDF2-HMAC-SHA256\"\n    }}{s}",
                 .{idx, chain.name, chain.chain_id, chain.coin_type,
-                  account.evm_address[0..evm_len],
+                  native_addr,
                   account.pq_address[0..pq_len],
                   priv_hex, pub_hex_str, chain.coin_type,
                   if (chain.address_format == .EVM) "EVM" else if (chain.address_format == .UTXO) "UTXO" else "ACCOUNT",
@@ -90,11 +99,22 @@ pub const WalletMetadataExporter = struct {
             var hex_buf: [256]u8 = undefined;
             const priv_hex = format_hex(account.evm_private_key[0..], &hex_buf);
 
-            const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
             const pq_len = std.mem.indexOfScalar(u8, &account.pq_address, 0) orelse account.pq_address.len;
 
             std.debug.print("[{d:02}] 🪙 {s} (Chain ID: {})\n", .{idx, chain.name, chain.chain_id});
-            std.debug.print("     EVM Address:      {s}\n", .{account.evm_address[0..evm_len]});
+
+            // Show native address based on format
+            if (chain.address_format == .UTXO) {
+                const utxo_len = std.mem.indexOfScalar(u8, &account.utxo_address, 0) orelse account.utxo_address.len;
+                std.debug.print("     Address (UTXO):   {s}\n", .{account.utxo_address[0..utxo_len]});
+            } else if (chain.address_format == .EVM) {
+                const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
+                std.debug.print("     Address (EVM):    {s}\n", .{account.evm_address[0..evm_len]});
+            } else {
+                const evm_len = std.mem.indexOfScalar(u8, &account.evm_address, 0) orelse account.evm_address.len;
+                std.debug.print("     Address:          {s}\n", .{account.evm_address[0..evm_len]});
+            }
+
             std.debug.print("     PQ Address:       {s}\n", .{account.pq_address[0..pq_len]});
             std.debug.print("     Private Key:      {s}\n", .{priv_hex});
             std.debug.print("     Path:             m/44'/{d}'/0'/0/0\n", .{chain.coin_type});

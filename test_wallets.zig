@@ -28,6 +28,17 @@ pub fn main() !void {
 
     std.debug.print("✅ Wallet generated successfully!\n\n", .{});
 
+    // Display mnemonic seed (save this!)
+    std.debug.print("╔════════════════════════════════════════════════════════╗\n", .{});
+    std.debug.print("║            🔐 SAVE THIS SEED SAFELY 🔐                 ║\n", .{});
+    std.debug.print("║                                                        ║\n", .{});
+    std.debug.print("║  {s}  ║\n", .{test_mnemonic});
+    std.debug.print("║                                                        ║\n", .{});
+    std.debug.print("║  This 12-word mnemonic generates ALL your private keys ║\n", .{});
+    std.debug.print("║  for Bitcoin, Ethereum, Solana, and 17+ blockchains.   ║\n", .{});
+    std.debug.print("║  Keep it safe. Never share it. Never enter it online.  ║\n", .{});
+    std.debug.print("╚════════════════════════════════════════════════════════╝\n\n", .{});
+
     // Display all chains metadata to console
     WalletMetadataExporter.display_all_chains(wallet);
 
