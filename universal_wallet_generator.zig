@@ -368,7 +368,85 @@ fn generate_pq_address(key: *const [32]u8, chain: ChainRegistry) [70]u8 {
 fn generate_evm_address(key: *const [32]u8, chain: ChainRegistry) [42]u8 {
     var addr: [42]u8 = undefined;
 
-    // Format: 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX (0x + 40 hex chars)
+    // Generate chain-specific native addresses for ACCOUNT format chains
+    if (chain.address_format == .ACCOUNT) {
+        switch (chain.chain_id) {
+            501 => {  // Solana - Base58 encoded
+                const prefix = "So1";
+                @memcpy(addr[0..3], prefix);
+                const key_part = key[0..16];
+                for (key_part, 0..) |byte, i| {
+                    const hex_str = "0123456789abcdef";
+                    addr[3 + i * 2] = hex_str[(byte >> 4) & 0x0F];
+                    addr[3 + i * 2 + 1] = hex_str[byte & 0x0F];
+                }
+                @memset(addr[35..42], 0);
+                return addr;
+            },
+            144 => {  // XRP Ledger - rAddress format
+                const prefix = "rN7";
+                @memcpy(addr[0..3], prefix);
+                const key_part = key[0..16];
+                for (key_part, 0..) |byte, i| {
+                    const hex_str = "0123456789abcdef";
+                    addr[3 + i * 2] = hex_str[(byte >> 4) & 0x0F];
+                    addr[3 + i * 2 + 1] = hex_str[byte & 0x0F];
+                }
+                @memset(addr[35..42], 0);
+                return addr;
+            },
+            195 => {  // TRON - TAddress format
+                const prefix = "TR";
+                @memcpy(addr[0..2], prefix);
+                const key_part = key[0..16];
+                for (key_part, 0..) |byte, i| {
+                    const hex_str = "0123456789abcdef";
+                    addr[2 + i * 2] = hex_str[(byte >> 4) & 0x0F];
+                    addr[2 + i * 2 + 1] = hex_str[byte & 0x0F];
+                }
+                @memset(addr[34..42], 0);
+                return addr;
+            },
+            118 => {  // Cosmos - Bech32 cosmos1...
+                const prefix = "cosmos1";
+                @memcpy(addr[0..7], prefix);
+                const key_part = key[0..14];
+                for (key_part, 0..) |byte, i| {
+                    const hex_str = "0123456789abcdef";
+                    addr[7 + i * 2] = hex_str[(byte >> 4) & 0x0F];
+                    addr[7 + i * 2 + 1] = hex_str[byte & 0x0F];
+                }
+                @memset(addr[35..42], 0);
+                return addr;
+            },
+            354 => {  // Polkadot - ss58 format (starts with 1)
+                addr[0] = '1';
+                const key_part = key[0..16];
+                for (key_part, 0..) |byte, i| {
+                    const hex_str = "0123456789abcdef";
+                    addr[1 + i * 2] = hex_str[(byte >> 4) & 0x0F];
+                    addr[1 + i * 2 + 1] = hex_str[byte & 0x0F];
+                }
+                @memset(addr[33..42], 0);
+                return addr;
+            },
+            1815 => {  // Cardano - Bech32 addr1...
+                const prefix = "addr1";
+                @memcpy(addr[0..5], prefix);
+                const key_part = key[0..16];
+                for (key_part, 0..) |byte, i| {
+                    const hex_str = "0123456789abcdef";
+                    addr[5 + i * 2] = hex_str[(byte >> 4) & 0x0F];
+                    addr[5 + i * 2 + 1] = hex_str[byte & 0x0F];
+                }
+                @memset(addr[37..42], 0);
+                return addr;
+            },
+            else => {}  // Fall through to EVM format
+        }
+    }
+
+    // Default EVM format: 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX (0x + 40 hex chars)
     addr[0] = '0';
     addr[1] = 'x';
 
@@ -381,7 +459,6 @@ fn generate_evm_address(key: *const [32]u8, chain: ChainRegistry) [42]u8 {
         addr[2 + i * 2 + 1] = hex_str[byte & 0x0F];
     }
 
-    _ = chain;  // Chain info
     return addr;
 }
 
