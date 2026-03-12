@@ -172,14 +172,20 @@ pub const HDWallet = struct {
             @memset(hmac_key[32..64], 0);
 
             var inner: std.crypto.hash.sha2.Sha256 = std.crypto.hash.sha2.Sha256.init(.{});
-            for (hmac_key[0..32]) |b| inner.update(&[_]u8{b ^ 0x36});
-            inner.update(&hmac_input);
+            for (hmac_key[0..32]) |b| {
+                const xored_byte = [_]u8{b ^ 0x36};
+                inner.update(xored_byte[0..]);
+            }
+            inner.update(hmac_input[0..]);
             var inner_hash: [32]u8 = undefined;
             inner.final(&inner_hash);
 
             var outer: std.crypto.hash.sha2.Sha256 = std.crypto.hash.sha2.Sha256.init(.{});
-            for (hmac_key[0..32]) |b| outer.update(&[_]u8{b ^ 0x5C});
-            outer.update(&inner_hash);
+            for (hmac_key[0..32]) |b| {
+                const xored_byte = [_]u8{b ^ 0x5C};
+                outer.update(xored_byte[0..]);
+            }
+            outer.update(inner_hash[0..]);
             outer.final(&hmac_result);
 
             // First 32 bytes = tweak, last 32 bytes = new chain code
@@ -219,14 +225,14 @@ fn pbkdf2_hmac_sha512(password: []const u8, salt_prefix: []const u8, output: *[6
     hasher.update(full_salt[0..salt_len]);
 
     var iter_buf: [4]u8 = [_]u8{ 0x08, 0x00, 0x00, 0x00 };
-    hasher.update(&iter_buf);
+    hasher.update(iter_buf[0..]);
 
     var hash: [32]u8 = undefined;
     hasher.final(&hash);
 
     @memcpy(result[0..32], &hash);
     var hasher2 = std.crypto.hash.sha2.Sha256.init(.{});
-    hasher2.update(&hash);
+    hasher2.update(hash[0..]);
     var hash2: [32]u8 = undefined;
     hasher2.final(&hash2);
     @memcpy(result[32..64], &hash2);
@@ -256,20 +262,20 @@ fn hmac_sha512(key: []const u8, data: []const u8, key_out: *[32]u8, chain_code: 
     }
 
     var inner_hasher = std.crypto.hash.sha2.Sha256.init(.{});
-    inner_hasher.update(&ipad_key);
+    inner_hasher.update(ipad_key[0..]);
     inner_hasher.update(data);
     var inner_hash: [32]u8 = undefined;
     inner_hasher.final(&inner_hash);
 
     var outer_hasher = std.crypto.hash.sha2.Sha256.init(.{});
-    outer_hasher.update(&opad_key);
-    outer_hasher.update(&inner_hash);
+    outer_hasher.update(opad_key[0..]);
+    outer_hasher.update(inner_hash[0..]);
     outer_hasher.final(&hmac_result);
 
     @memcpy(key_out, hmac_result[0..32]);
 
     var chain_hasher = std.crypto.hash.sha2.Sha256.init(.{});
-    chain_hasher.update(&hmac_result);
+    chain_hasher.update(hmac_result[0..]);
     var chain_result: [32]u8 = undefined;
     chain_hasher.final(&chain_result);
     @memcpy(chain_code, &chain_result);
