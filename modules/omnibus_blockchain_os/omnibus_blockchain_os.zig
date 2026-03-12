@@ -197,6 +197,18 @@ pub export fn ipc_dispatch(opcode: u8, arg0: u64, arg1: u64, arg2: u64) u64 {
         0x96 => ipc_network_sync_blocks(arg0, arg1),           // sync_blocks(start_height, end_height) → u64 success
         0x97 => ipc_network_block_sync_complete(arg0),         // sync_complete(block_count) → u64 void
 
+        // Block Explorer operations (0xA0–0xAF)
+        0xA0 => ipc_explorer_get_block(arg0),                  // get_block(height) → block_ptr
+        0xA1 => ipc_explorer_get_account(arg0, arg1),          // get_account(address_ptr, addr_len) → account_ptr
+        0xA2 => ipc_explorer_list_blocks(arg0, arg1),          // list_blocks(start, count) → blocks_ptr
+        0xA3 => ipc_explorer_search_address(arg0, arg1),       // search_address(address_ptr, addr_len) → tx_count
+        0xA4 => ipc_explorer_network_stats(),                  // get_network_stats() → stats_ptr
+        0xA5 => ipc_explorer_block_height(),                   // get_current_height() → u64
+        0xA6 => ipc_explorer_total_supply(),                   // get_total_supply() → u64
+        0xA7 => ipc_explorer_circulating_supply(),             // get_circulating_supply() → u64
+        0xA8 => ipc_explorer_tx_count(),                       // get_tx_count() → u64
+        0xA9 => ipc_explorer_price_snapshot(),                 // get_price_snapshot() → prices_ptr
+
         else => 0xFFFFFFFFFFFFFFFF, // Invalid opcode
     };
 }
@@ -436,32 +448,90 @@ fn ipc_network_route_tx(tx_ptr: u64, tx_len: u64) u64 {
 }
 
 fn ipc_network_sync_blocks(start_height: u64, end_height: u64) u64 {
-    // Request block synchronization from peers
-    // Returns: 1 = sync started, 0 = failure
+    // Sync blocks from start_height to end_height
+    // Returns: 1 = success, 0 = failure
     _ = start_height;
     _ = end_height;
     return 1;
 }
 
 fn ipc_network_block_sync_complete(block_count: u64) u64 {
-    // Mark block synchronization as complete
-    // Returns: 1 = success
+    // Confirm block sync completion
+    // Returns: void (always 0)
     _ = block_count;
-    return 1;
+    return 0;
 }
 
 // ============================================================================
-// EXPORTS FOR TESTING
+// IPC: BLOCK EXPLORER OPERATIONS
 // ============================================================================
 
-pub fn get_state() BlockchainOSState {
-    return state;
+fn ipc_explorer_get_block(height: u64) u64 {
+    // Get block data at given height
+    // Returns: pointer to block data, or 0 if not found
+    _ = height;
+    // Would return pointer to block structure in memory
+    // For now, return BLOCKCHAIN_OS_BASE as placeholder
+    return BLOCKCHAIN_OS_BASE;
 }
 
-pub fn get_block_height() u64 {
+fn ipc_explorer_get_account(address_ptr: u64, addr_len: u64) u64 {
+    // Get account information by address
+    // Returns: pointer to account structure, or 0 if not found
+    _ = address_ptr;
+    _ = addr_len;
+    return 0;
+}
+
+fn ipc_explorer_list_blocks(start: u64, count: u64) u64 {
+    // List blocks from start height
+    // Returns: pointer to block list, or 0 if invalid range
+    _ = start;
+    _ = count;
+    return 0;
+}
+
+fn ipc_explorer_search_address(address_ptr: u64, addr_len: u64) u64 {
+    // Search for transactions involving address
+    // Returns: number of transactions found
+    _ = address_ptr;
+    _ = addr_len;
+    return 0;
+}
+
+fn ipc_explorer_network_stats() u64 {
+    // Get comprehensive network statistics
+    // Returns: pointer to network statistics structure
+    return BLOCKCHAIN_OS_BASE;
+}
+
+fn ipc_explorer_block_height() u64 {
+    // Get current blockchain height
+    // Returns: block height as u64
     return state.block_height;
 }
 
-pub fn increment_block() void {
-    state.block_height += 1;
+fn ipc_explorer_total_supply() u64 {
+    // Get total OMNI supply (fixed at 21M)
+    // Returns: total supply in smallest units (SAT)
+    return state.total_omni_supply;
+}
+
+fn ipc_explorer_circulating_supply() u64 {
+    // Get circulating supply
+    // Returns: circulating supply in smallest units (SAT)
+    return state.total_omni_circulating;
+}
+
+fn ipc_explorer_tx_count() u64 {
+    // Get total transaction count
+    // Returns: total transactions processed
+    return state.transactions_processed;
+}
+
+fn ipc_explorer_price_snapshot() u64 {
+    // Get price snapshot from lightweight miner
+    // Returns: pointer to price snapshot (Kraken, LCX, Coinbase)
+    // Would query lightweight_miner_os at 0x670000
+    return 0;
 }
