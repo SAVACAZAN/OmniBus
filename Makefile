@@ -1737,6 +1737,21 @@ $(BUILD_DIR)/arbitrage_execution.o: ./modules/bot_strategies/arbitrage_execution
 	cd ./modules/bot_strategies && zig build-obj arbitrage_execution.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
 	@if [ -f ./modules/bot_strategies/arbitrage_execution.o ]; then mv ./modules/bot_strategies/arbitrage_execution.o $@; fi
 
+$(BUILD_DIR)/wallet_state.o: ./modules/bot_strategies/wallet_state.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Wallet State to object file..."
+	cd ./modules/bot_strategies && zig build-obj wallet_state.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/wallet_state.o ]; then mv ./modules/bot_strategies/wallet_state.o $@; fi
+
+$(BUILD_DIR)/user_accounts.o: ./modules/bot_strategies/user_accounts.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling User Accounts to object file..."
+	cd ./modules/bot_strategies && zig build-obj user_accounts.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/user_accounts.o ]; then mv ./modules/bot_strategies/user_accounts.o $@; fi
+
+$(BUILD_DIR)/local_exchange.o: ./modules/bot_strategies/local_exchange.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Local Exchange to object file..."
+	cd ./modules/bot_strategies && zig build-obj local_exchange.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/local_exchange.o ]; then mv ./modules/bot_strategies/local_exchange.o $@; fi
+
 $(BUILD_DIR)/bot_strategies_stubs.o: ./modules/bot_strategies/libc_stubs.asm | $(BUILD_DIR)/.keep
 	@echo "[AS] Assembling Bot Strategies libc stubs..."
 	nasm -f elf64 -o $@ $<
@@ -1745,9 +1760,9 @@ $(BUILD_DIR)/bot_strategies_entry.o: ./modules/bot_strategies/entry.asm | $(BUIL
 	@echo "[AS] Assembling Bot Strategies entry..."
 	nasm -f elf64 -o $@ $<
 
-$(BUILD_DIR)/bot_strategies.elf: $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/dca_bot.o $(BUILD_DIR)/dex_interface.o $(BUILD_DIR)/unified_orderbook.o $(BUILD_DIR)/omni_arbitrage.o $(BUILD_DIR)/local_orderbook.o $(BUILD_DIR)/cex_orderbook.o $(BUILD_DIR)/dex_orderbook.o $(BUILD_DIR)/order_router.o $(BUILD_DIR)/order_placement.o $(BUILD_DIR)/arbitrage_execution.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o ./modules/bot_strategies/bot_strategies.ld
+$(BUILD_DIR)/bot_strategies.elf: $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/dca_bot.o $(BUILD_DIR)/dex_interface.o $(BUILD_DIR)/unified_orderbook.o $(BUILD_DIR)/omni_arbitrage.o $(BUILD_DIR)/local_orderbook.o $(BUILD_DIR)/cex_orderbook.o $(BUILD_DIR)/dex_orderbook.o $(BUILD_DIR)/order_router.o $(BUILD_DIR)/order_placement.o $(BUILD_DIR)/arbitrage_execution.o $(BUILD_DIR)/wallet_state.o $(BUILD_DIR)/user_accounts.o $(BUILD_DIR)/local_exchange.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o ./modules/bot_strategies/bot_strategies.ld
 	@echo "[LD] Linking Bot Strategies ELF..."
-	ld -T ./modules/bot_strategies/bot_strategies.ld -o $@ $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/dca_bot.o $(BUILD_DIR)/dex_interface.o $(BUILD_DIR)/unified_orderbook.o $(BUILD_DIR)/omni_arbitrage.o $(BUILD_DIR)/local_orderbook.o $(BUILD_DIR)/cex_orderbook.o $(BUILD_DIR)/dex_orderbook.o $(BUILD_DIR)/order_router.o $(BUILD_DIR)/order_placement.o $(BUILD_DIR)/arbitrage_execution.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o 2>&1 | grep -v "warning:" || true
+	ld -T ./modules/bot_strategies/bot_strategies.ld -o $@ $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/dca_bot.o $(BUILD_DIR)/dex_interface.o $(BUILD_DIR)/unified_orderbook.o $(BUILD_DIR)/omni_arbitrage.o $(BUILD_DIR)/local_orderbook.o $(BUILD_DIR)/cex_orderbook.o $(BUILD_DIR)/dex_orderbook.o $(BUILD_DIR)/order_router.o $(BUILD_DIR)/order_placement.o $(BUILD_DIR)/arbitrage_execution.o $(BUILD_DIR)/wallet_state.o $(BUILD_DIR)/user_accounts.o $(BUILD_DIR)/local_exchange.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o 2>&1 | grep -v "warning:" || true
 
 $(BUILD_DIR)/bot_strategies.bin: $(BUILD_DIR)/bot_strategies.elf
 	@echo "[OC] Converting Bot Strategies to binary..."
