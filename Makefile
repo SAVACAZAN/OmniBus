@@ -1667,6 +1667,26 @@ $(BUILD_DIR)/gridbot_engine.o: ./modules/bot_strategies/gridbot_engine.zig | $(B
 	cd ./modules/bot_strategies && zig build-obj gridbot_engine.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
 	@if [ -f ./modules/bot_strategies/gridbot_engine.o ]; then mv ./modules/bot_strategies/gridbot_engine.o $@; fi
 
+$(BUILD_DIR)/orderbook_local.o: ./modules/bot_strategies/orderbook_local.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling OrderBook Local to object file..."
+	cd ./modules/bot_strategies && zig build-obj orderbook_local.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/orderbook_local.o ]; then mv ./modules/bot_strategies/orderbook_local.o $@; fi
+
+$(BUILD_DIR)/market_maker.o: ./modules/bot_strategies/market_maker.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling Market Maker to object file..."
+	cd ./modules/bot_strategies && zig build-obj market_maker.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/market_maker.o ]; then mv ./modules/bot_strategies/market_maker.o $@; fi
+
+$(BUILD_DIR)/cex_interface.o: ./modules/bot_strategies/cex_interface.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling CEX Interface to object file..."
+	cd ./modules/bot_strategies && zig build-obj cex_interface.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/cex_interface.o ]; then mv ./modules/bot_strategies/cex_interface.o $@; fi
+
+$(BUILD_DIR)/cex_signing_bridge.o: ./modules/bot_strategies/cex_signing_bridge.zig | $(BUILD_DIR)/.keep
+	@echo "[ZIG] Compiling CEX Signing Bridge to object file..."
+	cd ./modules/bot_strategies && zig build-obj cex_signing_bridge.zig -target x86_64-freestanding -O ReleaseFast -ofmt=elf 2>&1 | grep -v "note:" || true
+	@if [ -f ./modules/bot_strategies/cex_signing_bridge.o ]; then mv ./modules/bot_strategies/cex_signing_bridge.o $@; fi
+
 $(BUILD_DIR)/bot_strategies_stubs.o: ./modules/bot_strategies/libc_stubs.asm | $(BUILD_DIR)/.keep
 	@echo "[AS] Assembling Bot Strategies libc stubs..."
 	nasm -f elf64 -o $@ $<
@@ -1675,9 +1695,9 @@ $(BUILD_DIR)/bot_strategies_entry.o: ./modules/bot_strategies/entry.asm | $(BUIL
 	@echo "[AS] Assembling Bot Strategies entry..."
 	nasm -f elf64 -o $@ $<
 
-$(BUILD_DIR)/bot_strategies.elf: $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o ./modules/bot_strategies/bot_strategies.ld
+$(BUILD_DIR)/bot_strategies.elf: $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o ./modules/bot_strategies/bot_strategies.ld
 	@echo "[LD] Linking Bot Strategies ELF..."
-	ld -T ./modules/bot_strategies/bot_strategies.ld -o $@ $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o 2>&1 | grep -v "warning:" || true
+	ld -T ./modules/bot_strategies/bot_strategies.ld -o $@ $(BUILD_DIR)/bot_strategies.o $(BUILD_DIR)/gridbot_engine.o $(BUILD_DIR)/orderbook_local.o $(BUILD_DIR)/market_maker.o $(BUILD_DIR)/cex_interface.o $(BUILD_DIR)/cex_signing_bridge.o $(BUILD_DIR)/bot_strategies_stubs.o $(BUILD_DIR)/bot_strategies_entry.o 2>&1 | grep -v "warning:" || true
 
 $(BUILD_DIR)/bot_strategies.bin: $(BUILD_DIR)/bot_strategies.elf
 	@echo "[OC] Converting Bot Strategies to binary..."

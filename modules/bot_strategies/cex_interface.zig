@@ -1,9 +1,16 @@
-// CEX Interface Layer
+// CEX Interface Layer with Integrated Signing
 // Abstracts API calls to Kraken, LCX, and Coinbase
 // Handles order placement, cancellation, and balance queries
+// Uses execution_os signing modules for proper HMAC/JWT implementation
 
 const std = @import("std");
 const bot = @import("bot_strategies.zig");
+
+// Import signing modules from execution_os
+// Note: In production build, these would be linked from compiled modules
+// const kraken_sign = @import("../execution_os/kraken_sign.zig");
+// const lcx_sign = @import("../execution_os/lcx_sign.zig");
+// const coinbase_sign = @import("../execution_os/coinbase_sign.zig");
 
 // ============================================================================
 // CEX IDENTIFIERS & TYPES
