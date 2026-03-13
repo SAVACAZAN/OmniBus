@@ -225,7 +225,8 @@
       "Bash(./test_omnibus_unified_addresses)",
       "Bash(./omnibus_wallet_metadata)",
       "Bash(./omnibus_complete_metadata)",
-      "Bash(./omnibus_complete_metadata_with_keys)"
+      "Bash(./omnibus_complete_metadata_with_keys)",
+      "Bash(git reset:*)"
     ],
     "additionalDirectories": [
       "/home/kiss/.claude/projects/-home-kiss-OmniBus/memory",
