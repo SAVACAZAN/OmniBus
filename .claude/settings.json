@@ -216,7 +216,8 @@
       "Bash(curl -s http://localhost:8080/explorer_dynamic.html)",
       "Bash(curl -s http://localhost:8888/explorer_dynamic.html)",
       "Bash(echo \"0 external refs\" head -1 \"$f\")",
-      "Bash(pkill -f \"http.server\")"
+      "Bash(pkill -f \"http.server\")",
+      "Bash(./test_wallets_extended)"
     ],
     "additionalDirectories": [
       "/home/kiss/.claude/projects/-home-kiss-OmniBus/memory",

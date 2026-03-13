@@ -125,12 +125,20 @@ pub const Address = struct {
     chain: u8,
     chain_name: [32]u8,
 
-    // Post-Quantum Address (primary)
+    // Post-Quantum Address (primary for OmniBus tokens)
     pq_address: [70]u8,      // ob_k1_, ob_f1_, ob_d1_, ob_s1_
     pq_crypto: [32]u8,       // Kyber-768, Falcon-512, Dilithium-5, SPHINCS+
 
     // EVM-Compatible Address (secondary, for interoperability)
     evm_address: [42]u8,     // 0x... format
+
+    // Bitcoin Taproot (P2TR) Address
+    // bc1p... (62 chars) – v1 witness program, supports Schnorr signatures
+    btc_taproot_address: [62]u8,
+
+    // Lightning Network Address (for OmniBus tokens)
+    // Format: <pubkey>@<ip>:<port> or lnbc... (BOLT-11 invoice)
+    lightning_address: [128]u8,
 
     derivation_path: [64]u8,
     is_active: u8,
@@ -325,10 +333,121 @@ pub fn derive_address_by_chain(chain_name: []const u8, index: u32) Address {
         address.evm_address[2 + i] = 'Y'; // Placeholder for EVM address
     }
 
+    // Format BITCOIN TAPROOT address (bc1p... for Schnorr signatures)
+    // P2TR: v1 witness program derived from Schnorr public key
+    // Taproot address length: 62 chars (bc1p + 59 bech32 encoded chars)
+    const taproot_prefix = "bc1p";
+    @memcpy(address.btc_taproot_address[0..4], taproot_prefix);
+    for (0..58) |i| {
+        address.btc_taproot_address[4 + i] = 'Z'; // Placeholder for taproot key
+    }
+
+    // Format LIGHTNING NETWORK address (for OmniBus tokens)
+    // Two formats supported:
+    // 1. Public node ID: <33-byte-pubkey-hex>@<ip-address>:<port>
+    // 2. BOLT-11 Invoice: lnbc... (Lightning invoice format)
+    // For OmniBus tokens: lnbc + amount + exp + signature
+    const ln_prefix = "lnbc";
+    @memcpy(address.lightning_address[0..4], ln_prefix);
+    // Append amount in satoshis (placeholder)
+    var ln_offset: usize = 4;
+    const ln_amount_str = "1000000u";
+    @memcpy(address.lightning_address[ln_offset..ln_offset + 7], ln_amount_str);
+    ln_offset += 7;
+    // Append expiry timestamp and signature
+    const ln_suffix = "ps3lhdc8z";
+    @memcpy(address.lightning_address[ln_offset..ln_offset + ln_suffix.len], ln_suffix);
+    for (ln_offset + ln_suffix.len..128) |i| {
+        address.lightning_address[i] = ' '; // Padding
+    }
+
     // In real impl: Use HDWallet.derive_path() from universal_wallet_generator
     // This would call HMAC-SHA512 iteratively for each path component
-    // Then generate both PQ and EVM addresses from the derived key
+    // Then generate all address formats from the derived key:
+    // - PQ: hash(derived_key) with custom prefix
+    // - EVM: Keccak256(pubkey) -> 20-byte address
+    // - Taproot: Schnorr(derived_key) -> 32-byte taproot output key
+    // - Lightning: ECDSA pubkey + per-node ID derivation
     return address;
+}
+
+// ============================================================================
+// Bitcoin Taproot (P2TR) & Lightning Network Address Generation
+// ============================================================================
+
+/// Generate Bitcoin Taproot (P2TR) address from derived key
+/// P2TR format: bc1p + 59 bech32 chars = 62 total
+/// Uses Schnorr signature scheme (BIP-340) for taproot output key
+pub fn generate_btc_taproot(derived_key: [32]u8, index: u32) [62]u8 {
+    var taproot_addr: [62]u8 = undefined;
+
+    // Taproot output key derivation:
+    // 1. Generate Schnorr public key from derived_key (32 bytes)
+    // 2. Apply tweaking: Q' = Q + hash(Q || tweak)
+    // 3. Encode as bech32 (witness v1)
+
+    const prefix = "bc1p";
+    @memcpy(taproot_addr[0..4], prefix);
+
+    // Placeholder: derive from key hash
+    // Real impl: Schnorr(derived_key) -> 32-byte taproot key -> bech32 encode
+    for (0..58) |i| {
+        const byte_val = ((derived_key[i % 32] +% @as(u8, @truncate(index >> (i / 4)))) ^ 0x55);
+        taproot_addr[4 + i] = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"[byte_val % 32];
+    }
+
+    return taproot_addr;
+}
+
+/// Generate Lightning Network address for OmniBus tokens
+/// Supports two formats:
+/// 1. BOLT-11 Invoice: lnbc<amount><expiry><signature>
+/// 2. Node ID: <pubkey>@<ip>:<port>
+pub fn generate_lightning_address(derived_key: [32]u8, token_symbol: []const u8) [128]u8 {
+    var ln_addr: [128]u8 = undefined;
+
+    // BOLT-11 Invoice format for Lightning transactions
+    // Structure: lnbc + amount + unit (u=micro, m=milli, etc)
+    //           + expiry (10m default) + signature
+
+    const ln_prefix = "lnbc";
+    @memcpy(ln_addr[0..4], ln_prefix);
+
+    var offset: usize = 4;
+
+    // Amount in satoshis (placeholder: 1 million sats = 0.01 BTC)
+    const amount_str = "1000000u";
+    @memcpy(ln_addr[offset..offset + amount_str.len], amount_str);
+    offset += amount_str.len;
+
+    // Expiry time: 3600 seconds (1 hour default)
+    const expiry_str = "3600";
+    for (0..expiry_str.len) |i| {
+        ln_addr[offset + i] = expiry_str[i];
+    }
+    offset += 4;
+
+    // ECDSA signature placeholder (real: SECP256K1 signature of invoice hash)
+    // Length: 104 chars (typical BOLT-11 sig in bech32)
+    for (0..80) |i| {
+        const byte_val = (derived_key[i % 32] ^ (derived_key[(i+1) % 32]));
+        ln_addr[offset + i] = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"[byte_val % 32];
+    }
+    offset += 80;
+
+    // Token-specific suffix (to differentiate OMNI/LOVE/FOOD/RENT/VACA)
+    if (token_symbol.len > 0) {
+        const suffix_max = @min(token_symbol.len, 128 - offset - 10);
+        @memcpy(ln_addr[offset..offset + suffix_max], token_symbol[0..suffix_max]);
+        offset += suffix_max;
+    }
+
+    // Pad remainder
+    for (offset..128) |i| {
+        ln_addr[i] = 0;
+    }
+
+    return ln_addr;
 }
 
 // ============================================================================
@@ -363,7 +482,7 @@ pub fn handle_generate_seed(words_param: u8) HttpResponse {
 }
 
 /// Handle GET /api/wallet/addresses/{chain}?index=0
-/// Returns BOTH post-quantum AND EVM-compatible addresses
+/// Returns MULTIPLE address formats: post-quantum, EVM, Bitcoin Taproot, Lightning Network
 pub fn handle_derive_addresses(chain_name: []const u8, index: u32) HttpResponse {
     var response: HttpResponse = undefined;
     response.status_code = 200;
@@ -372,14 +491,36 @@ pub fn handle_derive_addresses(chain_name: []const u8, index: u32) HttpResponse 
 
     const address = derive_address_by_chain(chain_name, index);
 
-    // Format JSON response with both address formats
-    var json_buf: [2048]u8 = undefined;
+    // Get chain name string for response
+    const chain_str_len = std.mem.indexOfScalar(u8, &address.chain_name, 0) orelse 32;
+    const chain_str = address.chain_name[0..chain_str_len];
+    const path_str_len = std.mem.indexOfScalar(u8, &address.derivation_path, 0) orelse 64;
+    const path_str = address.derivation_path[0..path_str_len];
+    const crypto_str_len = std.mem.indexOfScalar(u8, &address.pq_crypto, 0) orelse 32;
+    const crypto_str = address.pq_crypto[0..crypto_str_len];
+
+    // Format comprehensive JSON response with all address types
+    var json_buf: [4096]u8 = undefined;
     const json_len = std.fmt.bufPrint(&json_buf,
-        "{{\n  \"chain\": \"{s}\",\n  \"derivation_path\": \"{s}\",\n  \"pq_address\": \"{{prefix}}...\",\n  \"evm_address\": \"0x...\",\n  \"pq_crypto\": \"{s}\",\n  \"key_derivation\": \"BIP-32 HMAC-SHA512 CKDpriv\",\n  \"key_length\": 32\n}}",
+        "{{\n" ++
+        "  \"chain\": \"{s}\",\n" ++
+        "  \"index\": {d},\n" ++
+        "  \"derivation_path\": \"{s}\",\n" ++
+        "  \"addresses\": {{\n" ++
+        "    \"pq_address\": {{\"format\": \"{s}...\", \"crypto\": \"{s}\", \"bits\": 256}},\n" ++
+        "    \"evm_address\": \"0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\n" ++
+        "    \"btc_taproot_p2tr\": \"bc1pXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\n" ++
+        "    \"lightning_invoice\": \"lnbc1000000ups3lhdc8z...\"\n" ++
+        "  }},\n" ++
+        "  \"key_derivation\": \"BIP-32 HMAC-SHA512 (standard) + Taproot Schnorr (Bitcoin) + Lightning ECDSA\",\n" ++
+        "  \"key_length_bits\": 256\n" ++
+        "}}",
         .{
-            address.chain_name[0..std.mem.indexOfScalar(u8, &address.chain_name, 0) orelse 32],
-            address.derivation_path[0..std.mem.indexOfScalar(u8, &address.derivation_path, 0) orelse 64],
-            address.pq_crypto[0..std.mem.indexOfScalar(u8, &address.pq_crypto, 0) orelse 32]
+            chain_str,
+            index,
+            path_str,
+            crypto_str,
+            crypto_str,
         }
     ) catch 0;
 
@@ -390,14 +531,53 @@ pub fn handle_derive_addresses(chain_name: []const u8, index: u32) HttpResponse 
 }
 
 /// Handle GET /api/wallet/balance?address=0x...
-/// Shows balances for all 5 tokens with their post-quantum crypto methods
+/// Shows balances for all 5 tokens with all address formats: PQ, EVM, Taproot, Lightning
 pub fn handle_get_balance(address: [*:0]const u8) HttpResponse {
     var response: HttpResponse = undefined;
     response.status_code = 200;
     @memcpy(response.content_type[0..16], "application/json");
     response.content_type[16] = 0;
 
-    const json = "{\n  \"address\": \"ADDRESS_HERE\",\n  \"balances\": {\n    \"OMNI\": {\"crypto\": \"Kyber-768\", \"pq_address\": \"ob_k1_...\"},\n    \"LOVE\": {\"crypto\": \"Kyber-768\", \"pq_address\": \"ob_k1_...\"},\n    \"FOOD\": {\"crypto\": \"Falcon-512\", \"pq_address\": \"ob_f1_...\"},\n    \"RENT\": {\"crypto\": \"Dilithium-5\", \"pq_address\": \"ob_d1_...\"},\n    \"VACA\": {\"crypto\": \"SPHINCS+\", \"pq_address\": \"ob_s1_...\"}\n  }\n}";
+    const json = "{\n" ++
+        "  \"address\": \"ADDRESS_HERE\",\n" ++
+        "  \"balances\": {\n" ++
+        "    \"OMNI\": {\n" ++
+        "      \"crypto\": \"Kyber-768\",\n" ++
+        "      \"pq_address\": \"ob_k1_...\",\n" ++
+        "      \"evm_address\": \"0x...\",\n" ++
+        "      \"btc_taproot\": \"bc1p...\",\n" ++
+        "      \"lightning_invoice\": \"lnbc1000000u...\"\n" ++
+        "    },\n" ++
+        "    \"LOVE\": {\n" ++
+        "      \"crypto\": \"Kyber-768\",\n" ++
+        "      \"pq_address\": \"ob_k1_...\",\n" ++
+        "      \"evm_address\": \"0x...\",\n" ++
+        "      \"btc_taproot\": \"bc1p...\",\n" ++
+        "      \"lightning_invoice\": \"lnbc1000000u...\"\n" ++
+        "    },\n" ++
+        "    \"FOOD\": {\n" ++
+        "      \"crypto\": \"Falcon-512\",\n" ++
+        "      \"pq_address\": \"ob_f1_...\",\n" ++
+        "      \"evm_address\": \"0x...\",\n" ++
+        "      \"btc_taproot\": \"bc1p...\",\n" ++
+        "      \"lightning_invoice\": \"lnbc1000000u...\"\n" ++
+        "    },\n" ++
+        "    \"RENT\": {\n" ++
+        "      \"crypto\": \"Dilithium-5\",\n" ++
+        "      \"pq_address\": \"ob_d1_...\",\n" ++
+        "      \"evm_address\": \"0x...\",\n" ++
+        "      \"btc_taproot\": \"bc1p...\",\n" ++
+        "      \"lightning_invoice\": \"lnbc1000000u...\"\n" ++
+        "    },\n" ++
+        "    \"VACA\": {\n" ++
+        "      \"crypto\": \"SPHINCS+\",\n" ++
+        "      \"pq_address\": \"ob_s1_...\",\n" ++
+        "      \"evm_address\": \"0x...\",\n" ++
+        "      \"btc_taproot\": \"bc1p...\",\n" ++
+        "      \"lightning_invoice\": \"lnbc1000000u...\"\n" ++
+        "    }\n" ++
+        "  }\n" ++
+        "}";
     const json_len = json.len;
     @memcpy(response.body[0..json_len], json[0..json_len]);
     response.body_len = json_len;
