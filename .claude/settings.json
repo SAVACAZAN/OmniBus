@@ -221,7 +221,11 @@
       "Bash(./wallet_generation_examples)",
       "Bash(./omnibus_complete_wallet_test)",
       "Bash(./test_omnibus_native)",
-      "Bash(./test_omnibus_bip44_lightning)"
+      "Bash(./test_omnibus_bip44_lightning)",
+      "Bash(./test_omnibus_unified_addresses)",
+      "Bash(./omnibus_wallet_metadata)",
+      "Bash(./omnibus_complete_metadata)",
+      "Bash(./omnibus_complete_metadata_with_keys)"
     ],
     "additionalDirectories": [
       "/home/kiss/.claude/projects/-home-kiss-OmniBus/memory",
