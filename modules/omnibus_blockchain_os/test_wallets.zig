@@ -41,11 +41,32 @@ const Token = struct {
 };
 
 const TOKENS = [_]Token{
+    // OmniBus Tokens (Post-Quantum)
     .{ .name = "OmniBus OMNI", .symbol = "OMNI", .coin_type = 8888, .pq_crypto = "Kyber-768", .pq_prefix = "ob_k1_", .decimals = 8 },
     .{ .name = "OmniBus Love", .symbol = "LOVE", .coin_type = 8888, .pq_crypto = "Kyber-768", .pq_prefix = "ob_k1_", .decimals = 18 },
     .{ .name = "OmniBus Food", .symbol = "FOOD", .coin_type = 8889, .pq_crypto = "Falcon-512", .pq_prefix = "ob_f1_", .decimals = 8 },
     .{ .name = "OmniBus Rent", .symbol = "RENT", .coin_type = 8890, .pq_crypto = "Dilithium-5", .pq_prefix = "ob_d1_", .decimals = 6 },
     .{ .name = "OmniBus Vacation", .symbol = "VACA", .coin_type = 8891, .pq_crypto = "SPHINCS+", .pq_prefix = "ob_s1_", .decimals = 12 },
+    // Major Blockchains
+    .{ .name = "Bitcoin", .symbol = "BTC", .coin_type = 0, .pq_crypto = "Secp256k1", .pq_prefix = "1", .decimals = 8 },
+    .{ .name = "Ethereum", .symbol = "ETH", .coin_type = 60, .pq_crypto = "Secp256k1", .pq_prefix = "0x", .decimals = 18 },
+    .{ .name = "Solana", .symbol = "SOL", .coin_type = 501, .pq_crypto = "Ed25519", .pq_prefix = "So", .decimals = 9 },
+    .{ .name = "Polygon", .symbol = "MATIC", .coin_type = 60, .pq_crypto = "Secp256k1", .pq_prefix = "0x", .decimals = 18 },
+    .{ .name = "Arbitrum", .symbol = "ARB", .coin_type = 60, .pq_crypto = "Secp256k1", .pq_prefix = "0x", .decimals = 18 },
+    .{ .name = "Avalanche", .symbol = "AVAX", .coin_type = 60, .pq_crypto = "Secp256k1", .pq_prefix = "0x", .decimals = 18 },
+    .{ .name = "Optimism", .symbol = "OP", .coin_type = 60, .pq_crypto = "Secp256k1", .pq_prefix = "0x", .decimals = 18 },
+    .{ .name = "Litecoin", .symbol = "LTC", .coin_type = 2, .pq_crypto = "Secp256k1", .pq_prefix = "L", .decimals = 8 },
+    .{ .name = "Dogecoin", .symbol = "DOGE", .coin_type = 3, .pq_crypto = "Secp256k1", .pq_prefix = "D", .decimals = 8 },
+    .{ .name = "Cardano", .symbol = "ADA", .coin_type = 1815, .pq_crypto = "Ed25519", .pq_prefix = "addr", .decimals = 6 },
+    .{ .name = "TRON", .symbol = "TRX", .coin_type = 195, .pq_crypto = "Secp256k1", .pq_prefix = "T", .decimals = 6 },
+    .{ .name = "Cosmos", .symbol = "ATOM", .coin_type = 118, .pq_crypto = "Secp256k1", .pq_prefix = "cosmos", .decimals = 6 },
+    .{ .name = "Polkadot", .symbol = "DOT", .coin_type = 354, .pq_crypto = "Ed25519", .pq_prefix = "1", .decimals = 10 },
+    .{ .name = "XRP Ledger", .symbol = "XRP", .coin_type = 144, .pq_crypto = "Secp256k1", .pq_prefix = "r", .decimals = 6 },
+    .{ .name = "NEAR", .symbol = "NEAR", .coin_type = 397, .pq_crypto = "Ed25519", .pq_prefix = "near", .decimals = 24 },
+    .{ .name = "Aptos", .symbol = "APT", .coin_type = 637, .pq_crypto = "Ed25519", .pq_prefix = "0x", .decimals = 8 },
+    .{ .name = "Sui", .symbol = "SUI", .coin_type = 784, .pq_crypto = "Ed25519", .pq_prefix = "0x", .decimals = 9 },
+    .{ .name = "Moonbeam", .symbol = "GLMR", .coin_type = 60, .pq_crypto = "Secp256k1", .pq_prefix = "0x", .decimals = 18 },
+    .{ .name = "Fantom", .symbol = "FTM", .coin_type = 60, .pq_crypto = "Secp256k1", .pq_prefix = "0x", .decimals = 18 },
 };
 
 pub fn main() !void {
