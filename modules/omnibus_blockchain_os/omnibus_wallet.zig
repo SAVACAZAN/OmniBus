@@ -152,10 +152,14 @@ pub fn derive_key(
     _ = timestamp;
     if (wallet.key_count >= 35) return false;
 
-    // BIP-44 path: m/44'/506'/domain'/0/0
-    // 44' = change purpose
-    // 506' = OmniBus coin type
-    // domain' = domain index
+    // BIP-44 path: m/44'/coin_type'/domain'/0/0
+    // 44' = purpose (BIP-44 standard)
+    // coin_type' options:
+    //   - 506' = OmniBus native (default, maximum compatibility)
+    //   - 0' = Bitcoin compatible (uses Bitcoin derivation)
+    //   - 2' = Litecoin compatible (UTXO model, cheaper)
+    //   - 550' = Lightning Network (fastest/cheapest payments)
+    // domain' = domain index (0-4 for OMNI/LOVE/FOOD/RENT/VACA)
     // 0' = account 0
     // 0 = address index 0
 

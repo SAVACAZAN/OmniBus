@@ -220,7 +220,8 @@
       "Bash(./test_wallets_extended)",
       "Bash(./wallet_generation_examples)",
       "Bash(./omnibus_complete_wallet_test)",
-      "Bash(./test_omnibus_native)"
+      "Bash(./test_omnibus_native)",
+      "Bash(./test_omnibus_bip44_lightning)"
     ],
     "additionalDirectories": [
       "/home/kiss/.claude/projects/-home-kiss-OmniBus/memory",
