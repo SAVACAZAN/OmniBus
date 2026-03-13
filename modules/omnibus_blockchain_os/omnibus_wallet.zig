@@ -41,12 +41,30 @@ pub const AddressFormat = struct {
 };
 
 pub const OmniBusAddress = struct {
-    // OmniBus native address format: 0x<domain_id><pubkey_hash><checksum>
+    // OmniBus native address format (classical): 0x<domain_id><pubkey_hash><checksum>
     // Example: 0x0a1f2e3d4c5b6a7f8e9d0c1b2a3f4e5d6c7b8a9f
+    // Length: 74 characters (0x + 2 domain + 64 pubkey + 8 checksum)
 
     domain_id: u8,           // 0x0 = OMNI, 0x1 = LOVE, etc.
     pubkey_hash: [32]u8,    // SHA-256(public_key)
     checksum: [4]u8,        // CRC32 checksum
+};
+
+pub const OmniBusAddressPostQuantum = struct {
+    // OmniBus post-quantum address format: omni_<crypto_algo>_<domain>_<pubkey_hash>
+    // Example: omni_k1_0_a1f2e3d4c5b6a7f8e9d0c1b2a3f4e5d (Kyber-768, OMNI domain)
+    // Length: 72 characters (prefix varies by algorithm)
+    //
+    // Crypto prefixes:
+    // - omni_k1_: Kyber-768 (ML-KEM-768) for OMNI, LOVE
+    // - omni_f1_: Falcon-512 for FOOD
+    // - omni_d1_: Dilithium-5 (ML-DSA-5) for RENT
+    // - omni_s1_: SPHINCS+ (SLH-DSA) for VACATION
+
+    crypto_algo: u8,        // 0=Kyber, 1=Falcon, 2=Dilithium, 3=SPHINCS+
+    domain_id: u8,          // 0=OMNI, 1=LOVE, 2=FOOD, 3=RENT, 4=VACATION
+    pubkey_hash: [32]u8,    // SHA-256(pq_public_key) for compatibility
+    signature: [96]u8,      // PQ signature stub (actual: variable length per algo)
 };
 
 // ============================================================================
@@ -168,7 +186,7 @@ pub fn derive_key(
     return true;
 }
 
-/// Generate OmniBus-native address from public key
+/// Generate OmniBus-native address from public key (classical Secp256k1)
 fn generate_omnibus_address(pubkey: [65]u8, pubkey_len: u8, domain: DomainType) OmniBusAddress {
     var addr: OmniBusAddress = undefined;
 
@@ -191,6 +209,51 @@ fn generate_omnibus_address(pubkey: [65]u8, pubkey_len: u8, domain: DomainType) 
     return addr;
 }
 
+/// Generate OmniBus post-quantum address from PQ public key
+/// Format: omni_<algo>_<domain>_<pubkey_hash>
+/// Supported algorithms:
+/// - Kyber-768 (ML-KEM-768) for OMNI, LOVE tokens
+/// - Falcon-512 for FOOD token
+/// - Dilithium-5 (ML-DSA-5) for RENT token
+/// - SPHINCS+ (SLH-DSA-256) for VACATION token
+fn generate_omnibus_pq_address(pq_pubkey: [*]const u8, pq_pubkey_len: u32, domain: DomainType) OmniBusAddressPostQuantum {
+    var addr: OmniBusAddressPostQuantum = undefined;
+
+    addr.domain_id = @intFromEnum(domain);
+
+    // Select crypto algorithm based on domain
+    switch (domain) {
+        .OMNI, .LOVE => {
+            addr.crypto_algo = 0; // Kyber-768 (ML-KEM-768)
+        },
+        .FOOD => {
+            addr.crypto_algo = 1; // Falcon-512
+        },
+        .RENT => {
+            addr.crypto_algo = 2; // Dilithium-5 (ML-DSA-5)
+        },
+        .VACATION => {
+            addr.crypto_algo = 3; // SPHINCS+ (SLH-DSA-256)
+        },
+    }
+
+    // Hash the PQ public key (SHA-256 for indexing, not encryption)
+    var hasher = std.crypto.hash.sha2.Sha256.init(.{});
+    if (pq_pubkey_len > 0) {
+        hasher.update(pq_pubkey[0..@min(pq_pubkey_len, 4096)]);
+    }
+    hasher.final(&addr.pubkey_hash);
+
+    // PQ signature (stub - actual implementation uses algorithm-specific sizes)
+    // Kyber-768: ciphertext 1088 bytes, signature 2400 bytes
+    // Falcon-512: signature 897 bytes
+    // Dilithium-5: signature 4595 bytes
+    // SPHINCS+: signature 17088 bytes
+    @memset(&addr.signature, 0);
+
+    return addr;
+}
+
 fn derive_address_for_chain(key: *WalletKey, chain: ChainType) AddressFormat {
     var addr: AddressFormat = undefined;
     addr.chain = chain;
@@ -208,7 +271,13 @@ fn derive_address_for_chain(key: *WalletKey, chain: ChainType) AddressFormat {
     // Generate chain-specific address
     switch (chain) {
         .OMNIBUS => {
-            // OmniBus format: 0x<domain><hash><checksum>
+            // OmniBus native chain supports TWO address formats:
+            // 1. Classical (Secp256k1): 0x<domain><hash><checksum> (74 chars)
+            // 2. Post-Quantum (PQ): omni_<algo>_<domain>_<hash> (variable length)
+            //
+            // Default: Use classical format with domain-specific PQ prefix
+            // Users can opt-in to full PQ addressing for quantum resistance
+
             const omnibus_addr = generate_omnibus_address(key.public_key, key.public_key_len, key.domain);
 
             // Format as hex: "0x0a1f2e3d4c5b6a7f..."
@@ -219,6 +288,9 @@ fn derive_address_for_chain(key: *WalletKey, chain: ChainType) AddressFormat {
 
             @memcpy(&addr.address, &hex_buf);
             addr.address_len = 74;
+
+            // Note: To use post-quantum address format, derive_key_with_pq()
+            // should be called instead, which generates omni_k1_, omni_f1_, etc.
         },
 
         .BITCOIN => {
