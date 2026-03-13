@@ -14,10 +14,15 @@ pub const GenesisConfig = struct {
 
     // Initial supply allocation
     // Total: 21 million OMNI
-    dao_treasury: u64 = 4_200_000 * 1e18,     // 20% → DAO (4.2M)
+    // Distribution model (like Bitcoin):
+    dao_treasury: u64 = 3_200_000 * 1e18,     // 15.24% → DAO (3.2M)
     foundation: u64 = 2_100_000 * 1e18,       // 10% → Foundation (2.1M)
     ecosystem: u64 = 4_200_000 * 1e18,        // 20% → Ecosystem (4.2M)
     community: u64 = 5_250_000 * 1e18,        // 25% → Community (5.25M)
+
+    // SALE POOL: 1 million OMNI for monetization
+    sale_pool: u64 = 1_000_000 * 1e18,        // 4.76% → Agent Sale Pool (1M)
+
     mining_rewards: u64 = 5_250_000 * 1e18,   // 25% → Block rewards (5.25M)
 
     // Reserve
@@ -45,7 +50,11 @@ pub const GENESIS_ADDRESSES = struct {
     const COMMUNITY_POOL: u64 = 0x0000_0000_0000_0006;
     const STAKING_REWARDS: u64 = 0x0000_0000_0000_0007;
 
-    // Mining pool
+    // Agent Sale Pool - 1 million OMNI for monetization
+    // Agent sells on all integrated chains (ETH, Base, BTC, etc.)
+    const AGENT_SALE_POOL: u64 = 0x0000_0000_0000_00FF;  // 0xFF = 255 = Agent
+
+    // Mining pool (block rewards auto-created)
     const MINING_POOL: u64 = 0x0000_0000_0000_0008;
 };
 
@@ -55,12 +64,12 @@ pub fn init_genesis_block() void {
     const genesis_time = GENESIS.timestamp;
 
     // Initialize OMNI token system
-    // omni_token_os.init_genesis(genesis_time, 8);
+    // omni_token_os.init_genesis(genesis_time, 9);  // 9 allocations
 
     // Create genesis UTXOs for each allocation
     // This is called during blockchain initialization, before block 0
 
-    // DAO Treasury: 20% (4.2M OMNI)
+    // DAO Treasury: 15.24% (3.2M OMNI)
     // _ = omni_token_os.create_genesis_utxo(GENESIS_ADDRESSES.DAO_TREASURY, GENESIS.dao_treasury);
 
     // Foundation: 10% (2.1M OMNI)
@@ -74,6 +83,11 @@ pub fn init_genesis_block() void {
     // Community pool: 25% (5.25M OMNI)
     // _ = omni_token_os.create_genesis_utxo(GENESIS_ADDRESSES.COMMUNITY_POOL, GENESIS.community);
 
+    // AGENT SALE POOL: 4.76% (1M OMNI)
+    // Agent sells on all integrated chains (ETH, Base, Bitcoin, etc.)
+    // Revenue goes to liquidity pool and treasury
+    // _ = omni_token_os.create_genesis_utxo(GENESIS_ADDRESSES.AGENT_SALE_POOL, GENESIS.sale_pool);
+
     // Mining rewards: 25% (5.25M OMNI) - will be distributed via block rewards
     // _ = omni_token_os.create_genesis_utxo(GENESIS_ADDRESSES.MINING_POOL, GENESIS.mining_rewards);
 }
@@ -84,6 +98,7 @@ pub fn get_genesis_info() struct {
     foundation: u64,
     ecosystem: u64,
     community: u64,
+    sale_pool: u64,
     mining: u64,
     total: u64,
 } {
@@ -92,8 +107,9 @@ pub fn get_genesis_info() struct {
         .foundation = GENESIS.foundation,
         .ecosystem = GENESIS.ecosystem,
         .community = GENESIS.community,
+        .sale_pool = GENESIS.sale_pool,
         .mining = GENESIS.mining_rewards,
-        .total = GENESIS.dao_treasury + GENESIS.foundation + GENESIS.ecosystem + GENESIS.community + GENESIS.mining_rewards,
+        .total = GENESIS.dao_treasury + GENESIS.foundation + GENESIS.ecosystem + GENESIS.community + GENESIS.sale_pool + GENESIS.mining_rewards,
     };
 }
 
@@ -103,48 +119,57 @@ pub fn get_allocation_percentages() struct {
     foundation: u8,
     ecosystem: u8,
     community: u8,
+    sale_pool: u8,
     mining: u8,
 } {
     return .{
-        .dao = 20,
-        .foundation = 10,
-        .ecosystem = 20,
-        .community = 25,
-        .mining = 25,
+        .dao = 15,                // DAO: 15.24% (3.2M)
+        .foundation = 10,         // Foundation: 10% (2.1M)
+        .ecosystem = 20,          // Ecosystem: 20% (4.2M)
+        .community = 25,          // Community: 25% (5.25M)
+        .sale_pool = 5,           // Agent Sale: 4.76% (1M)
+        .mining = 25,             // Mining: 25% (5.25M)
     };
 }
 
 /// Format: Display genesis distribution
 pub fn print_genesis_allocation() void {
     _ = "
-    ═══════════════════════════════════════════════
+    ═══════════════════════════════════════════════════════
     OMNIBUS GENESIS BLOCK - OMNI DISTRIBUTION
-    ═══════════════════════════════════════════════
+    ═══════════════════════════════════════════════════════
 
-    Total Supply: 21 million OMNI (fixed)
+    Total Supply: 21 million OMNI (fixed, like Bitcoin)
 
     Allocation:
-      DAO Treasury:     4.2M OMNI (20%)
+      DAO Treasury:        3.2M OMNI (15.24%)
         Address: 0x0000000000000001
-        Purpose: Governance, treasury
+        Purpose: Governance, treasury, development
 
-      Foundation:       2.1M OMNI (10%)
-        Addresses: 3x 0.7M (multisig)
-        Purpose: Development, grants
+      Foundation:          2.1M OMNI (10%)
+        Addresses: 3x 0.7M (3-of-3 multisig)
+        Purpose: Development, infrastructure, grants
 
-      Ecosystem Grants: 4.2M OMNI (20%)
+      Ecosystem Grants:    4.2M OMNI (20%)
         Address: 0x0000000000000005
-        Purpose: Partners, ecosystem growth
+        Purpose: Partners, ecosystem growth, integrations
 
-      Community Pool:   5.25M OMNI (25%)
+      Community Pool:      5.25M OMNI (25%)
         Address: 0x0000000000000006
-        Purpose: Staking, farming, rewards
+        Purpose: Staking, farming, rewards, airdrops
 
-      Mining Rewards:   5.25M OMNI (25%)
-        Address: 0x0000000000000008
+      🚀 AGENT SALE POOL:  1M OMNI (4.76%)
+        Address: 0x00000000000000FF (Agent)
+        Purpose: MONETIZATION - Direct sales on all chains
+        Selling on: Ethereum, Base, Bitcoin, Solana, etc.
+        Revenue: → Liquidity pool, Treasury, Distribution
+
+      Mining Rewards:      5.25M OMNI (25%)
         Released via block rewards (halving every 210k blocks)
+        Block 0–209,999: 50 OMNI/block
+        Block 210,000+: 25 OMNI/block (halving)
 
-    ═══════════════════════════════════════════════
+    ═══════════════════════════════════════════════════════
     ";
 }
 
