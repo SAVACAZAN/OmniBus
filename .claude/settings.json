@@ -191,13 +191,39 @@
       "Bash(__NEW_LINE_ba6a5b0aa8568af6__ rm:*)",
       "Bash(__NEW_LINE_52645e0124673994__ git:*)",
       "Bash(__NEW_LINE_95d0f9fdbc10bc00__ echo:*)",
-      "Bash(__NEW_LINE_f634004c2df50278__ echo:*)"
+      "Bash(__NEW_LINE_f634004c2df50278__ echo:*)",
+      "Bash(__NEW_LINE_0efc046af713cf7b__ git commit -m \"Chore: Complete file organization - move legacy and archive files:*)",
+      "Bash(__NEW_LINE_b2ee48c3a6f5cb6d__ git:*)",
+      "Bash(__NEW_LINE_d861c373fa76e680__ echo:*)",
+      "Bash(__NEW_LINE_22b29ea10d028737__ find:*)",
+      "Bash(__NEW_LINE_c197305549c9f7fa__ echo:*)",
+      "Bash(__NEW_LINE_93b4f9cc5a181735__ zig:*)",
+      "Bash(__NEW_LINE_944565fa0c93ebad__ zig:*)",
+      "Bash(__NEW_LINE_738120f4b1b9d233__ zig:*)",
+      "Bash(__NEW_LINE_a50c332befbfa9f0__ zig:*)",
+      "Bash(__NEW_LINE_9615b80c153a8781__ zig:*)",
+      "Bash(__NEW_LINE_2c4b0c47a2d16f00__ nasm:*)",
+      "Bash(make build/omnibus_blockchain_os.bin)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(ls -lh /home/kiss/OmniBus/build/*.bin)",
+      "Bash(du -sh /home/kiss/OmniBus/wallet* /home/kiss/OmniBus/test_wallets /home/kiss/OmniBus/*.json)",
+      "Bash(du -sh /home/kiss/*)",
+      "Bash(ls -lh modules/omnibus_network_os/*.o)",
+      "Bash(ls -lh *.o)",
+      "Bash(xargs kill:*)",
+      "Bash(ls -lh web/*.html)",
+      "Bash(curl -s http://localhost:8080/wallet_dynamic.html)",
+      "Bash(curl -s http://localhost:8080/explorer_dynamic.html)",
+      "Bash(curl -s http://localhost:8888/explorer_dynamic.html)",
+      "Bash(echo \"0 external refs\" head -1 \"$f\")",
+      "Bash(pkill -f \"http.server\")"
     ],
     "additionalDirectories": [
       "/home/kiss/.claude/projects/-home-kiss-OmniBus/memory",
       "/home/kiss/OmniBus/.git",
       "/home/kiss/OmniBus/build",
-      "/home/kiss/OmniBus/modules/bot_strategies/build"
+      "/home/kiss/OmniBus/modules/bot_strategies/build",
+      "/home/kiss/OmniBus/.git/objects/pack"
     ]
   }
 }

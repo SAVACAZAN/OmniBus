@@ -153,8 +153,16 @@ pub fn get_token_metadata(token_id: u8) ?TokenMetadata {
     return null;
 }
 
-/// Derive child key using BIP-44 path
-/// Supports 50+ blockchains + 5 OmniBus tokens from single BIP-39 seed
+/// Derive child key using NATIVE derivation for each blockchain
+/// Each blockchain uses its own cryptographic method:
+/// - OmniBus tokens: Custom BIP-44 paths (8888-8891) + Post-Quantum crypto
+/// - Bitcoin: BIP-44 path m/44'/0'/0'/0/0 + Secp256k1 UTXO
+/// - Ethereum: BIP-44 path m/44'/60'/0'/0/0 + Secp256k1 (EVM account model)
+/// - Solana: BIP-44 path m/44'/501'/0'/0/0 + Ed25519 (native)
+/// - Cardano: Ledger derivation (proprietary Cardano standard) + Ed25519
+/// - Cosmos: Cosmos SDK derivation (proprietary) + Secp256k1
+/// - Polkadot: Substrate derivation (proprietary) + Ed25519
+/// NO forced BIP-44 for all - each uses native method
 pub fn derive_address_by_chain(chain_name: []const u8, index: u32) Address {
     var address: Address = undefined;
     address.is_active = 1;

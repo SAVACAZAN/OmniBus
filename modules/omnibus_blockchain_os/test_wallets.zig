@@ -87,8 +87,14 @@ pub fn main() !void {
     std.debug.print("🔐 Derivation Algorithm:\n", .{});
     std.debug.print("   Step 1: PBKDF2-HMAC-SHA512(mnemonic, \"TREZOR\") → 64-byte seed\n", .{});
     std.debug.print("   Step 2: HMAC-SHA512(\"Bitcoin seed\", seed) → master key + chain code\n", .{});
-    std.debug.print("   Step 3: BIP-44 path iteration → m/44'/coin_type'/0'/0/0\n", .{});
-    std.debug.print("   Step 4: Generate PQ address (ob_k1_, ob_f1_, etc.) + EVM address (0x...)\n\n", .{});
+    std.debug.print("   Step 3: Each blockchain uses NATIVE derivation (not forced BIP-44):\n", .{});
+    std.debug.print("      - OmniBus: Custom paths m/44'/8888'/0'/0/0 → m/44'/8891'/0'/0/0\n", .{});
+    std.debug.print("      - Bitcoin/Ethereum: BIP-44 (m/44'/0'/0'/0/0, m/44'/60'/0'/0/0)\n", .{});
+    std.debug.print("      - Solana: BIP-44 (m/44'/501'/0'/0/0) but Ed25519 instead of Secp256k1\n", .{});
+    std.debug.print("      - Cardano: Ledger derivation (proprietary, NOT BIP-44)\n", .{});
+    std.debug.print("      - Cosmos: Cosmos SDK derivation (proprietary, NOT BIP-44)\n", .{});
+    std.debug.print("      - Polkadot: Substrate derivation (proprietary, NOT BIP-44)\n", .{});
+    std.debug.print("   Step 4: Generate addresses in native format for each blockchain\n\n", .{});
 
     // Initialize wallet
     const wallet = HDWallet.init(test_mnemonic);

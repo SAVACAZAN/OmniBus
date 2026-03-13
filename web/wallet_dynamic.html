@@ -395,10 +395,10 @@
                 <div class="input-group">
                     <label class="input-label">Option 1: Generate New Seed Phrase (12 or 24 words)</label>
                     <div class="button-group">
-                        <button hx-post="/api/wallet/generate" hx-vals='{"words": "12"}' hx-target="#seed-display">
+                        <button hx-get="/api/wallet/generate?words=12" hx-target="#seed-display" hx-trigger="click">
                             Generate 12 Words
                         </button>
-                        <button hx-post="/api/wallet/generate" hx-vals='{"words": "24"}' hx-target="#seed-display">
+                        <button hx-get="/api/wallet/generate?words=24" hx-target="#seed-display" hx-trigger="click">
                             Generate 24 Words
                         </button>
                         <button class="secondary" onclick="this.textContent='Copied!'; setTimeout(() => this.textContent='Copy Seed', 1500)">
@@ -410,7 +410,7 @@
                 <div class="input-group" style="margin-top: 25px;">
                     <label class="input-label">Option 2: Import Existing Seed Phrase</label>
                     <textarea placeholder="Enter 12 or 24 words separated by spaces..." style="height: 80px;"></textarea>
-                    <button style="margin-top: 10px;" hx-post="/api/wallet/import" hx-target="#address-display">
+                    <button style="margin-top: 10px;" hx-get="/api/wallet/portfolio" hx-target="#address-display" hx-trigger="click">
                         Import & Generate Addresses
                     </button>
                 </div>
@@ -491,7 +491,7 @@
                 </div>
 
                 <!-- OMNI Addresses -->
-                <div id="tab-0" class="tab-content" hx-get="/api/wallet/addresses/omni" hx-trigger="load">
+                <div id="tab-0" class="tab-content" hx-get="/api/wallet/addresses/omni" hx-trigger="load, click from #tab-0">
                     <div class="address-card">
                         <div class="chain-name">🟠 OMNI (Native)</div>
                         <div class="address-item">
