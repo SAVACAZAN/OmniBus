@@ -1,8 +1,10 @@
 // OmniBus Wallet – Multi-chain HD wallet with BIP-39/32 support
 // Supports: BTC, ETH, EGLD, Solana, Optimism, Base
 // Key derivation: m/44'/506'/domain'/0/0
+// PQ signing delegated to pqc_wallet_bridge.zig via IPC
 
 const std = @import("std");
+const pqc_bridge = @import("pqc_wallet_bridge.zig");
 
 // ============================================================================
 // CHAIN DEFINITIONS
@@ -356,24 +358,49 @@ fn format_derivation_path(buf: *[32]u8, domain: DomainType, index: u8) u8 {
 // SIGNING
 // ============================================================================
 
+/// Sign a transaction message.
+/// For OMNIBUS chain: uses PQ signing via pqc_wallet_bridge (Dilithium/Falcon/SPHINCS+).
+/// For other chains: returns classical stub (Ed25519/secp256k1 TODO).
+/// Returns first 96 bytes of signature (truncated from full PQ sig for compatibility).
 pub fn sign_transaction(
     wallet: *const HDWallet,
     key_idx: u32,
     message: [32]u8,
 ) [96]u8 {
-    _ = message;
-    if (key_idx >= wallet.key_count) {
-        return [_]u8{0} ** 96;
+    if (key_idx >= wallet.key_count) return [_]u8{0} ** 96;
+
+    const key = &wallet.keys[key_idx];
+
+    // OmniBus native chain → PQ signing via bridge
+    if (key.chain == .OMNIBUS) {
+        const signed_tx = pqc_bridge.sign_tx(key.domain, message);
+        var out: [96]u8 = undefined;
+        const copy_len = @min(signed_tx.sig_len, 96);
+        @memcpy(out[0..copy_len], signed_tx.signature[0..copy_len]);
+        if (copy_len < 96) @memset(out[copy_len..], 0);
+        return out;
     }
 
-    _ = wallet.keys[key_idx];
-
-    // TODO: Implement actual signing
-    // Use Ed25519 or secp256k1 depending on chain
+    // Classical chains (BTC/ETH/EGLD/SOL): Ed25519/secp256k1 – TODO
     var signature: [96]u8 = undefined;
     @memset(&signature, 0);
-
     return signature;
+}
+
+/// Sign transaction and return full PQ blob (for block inclusion).
+/// Use this instead of sign_transaction() when chain == .OMNIBUS.
+pub fn sign_transaction_pq(
+    wallet: *const HDWallet,
+    key_idx: u32,
+    message: [32]u8,
+) pqc_bridge.PqSignedTx {
+    if (key_idx >= wallet.key_count) {
+        var empty: pqc_bridge.PqSignedTx = undefined;
+        empty.sig_len = 0;
+        return empty;
+    }
+    const key = &wallet.keys[key_idx];
+    return pqc_bridge.sign_tx(key.domain, message);
 }
 
 // ============================================================================

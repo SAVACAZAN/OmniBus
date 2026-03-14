@@ -5,7 +5,7 @@
 const std = @import("std");
 
 // Forward declarations to other OS modules
-const types = @import("rpc_state_types.zig");  // For RPC operations
+const pqc_bridge = @import("pqc_wallet_bridge.zig"); // PQ signing/keygen
 // const token_os = @import("token_os.zig");    // Token operations
 // const wallet_os = @import("wallet_os.zig");  // Wallet operations
 // const dao_os = @import("dao_os.zig");        // DAO operations
@@ -35,7 +35,7 @@ pub const Opcode = enum(u8) {
 
     // Token Operations (0x10–0x1F)
     OP_TRANSFER = 0x10,
-    OP_BALANCE = 0x11,
+    OP_TOKEN_BALANCE = 0x11,
     OP_MINT = 0x12,
     OP_BURN = 0x13,
     OP_STAKE = 0x14,
@@ -212,14 +212,9 @@ pub export fn execute_opcode(
 
     // Route to appropriate handler based on opcode
     return switch (opcode) {
-        // Stack operations
+        // Stack operations (0x00–0x0F)
         0x00 => op_push0(ctx),
         0x01...0x0F => op_push(ctx, opcode),
-        0x11 => op_dup(ctx),
-        0x12 => op_drop(ctx),
-        0x13 => op_swap(ctx),
-        0x14 => op_over(ctx),
-        0x15 => op_rot(ctx),
 
         // Token operations
         0x10 => op_transfer(ctx, arg0, arg1, arg2),
@@ -229,6 +224,12 @@ pub export fn execute_opcode(
         0x14 => op_stake(ctx, arg0, arg1, arg2),
         0x15 => op_unstake(ctx, arg0, arg1),
         0x16 => op_claim_rewards(ctx, arg0),
+
+        // Wallet + PQC operations (via pqc_wallet_bridge)
+        // OP_DERIVE_KEY 0x20: arg0=PqWalletSlot ptr, arg1=domain(u8)
+        // OP_SIGN_TX    0x22: arg0=tx_hash ptr (32B + domain byte), arg1=PqSignedTx out ptr
+        // OP_VERIFY_SIG 0x23: arg0=PqSignedTx ptr
+        0x20, 0x22, 0x23 => pqc_bridge.opcode_dispatch(opcode, arg0, arg1),
 
         // Arithmetic
         0x90 => op_add(ctx),

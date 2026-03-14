@@ -19,8 +19,9 @@ const blockchain = @import("omnibus_blockchain.zig");
 const simulator = @import("blockchain_simulator.zig");
 const miner_rewards = @import("miner_rewards.zig");
 const network = @import("network_integration.zig");
-const token_registry = @import("token_registry.zig");
+const token_registry   = @import("token_registry.zig");
 const oracle_consensus = @import("oracle_consensus.zig");
+const ws_collector     = @import("ws_collector.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -125,6 +126,9 @@ pub export fn init_plugin() void {
     // Phase 64: Initialize Oracle Consensus (4/6 validator voting)
     oracle_consensus.init_oracle_consensus();
 
+    // Phase 67: Initialize WebSocket price collector (0.1s sub-block pipeline)
+    ws_collector.init();
+
     initialized = true;
 }
 
@@ -150,32 +154,41 @@ const ExchangeBuffer = struct {
     lcx_volume_sats: u64,
 };
 
-/// Read prices from exchange buffers and inject into State Trie
-/// Called once per blockchain cycle from lightweight_miner_os
+/// Read prices from exchange buffers, inject into State Trie + ws_collector ring buffer.
+/// Called once per blockchain cycle from run_blockchain_cycle().
 pub fn inject_oracle_prices() void {
-    // Read from shared memory buffers (populated by external WebSocket feeders)
-    const kraken_buf = @as(*volatile ExchangeBuffer, @ptrFromInt(0x140000));
+    const kraken_buf   = @as(*volatile ExchangeBuffer, @ptrFromInt(0x140000));
     const coinbase_buf = @as(*volatile ExchangeBuffer, @ptrFromInt(0x141000));
 
-    // Get token mappings
     const btc_map = token_registry.lookupBySymbol("BTC") orelse return;
     const eth_map = token_registry.lookupBySymbol("ETH") orelse return;
 
-    // === Inject BTC prices (write to State Trie slot from Kraken) ===
+    // Inject BTC into State Trie (Kraken)
     if (kraken_buf.btc_price_cents > 0) {
-        const btc_price_slot = @as(*volatile u64, @ptrFromInt(btc_map.state_trie_slot));
-        btc_price_slot.* = kraken_buf.btc_price_cents;
+        const slot = @as(*volatile u64, @ptrFromInt(btc_map.state_trie_slot));
+        slot.* = kraken_buf.btc_price_cents;
+        // Feed into ws_collector pipeline (token_id=0 = BTC, exchange=KRAKEN=2)
+        ws_collector.price_feed_push(0, @intFromEnum(ws_collector.ExchangeId.KRAKEN),
+            kraken_buf.btc_price_cents, 0, 0);
     }
 
-    // === Inject ETH prices (write to State Trie slot from Coinbase) ===
+    // Inject ETH into State Trie (Coinbase)
     if (coinbase_buf.eth_price_cents > 0) {
-        const eth_price_slot = @as(*volatile u64, @ptrFromInt(eth_map.state_trie_slot));
-        eth_price_slot.* = coinbase_buf.eth_price_cents;
+        const slot = @as(*volatile u64, @ptrFromInt(eth_map.state_trie_slot));
+        slot.* = coinbase_buf.eth_price_cents;
+        // Feed into ws_collector pipeline (token_id=1 = ETH, exchange=COINBASE=1)
+        ws_collector.price_feed_push(1, @intFromEnum(ws_collector.ExchangeId.COINBASE),
+            coinbase_buf.eth_price_cents, 0, 0);
     }
 
-    // === Timestamp marker ===
     state.timestamp = rdtsc();
 }
+
+// TSC ticks per 100ms (≈3GHz CPU: 3_000_000_000 / 10 = 300_000_000)
+// Adjust at runtime if needed via calibration
+const TSC_PER_100MS: u64 = 300_000_000;
+
+var tsc_last_tick: u64 = 0;
 
 pub export fn run_blockchain_cycle() void {
     if (!initialized) {
@@ -185,8 +198,16 @@ pub export fn run_blockchain_cycle() void {
     state.cycle_count += 1;
     state.timestamp = rdtsc();
 
-    // Inject latest oracle prices from WebSocket buffers
+    // Inject latest oracle prices from WebSocket buffers into ws_collector ring
     inject_oracle_prices();
+
+    // Phase 67: Tick ws_collector every 100ms (TSC-based)
+    const tsc_now = rdtsc();
+    if (tsc_last_tick == 0) tsc_last_tick = tsc_now;
+    if (tsc_now -% tsc_last_tick >= TSC_PER_100MS) {
+        ws_collector.tick_100ms();
+        tsc_last_tick = tsc_now;
+    }
 
     // Phase 64: Oracle Consensus Integration
     // Create a new price snapshot every cycle
