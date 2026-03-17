@@ -217,9 +217,9 @@ pub export fn init_plugin() void {
         state.block_timestamp = rdtsc();
 
         uart('H'); // [H]ash calculated
-        // Salvăm genesis pe disc
-        vault_storage.save_block(1, &gen_header.merkle_root, &gen_hash);
-        uart('V'); // [V]ault saved
+        // TODO: save_block disabled for debug – may cause hang
+        // vault_storage.save_block(1, &gen_header.merkle_root, &gen_hash);
+        uart('V'); // [V]ault saved (skipped block write)
     }
 
     // Phase 67: Multi-exchange price feeds initialization (DISABLED for genesis bootstrap)
