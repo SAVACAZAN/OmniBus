@@ -73,6 +73,14 @@ All addresses derive from the same 12-word mnemonic using different coin types:
 
 ## 🔐 Post-Quantum Domains (NIST Post-Quantum Cryptography)
 
+**⚠️ IMPORTANT**: These 4 domains are **NON-TRANSFERABLE**. They serve specific purposes:
+- **Encryption** (omnibus.love) – asymmetric encryption, not tokens
+- **Signatures** (omnibus.food) – digital signatures, not tokens
+- **Governance** (omnibus.rent) – voting credentials, not tokens
+- **Archival** (omnibus.archive) – eternal record-keeping, not tokens
+
+Only the **native OMNI token** is transferable and tradeable.
+
 Derived from master seed using domain-specific sub-seeds: `HMAC-SHA512(seed, "omnibus.{domain}")`
 
 ### omnibus.love (Kyber-768 / ML-KEM-768)
@@ -105,15 +113,15 @@ Derived from master seed using domain-specific sub-seeds: `HMAC-SHA512(seed, "om
 - **Short ID**: `OMNI-6d2e-RENT`
 - **Use**: Governance voting / transaction signing (future FIPS 204 compliance)
 
-### omnibus.omni (SPHINCS+ / SLH-DSA-256)
+### omnibus.archive (SPHINCS+ / SLH-DSA-256)
 - **Algorithm**: Hash-based digital signature (stateless)
-- **Sub-seed**: `HMAC-SHA512(seed, "omnibus.omni")`
+- **Sub-seed**: `HMAC-SHA512(seed, "omnibus.archive")`
 - **Public Key Size**: 32 bytes (smallest PQ key)
 - **Secret Key Size**: 64 bytes (smallest PQ secret)
 - **Security Level**: **128-bit eternal security** (provably secure against any future computer)
 - **Address**: `ob_s3_9a2d5c1f4e7b2a5f8c3d6e9a1d4c7f2a`
-- **Short ID**: `OMNI-8f1a-OMNI`
-- **Use**: Long-term archival signatures, "provably future-proof" records
+- **Short ID**: `OMNI-8f1a-ARCH`
+- **Use**: Long-term archival signatures, "provably future-proof" records, legal compliance
 
 ---
 
@@ -225,9 +233,9 @@ omnibus.rent
   Pub Key: 2592 bytes | Secret Key: 4896 bytes
   Security: 256-bit quantum
 
-omnibus.omni
+omnibus.archive
   Algorithm: SPHINCS+ (SLH-DSA-256)
-  Short ID: OMNI-8f1a-OMNI
+  Short ID: OMNI-8f1a-ARCH
   Address: ob_s3_9a2d5c1f4e7b2a5f8c3d6e9a1d4c7f2a
   Pub Key: 32 bytes | Secret Key: 64 bytes
   Security: 128-bit eternal
@@ -282,18 +290,34 @@ omnibus.omni
 
 ---
 
-## 📊 Summary
+## 📊 Summary: 1 Native + 4 Domains = 5 On-Chain Entities
 
+### Transferable:
+| Entity | Purpose | Balance |
+|--------|---------|---------|
+| **OMNI (native)** | Trading, arbitrage, rewards | 1,000,000 OMNI |
+
+### Non-Transferable (Specialized Domains):
+| Domain | Algorithm | Purpose | Key Size | Use Case |
+|--------|-----------|---------|----------|----------|
+| omnibus.love | Kyber-768 | Encryption | 1,184 B | Asymmetric KEM |
+| omnibus.food | Falcon-512 | Signatures | 897 B | Compact signatures |
+| omnibus.rent | Dilithium-5 | Governance | 2,592 B | Voting credentials |
+| omnibus.archive | SPHINCS+ | Archival | 32 B | Eternal records |
+
+### Overall Metrics:
 | Metric | Value |
 |--------|-------|
-| **Mnemonic Words** | 12 (128-bit) |
-| **Classical Chains** | 6 (BTC, ETH, SOL, EGLD, OP, Base) |
-| **Post-Quantum Domains** | 4 (LOVE, FOOD, RENT, OMNI) |
-| **ERC20-Compatible Addresses** | 3 (ETH, OP, Base) |
-| **Total Addresses Generated** | 10 |
-| **Initial Balance** | 1,000,000 OMNI |
+| **Mnemonic Words** | 12 (128-bit entropy) |
+| **Native Token** | OMNI (transferable, 1M initial) |
+| **Specialized Domains** | 4 (non-transferable) |
+| **Total On-Chain Entities** | 5 (1 native + 4 domains) |
+| **Classical Chain Support** | 6 (BTC, ETH, SOL, EGLD, Optimism, Base) |
+| **ERC20-Compatible Addresses** | 3 (Ethereum, Optimism, Base – same address) |
+| **Post-Quantum Algorithms** | 4 NIST-approved (Kyber, Falcon, Dilithium, SPHINCS+) |
+| **Initial Balance** | 1,000,000 OMNI (100M SAT) |
 | **USDC On-Ramp Address** | `0x8ba1f109551bD432803012645Ac136ddd64DBA72` |
-| **Memory Used** | ~4 KB (no allocation) |
+| **Memory Used** | ~4 KB (fixed-size, no allocation) |
 
 ---
 

@@ -650,12 +650,12 @@ fn generate_pq_addresses(wallet: *AgentWallet) void {
         wallet.pq_count += 1;
     }
 
-    // omnibus.omni – SPHINCS+ (SLH-DSA-256, eternal security)
+    // omnibus.archive – SPHINCS+ (SLH-DSA-256, eternal security)
     if (wallet.pq_count < 4) {
         var addr = &wallet.pq_addrs[3];
         var pos: u8 = 0;
 
-        const domain = "omnibus.omni";
+        const domain = "omnibus.archive";
         for (domain) |c| {
             if (pos < 32) {
                 addr.domain[pos] = c;
@@ -675,7 +675,7 @@ fn generate_pq_addresses(wallet: *AgentWallet) void {
         addr.algorithm_len = pos;
 
         pos = 0;
-        const short = "OMNI-8f1a-OMNI";
+        const short = "OMNI-8f1a-ARCH";
         for (short) |c| {
             if (pos < 16) {
                 addr.short_id[pos] = c;
@@ -813,7 +813,8 @@ pub fn export_to_log() void {
 
     // Post-quantum domains
     for ("═══════════════════════════════════════════════════════════\n") |c| uart_write(c);
-    for ("🔐 POST-QUANTUM DOMAINS (NIST PQ Cryptography)\n") |c| uart_write(c);
+    for ("🔐 POST-QUANTUM DOMAINS (Non-Transferable, NIST PQ Crypto)\n") |c| uart_write(c);
+    for ("   (Use for encryption, signatures, governance, archival only)\n") |c| uart_write(c);
     for ("═══════════════════════════════════════════════════════════\n\n") |c| uart_write(c);
 
     for (0..wallet.pq_count) |i| {
