@@ -37,6 +37,7 @@ const coinbase_feed    = @import("coinbase_feed.zig");
 const lcx_feed         = @import("lcx_feed.zig");
 const agent_wallet     = @import("agent_wallet.zig");
 const block_explorer   = @import("block_explorer_os.zig");
+const usdc_onramp      = @import("usdc_erc20_onramp.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -242,6 +243,20 @@ pub export fn init_plugin() void {
     block_explorer.init_block_explorer();
     uart('E');  // [E]xplorer ready
 
+    // Phase 70: USDC ERC20 on-ramp initialization
+    // Note: USDC onramp tracks agent's ERC20 address for receiving minted OMNI
+    // Using a fixed [70]u8 array formatted as PQ domain address
+    var usdc_agent_addr: [70]u8 = undefined;
+    // Copy ERC20 address and pad with zeros
+    for (0..42) |i| {
+        usdc_agent_addr[i] = agent_data.address[i];
+    }
+    for (42..70) |i| {
+        usdc_agent_addr[i] = 0;
+    }
+    usdc_onramp.init_usdc_onramp(usdc_agent_addr, 42);
+    uart('U');  // [U]SDC on-ramp ready
+
     uart('!'); // init complete!
 }
 
@@ -396,6 +411,16 @@ pub export fn run_blockchain_cycle() void {
     if ((state.cycle_count & 0x3F) == 0) {  // Every 64 cycles
         block_explorer.update_balance(state.total_omni_circulating, state.total_omni_circulating, 0);
         block_explorer.display_explorer();
+    }
+
+    // Phase 70: USDC on-ramp polling every 16 cycles (check for incoming USDC from Ethereum)
+    if ((state.cycle_count & 0x0F) == 0) {  // Every 16 cycles
+        usdc_onramp.poll_ethereum_for_usdc();
+    }
+
+    // Phase 70: Display USDC on-ramp status every 128 cycles
+    if ((state.cycle_count & 0x7F) == 0) {  // Every 128 cycles
+        usdc_onramp.display_onramp_status();
     }
 
     // Procesăm un ciclu P2P – skip in DEV_MODE (single-node, no peers)
