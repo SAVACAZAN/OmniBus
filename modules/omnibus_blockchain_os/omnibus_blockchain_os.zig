@@ -35,6 +35,7 @@ const ipc              = @import("ipc.zig");
 const kraken_feed      = @import("kraken_feed.zig");
 const coinbase_feed    = @import("coinbase_feed.zig");
 const lcx_feed         = @import("lcx_feed.zig");
+const agent_wallet     = @import("agent_wallet.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -228,7 +229,12 @@ pub export fn init_plugin() void {
     // coinbase_feed.init_coinbase();
     // lcx_feed.init_lcx();
 
-    initialized = true;
+    // Phase 68: Agent wallet generation (BIP-39 mnemonic + HD keys)
+    agent_wallet.init_agent_wallet();
+    uart('A');  // [A]gent wallet ready
+    const agent_data = agent_wallet.get_wallet();
+    state.total_omni_circulating = agent_data.balance_sat;  // Initial supply = agent balance
+    uart('T');  // [T]okens allocated to agent
     uart('!'); // init complete!
 }
 
@@ -310,7 +316,15 @@ fn uart_block_num(height: u64) void {
 pub export fn run_blockchain_cycle() void {
     // Alive marker: every 256 calls print '.' to show we're running
     cycle_call_count +%= 1;
-    if ((cycle_call_count & 0xFF) == 1) uart('.');
+    if ((cycle_call_count & 0xFF) == 1) {
+        uart('.');
+        // DEBUG: print block height every 256 cycles
+        if ((cycle_call_count & 0xFFF) == 1) {
+            uart('[');
+            uart_block_num(state.block_height);
+            uart(']');
+        }
+    }
 
     if (!initialized) {
         init_plugin();
