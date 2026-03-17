@@ -222,22 +222,11 @@ pub export fn init_plugin() void {
         uart('V'); // [V]ault saved
     }
 
-    // Phase 67: Multi-exchange price feeds initialization (Kraken, Coinbase, LCX)
-    kraken_feed.init_kraken();
-    kraken_feed.register_pair(.BTCUSD, 0);
-    kraken_feed.register_pair(.ETHUSD, 1);
-    uart('K'); // [K]raken initialized
-
-    coinbase_feed.init_coinbase();
-    coinbase_feed.register_pair(.BTCUSD, 0);
-    coinbase_feed.register_pair(.ETHUSD, 1);
-    uart('C'); // [C]oinbase initialized
-
-    lcx_feed.init_lcx();
-    lcx_feed.register_pair(.LCXUSD, 2);
-    lcx_feed.register_pair(.BTCUSD, 0);
-    lcx_feed.register_pair(.ETHUSD, 1);
-    uart('L'); // [L]CX initialized
+    // Phase 67: Multi-exchange price feeds initialization (DISABLED for genesis bootstrap)
+    // TODO: Re-enable after genesis blocks are stable
+    // kraken_feed.init_kraken();
+    // coinbase_feed.init_coinbase();
+    // lcx_feed.init_lcx();
 
     initialized = true;
     uart('!'); // init complete!
@@ -331,11 +320,12 @@ pub export fn run_blockchain_cycle() void {
     state.timestamp = rdtsc();
 
     // Phase 67: Real multi-exchange prices in DEV_MODE
-    if (p2p_node.DEV_MODE) {
-        kraken_feed.fetch_prices_cycle();   // Write to 0x140000
-        coinbase_feed.fetch_prices_cycle(); // Write to 0x141000
-        lcx_feed.fetch_prices_cycle();      // Write to 0x142000
-    }
+    // TODO: Disabled for now – investigate stack corruption on 3rd call
+    // if (p2p_node.DEV_MODE) {
+    //     kraken_feed.fetch_prices_cycle();   // Write to 0x140000
+    //     coinbase_feed.fetch_prices_cycle(); // Write to 0x141000
+    //     lcx_feed.fetch_prices_cycle();      // Write to 0x142000
+    // }
 
     // Inject oracle prices into ws_collector ring buffer
     // PRODUCTION: read from Kraken/Coinbase external buffers
