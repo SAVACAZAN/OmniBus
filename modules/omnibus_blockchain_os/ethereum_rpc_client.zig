@@ -26,8 +26,8 @@ pub const EthereumConfig = struct {
 pub const SEPOLIA_CONFIG = EthereumConfig{
     .network = Network.SEPOLIA,
     .chain_id = 11155111,
-    .rpc_url = "https://sepolia.infura.io/v3/YOUR_INFURA_KEY".*,
-    .rpc_url_len = 51,
+    .rpc_url = "https://sepolia.infura.io/v3/4f39f708444a45a881b0b65117675cec".*,
+    .rpc_url_len = 64,
     .usdc_contract = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238".*,  // USDC.e on Sepolia (bridged)
     .usdc_len = 42,
 };
