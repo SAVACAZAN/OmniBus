@@ -36,6 +36,7 @@ const kraken_feed      = @import("kraken_feed.zig");
 const coinbase_feed    = @import("coinbase_feed.zig");
 const lcx_feed         = @import("lcx_feed.zig");
 const agent_wallet     = @import("agent_wallet.zig");
+const block_explorer   = @import("block_explorer_os.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -236,6 +237,11 @@ pub export fn init_plugin() void {
     const agent_data = agent_wallet.get_wallet();
     state.total_omni_circulating = agent_data.balance_sat;  // Initial supply = agent balance
     uart('T');  // [T]okens allocated to agent
+
+    // Phase 69: Block explorer initialization
+    block_explorer.init_block_explorer();
+    uart('E');  // [E]xplorer ready
+
     uart('!'); // init complete!
 }
 
@@ -381,6 +387,15 @@ pub export fn run_blockchain_cycle() void {
 
         // UART: afișează numărul blocului (ex: [0001] [0002] ...)
         uart_block_num(state.block_height);
+
+        // Phase 69: Update block explorer with new block data
+        block_explorer.add_block(state.block_height, &merkle, 1);  // 1 transaction per block (agent trade)
+    }
+
+    // Phase 69: Display block explorer every 64 cycles (shows latest blocks and balance)
+    if ((state.cycle_count & 0x3F) == 0) {  // Every 64 cycles
+        block_explorer.update_balance(state.total_omni_circulating, state.total_omni_circulating, 0);
+        block_explorer.display_explorer();
     }
 
     // Procesăm un ciclu P2P – skip in DEV_MODE (single-node, no peers)
