@@ -89,8 +89,8 @@ pub const AgentWallet = struct {
     classical_addrs: [6]ClassicalAddress = [_]ClassicalAddress{ClassicalAddress{}} ** 6,
     classical_count: u8 = 0,
 
-    // Post-quantum domain addresses (4)
-    pq_addrs: [4]PostQuantumAddress = [_]PostQuantumAddress{PostQuantumAddress{}} ** 4,
+    // Post-quantum domain addresses (5: 1 native OMNI + 4 protocol domains)
+    pq_addrs: [5]PostQuantumAddress = [_]PostQuantumAddress{PostQuantumAddress{}} ** 5,
     pq_count: u8 = 0,
 
     // Balance (in SAT)
@@ -650,12 +650,12 @@ fn generate_pq_addresses(wallet: *AgentWallet) void {
         wallet.pq_count += 1;
     }
 
-    // omnibus.archive – SPHINCS+ (SLH-DSA-256, eternal security)
-    if (wallet.pq_count < 4) {
+    // omnibus.vacation – SPHINCS+ (SLH-DSA-256, eternal security)
+    if (wallet.pq_count < 5) {
         var addr = &wallet.pq_addrs[3];
         var pos: u8 = 0;
 
-        const domain = "omnibus.archive";
+        const domain = "omnibus.vacation";
         for (domain) |c| {
             if (pos < 32) {
                 addr.domain[pos] = c;
@@ -675,7 +675,7 @@ fn generate_pq_addresses(wallet: *AgentWallet) void {
         addr.algorithm_len = pos;
 
         pos = 0;
-        const short = "OMNI-8f1a-ARCH";
+        const short = "OMNI-8f1a-VACA";
         for (short) |c| {
             if (pos < 16) {
                 addr.short_id[pos] = c;
@@ -699,6 +699,67 @@ fn generate_pq_addresses(wallet: *AgentWallet) void {
 
         pos = 0;
         const sec = "128-bit eternal";
+        for (sec) |c| {
+            if (pos < 32) {
+                addr.security_level[pos] = c;
+                pos += 1;
+            }
+        }
+        addr.security_len = pos;
+
+        wallet.pq_count += 1;
+    }
+
+    // omnibus.omni – NATIVE OMNI TOKEN (Dilithium-5 + Kyber-768 hybrid)
+    if (wallet.pq_count < 5) {
+        var addr = &wallet.pq_addrs[4];
+        var pos: u8 = 0;
+
+        const domain = "omnibus.omni";
+        for (domain) |c| {
+            if (pos < 32) {
+                addr.domain[pos] = c;
+                pos += 1;
+            }
+        }
+        addr.domain_len = pos;
+
+        pos = 0;
+        const algo = "Dilithium-5 + Kyber-768 (Hybrid)";
+        for (algo) |c| {
+            if (pos < 32) {
+                addr.algorithm[pos] = c;
+                pos += 1;
+            }
+        }
+        addr.algorithm_len = pos;
+
+        pos = 0;
+        const short = "OMNI-5k7m-OMNI";
+        for (short) |c| {
+            if (pos < 16) {
+                addr.short_id[pos] = c;
+                pos += 1;
+            }
+        }
+        addr.short_id_len = pos;
+
+        pos = 0;
+        const pq_addr = "ob_omni_5d7k768kyber5dil_native";
+        for (pq_addr) |c| {
+            if (pos < 48) {
+                addr.address[pos] = c;
+                pos += 1;
+            }
+        }
+        addr.address_len = pos;
+
+        // Hybrid key sizes: Kyber-768 + Dilithium-5
+        addr.pub_key_size = 1184 + 2592;  // 3776 bytes total
+        addr.secret_key_size = 2400 + 4896;  // 7296 bytes total
+
+        pos = 0;
+        const sec = "256-bit quantum (native chain)";
         for (sec) |c| {
             if (pos < 32) {
                 addr.security_level[pos] = c;

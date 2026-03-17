@@ -73,15 +73,27 @@ All addresses derive from the same 12-word mnemonic using different coin types:
 
 ## 🔐 Post-Quantum Domains (NIST Post-Quantum Cryptography)
 
-**⚠️ IMPORTANT**: These 4 domains are **NON-TRANSFERABLE**. They serve specific purposes:
-- **Encryption** (omnibus.love) – asymmetric encryption, not tokens
-- **Signatures** (omnibus.food) – digital signatures, not tokens
-- **Governance** (omnibus.rent) – voting credentials, not tokens
-- **Archival** (omnibus.archive) – eternal record-keeping, not tokens
-
-Only the **native OMNI token** is transferable and tradeable.
+**5 domenii total**: 1 pentru OMNI (transferabil) + 4 pentru protocol (non-transferabil)
 
 Derived from master seed using domain-specific sub-seeds: `HMAC-SHA512(seed, "omnibus.{domain}")`
+
+### TRANSFERABIL (1):
+
+### omnibus.omni (Dilithium-5 + Kyber-768 Hybrid) ⭐ **NATIVE OMNI**
+- **Purpose**: OMNI token transfers on OmniBus native blockchain
+- **Sub-seed**: `HMAC-SHA512(seed, "omnibus.omni")`
+- **Signature Algorithm**: Dilithium-5 (ML-DSA-5, FIPS 204)
+- **Encryption Algorithm**: Kyber-768 (ML-KEM-768)
+- **Public Key Size**: 3,776 bytes (Kyber 1,184 + Dilithium 2,592)
+- **Secret Key Size**: 7,296 bytes (Kyber 2,400 + Dilithium 4,896)
+- **Security Level**: **256-bit quantum resistance** (NIST category 5)
+- **Address**: `ob_omni_5d7k768kyber5dil_native`
+- **Short ID**: `OMNI-5k7m-OMNI`
+- **Use**: Sign OMNI transfers on native blockchain (post-quantum secure)
+- **Transferable**: ✅ **YES** – This is the OMNI token itself
+- **ERC20 Bridge**: Also available at `0x8ba1f109551bD432803012645Ac136ddd64DBA72`
+
+### NON-TRANSFERABIL (4 domenii protocol):
 
 ### omnibus.love (Kyber-768 / ML-KEM-768)
 - **Algorithm**: Key Encapsulation Mechanism (IND-CCA2 secure)
@@ -113,15 +125,15 @@ Derived from master seed using domain-specific sub-seeds: `HMAC-SHA512(seed, "om
 - **Short ID**: `OMNI-6d2e-RENT`
 - **Use**: Governance voting / transaction signing (future FIPS 204 compliance)
 
-### omnibus.archive (SPHINCS+ / SLH-DSA-256)
+### omnibus.vacation (SPHINCS+ / SLH-DSA-256)
 - **Algorithm**: Hash-based digital signature (stateless)
-- **Sub-seed**: `HMAC-SHA512(seed, "omnibus.archive")`
+- **Sub-seed**: `HMAC-SHA512(seed, "omnibus.vacation")`
 - **Public Key Size**: 32 bytes (smallest PQ key)
 - **Secret Key Size**: 64 bytes (smallest PQ secret)
 - **Security Level**: **128-bit eternal security** (provably secure against any future computer)
 - **Address**: `ob_s3_9a2d5c1f4e7b2a5f8c3d6e9a1d4c7f2a`
-- **Short ID**: `OMNI-8f1a-ARCH`
-- **Use**: Long-term archival signatures, "provably future-proof" records, legal compliance
+- **Short ID**: `OMNI-8f1a-VACA`
+- **Use**: Long-term archival signatures, "provably future-proof" records, eternal legal compliance
 
 ---
 
@@ -209,8 +221,15 @@ When agent initializes, it exports via UART serial:
     Address: 0x8ba1f109551bD432803012645Ac136ddd64DBA72
 
 ═══════════════════════════════════════════════════════════
-🔐 POST-QUANTUM DOMAINS (NIST PQ Cryptography)
+🔐 POST-QUANTUM DOMAINS (1 OMNI + 4 Protocol)
 ═══════════════════════════════════════════════════════════
+
+omnibus.omni (NATIVE OMNI TOKEN ⭐)
+  Algorithm: Dilithium-5 + Kyber-768 (Hybrid)
+  Short ID: OMNI-5k7m-OMNI
+  Address: ob_omni_5d7k768kyber5dil_native
+  Pub Key: 3776 bytes | Secret Key: 7296 bytes
+  Security: 256-bit quantum (native chain)
 
 omnibus.love
   Algorithm: Kyber-768 (ML-KEM-768)
@@ -233,9 +252,9 @@ omnibus.rent
   Pub Key: 2592 bytes | Secret Key: 4896 bytes
   Security: 256-bit quantum
 
-omnibus.archive
+omnibus.vacation
   Algorithm: SPHINCS+ (SLH-DSA-256)
-  Short ID: OMNI-8f1a-ARCH
+  Short ID: OMNI-8f1a-VACA
   Address: ob_s3_9a2d5c1f4e7b2a5f8c3d6e9a1d4c7f2a
   Pub Key: 32 bytes | Secret Key: 64 bytes
   Security: 128-bit eternal
@@ -290,34 +309,35 @@ omnibus.archive
 
 ---
 
-## 📊 Summary: 1 Native + 4 Domains = 5 On-Chain Entities
+## 📊 Summary: 5 Post-Quantum Domains Total
 
-### Transferable:
-| Entity | Purpose | Balance |
-|--------|---------|---------|
-| **OMNI (native)** | Trading, arbitrage, rewards | 1,000,000 OMNI |
+### Transferable (Native Blockchain):
+| Domain | Algorithm | Purpose | Balance | Key Size |
+|--------|-----------|---------|---------|----------|
+| **omnibus.omni** | Dilithium-5 + Kyber-768 | OMNI token transfers | 1,000,000 OMNI | 3,776 B pubkey |
 
-### Non-Transferable (Specialized Domains):
-| Domain | Algorithm | Purpose | Key Size | Use Case |
+### Non-Transferable (Protocol Domains):
+| Domain | Algorithm | Purpose | Key Size | Security |
 |--------|-----------|---------|----------|----------|
-| omnibus.love | Kyber-768 | Encryption | 1,184 B | Asymmetric KEM |
-| omnibus.food | Falcon-512 | Signatures | 897 B | Compact signatures |
-| omnibus.rent | Dilithium-5 | Governance | 2,592 B | Voting credentials |
-| omnibus.archive | SPHINCS+ | Archival | 32 B | Eternal records |
+| omnibus.love | Kyber-768 | Encryption KEM | 1,184 B | 256-bit quantum |
+| omnibus.food | Falcon-512 | Compact signatures | 897 B | 192-bit quantum |
+| omnibus.rent | Dilithium-5 | Governance voting | 2,592 B | 256-bit quantum |
+| omnibus.vacation | SPHINCS+ | Eternal archival | 32 B | 128-bit eternal |
 
 ### Overall Metrics:
 | Metric | Value |
 |--------|-------|
 | **Mnemonic Words** | 12 (128-bit entropy) |
-| **Native Token** | OMNI (transferable, 1M initial) |
-| **Specialized Domains** | 4 (non-transferable) |
-| **Total On-Chain Entities** | 5 (1 native + 4 domains) |
+| **Post-Quantum Domains** | 5 total (1 OMNI transferable + 4 protocol non-transferable) |
+| **Native OMNI Algorithm** | Dilithium-5 (signing) + Kyber-768 (encryption) |
 | **Classical Chain Support** | 6 (BTC, ETH, SOL, EGLD, Optimism, Base) |
-| **ERC20-Compatible Addresses** | 3 (Ethereum, Optimism, Base – same address) |
-| **Post-Quantum Algorithms** | 4 NIST-approved (Kyber, Falcon, Dilithium, SPHINCS+) |
-| **Initial Balance** | 1,000,000 OMNI (100M SAT) |
-| **USDC On-Ramp Address** | `0x8ba1f109551bD432803012645Ac136ddd64DBA72` |
-| **Memory Used** | ~4 KB (fixed-size, no allocation) |
+| **ERC20-Compatible Addresses** | 3 (Ethereum, Optimism, Base) |
+| **OMNI Addresses** | 2 (1 native blockchain: `ob_omni_...` + 1 ERC20: `0x8ba1f...`) |
+| **NIST PQ Algorithms** | 4 (Kyber-768, Falcon-512, Dilithium-5, SPHINCS+) |
+| **OMNI Initial Balance** | 1,000,000 OMNI (100,000,000,000 SAT) |
+| **USDC On-Ramp** | `0x8ba1f109551bD432803012645Ac136ddd64DBA72` (Ethereum/OP/Base) |
+| **Hybrid Key Size (omnibus.omni)** | 3,776 bytes pubkey + 7,296 bytes secret |
+| **Memory Used** | ~5 KB (fixed-size, no allocation) |
 
 ---
 
