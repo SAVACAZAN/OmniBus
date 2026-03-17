@@ -1,8 +1,10 @@
 // usdc_erc20_onramp.zig – ERC20 USDC to OMNI Bridge On-Ramp
-// Phase 70: Accept USDC from Ethereum, mint OMNI to agent wallet
+// Phase 70-71: Accept USDC from Ethereum, mint OMNI to agent wallet
 // Memory-mapped @ 0x3C1000, polls Ethereum block for transfers to bridge address
+// Supports Sepolia testnet + Ethereum mainnet
 
 const std = @import("std");
+const ethereum_rpc = @import("ethereum_rpc_client.zig");
 // const multi_token_bridge = @import("multi_token_bridge.zig");  // TODO: integrate with bridge in Phase 71
 
 // ============================================================================
