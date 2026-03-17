@@ -10,6 +10,13 @@
 ;   5. Page tables at 0x201000/0x202000/0x203000 (away from old 0x200000 dir)
 ; ============================================================================
 
+; ============================================================================
+; DEV_MODE: Single-node development/testing mode
+; Set to 1 to skip all non-blockchain module dispatches and run only the
+; OmniBus Blockchain OS cycle. Enables genesis + block production with 1 node.
+; ============================================================================
+%define DEV_MODE 1
+
 [BITS 32]
 
 ; ============================================================================
@@ -189,6 +196,10 @@ align 32
 [BITS 64]
 long_mode_entry:
 
+    ; DISABLE hardware interrupts IMMEDIATELY — IDT is not set up yet
+    ; Timer/keyboard interrupts with broken IDT → triple fault
+    cli
+
     ; Reload data segments
     mov ax, 0x10
     mov ds, ax
@@ -273,6 +284,22 @@ long_mode_entry:
     ; The IDT table is pre-computed with NASM macros below
     mov al, 'I'
     out dx, al
+
+    ; === Patch IDT entries with correct handler address (avoid hardcoded 0x100274) ===
+    lea rbx, [rel exception_handler_stub]   ; actual handler address (linker-resolved)
+    lea rdi, [rel idt_table]
+    mov rcx, 256                            ; 256 IDT entries
+.patch_idt:
+    mov ax, bx                              ; bits  0–15
+    mov word [rdi], ax
+    shr rbx, 16
+    mov ax, bx                              ; bits 16–31
+    mov word [rdi + 6], ax
+    shr rbx, 16
+    mov dword [rdi + 8], ebx               ; bits 32–63 (always 0 for kernel addr)
+    lea rbx, [rel exception_handler_stub]   ; restore for next iteration
+    add rdi, 16
+    loop .patch_idt
 
     ; === Load IDTR ===
     lea rax, [rel idt_ptr]
@@ -846,10 +873,14 @@ ada64_stub_event_loop:
     ; Check initialized flag BEFORE calling (diagnostic)
     movzx eax, byte [0x5DC000]          ; Read initialized flag
     add al, '0'                          ; '0' if 0, '1' if 1
+    mov dx, 0x3F8
     out dx, al                           ; Print flag value
+    mov al, '{'                          ; Print BEFORE blockchain call
+    out dx, al
     mov rax, 0x5D0000
     call rax
-    mov al, '!'                          ; Print if blockchain init returned
+    mov dx, 0x3F8                        ; Restore dx (may be clobbered)
+    mov al, '}'                          ; Print AFTER blockchain call returns
     out dx, al
 
     ; NeuroOS init_plugin @ 0x2D0000
@@ -950,6 +981,7 @@ ada64_stub_event_loop:
     out dx, al
 
     ; === SCHEDULER LOOP WITH IPC MODULE CALLS ===
+    mov dx, 0x3F8                       ; Restore serial port – may be clobbered by module inits
     lea r10, [rel kernel_cycle_count]
     lea r8, [rel ipc_control_block]    ; R8 = IPC control block base
 
@@ -958,6 +990,14 @@ scheduler_loop:
     mov r11, [r10]
     inc r11
     mov [r10], r11
+
+    ; Debug: print '*' on very first cycle to confirm scheduler started
+    cmp r11, 1
+    jne .skip_sched_tick
+    mov dx, 0x3F8
+    mov al, '*'
+    out dx, al
+.skip_sched_tick:
 
     ; === PHASE 12: Grid OS Metrics Export ===
     ; Grid OS exports trading metrics every cycle to 0x120000
@@ -1003,19 +1043,8 @@ scheduler_loop:
     ; These functions read the IPC control block and execute module code
 
     ; === PHASE 22: BLOCKCHAIN REAL EXECUTION ===
-    ; BlockchainOS: trigger every 256 cycles
-    mov rax, r11
-    test al, 0xFF
-    jnz .skip_blockchain_dispatch
-
-    ; Measure latency: call real run_blockchain_cycle()
-    rdtsc
-    mov r9, rax                         ; R9 = start time
-    call 0x250150                       ; BlockchainOS: run_blockchain_cycle @ 0x250150
-    rdtsc
-    sub rax, r9
-    mov qword [0x100228], rax           ; Store blockchain latency
-
+    ; Old BlockchainOS (0x250000) disabled – using OmniBlockchainOS @ 0x5D0000
+    ; (old module at 0x250940 kept as reference but not called in DEV_MODE)
 .skip_blockchain_dispatch:
 
     ; === PHASE 66: OMNIBLOCKCHAIN OS EXECUTION (NIC E1000 + P2P + PQC) ===
@@ -1024,9 +1053,20 @@ scheduler_loop:
     mov rax, r11
     test al, 0xFF
     jnz .skip_omniblockchain_dispatch
+    ; DEBUG: print '#' before call to confirm dispatch fires
+    mov dx, 0x3F8
+    mov al, '#'
+    out dx, al
     ; register-indirect call to avoid elf64 relocation offset error
     mov rax, 0x5D0006                   ; OmniBus Blockchain OS: _blockchain_run (offset +6 after _start)
     call rax
+    ; Reload caller-saved registers clobbered by Zig ReleaseFast code
+    lea r10, [rel kernel_cycle_count]
+    lea r8, [rel ipc_control_block]
+    ; DEBUG: print '>' to confirm _blockchain_run returned
+    mov dx, 0x3F8
+    mov al, '>'
+    out dx, al
 
     ; IPC: citește block_height raportat de OmniBus Blockchain OS
     ; Format: ipc_return_value @ 0x100120 (OFF_RETURN_VAL = 16 de la IPC_BLOCK_BASE 0x100110)
@@ -1034,6 +1074,12 @@ scheduler_loop:
     mov [0x100230], rax                 ; stochează în kernel metrics @ 0x100230
 
 .skip_omniblockchain_dispatch:
+
+%if DEV_MODE == 1
+    ; DEV_MODE: skip all non-blockchain module dispatches
+    ; Only blockchain OS runs in single-node dev mode
+    jmp .skip_non_blockchain_dispatches
+%endif
 
     ; === PHASE 22: NEURO REAL EXECUTION ===
     ; NeuroOS: trigger every 512 cycles
@@ -1405,6 +1451,8 @@ scheduler_loop:
     call 0x630100                       ; GCPOS: run_gcp_cycle @ 0x630100
 .skip_gcp_dispatch:
 
+.skip_non_blockchain_dispatches:
+
     ; === IPC AUTH GATE: check if any module sent a request (0x100050) ===
     movzx eax, byte [0x100050]
     test al, al
@@ -1471,7 +1519,9 @@ neuro_wrapper:
 ; PHASE 8: EXCEPTION HANDLER STUBS
 ; ============================================================================
 
-; Generic exception handler (prints 'E' + vector, then continues)
+; Generic exception handler (prints 'EH' then halts)
+; NOTE: Halts cleanly — does NOT attempt iretq to avoid cascading faults
+; when exceptions with error codes (#GP=13, #PF=14) push extra word on stack.
 exception_handler_stub:
     ; UART 'E' = Exception caught
     mov dx, 0x3F8
@@ -1482,11 +1532,60 @@ exception_handler_stub:
     mov al, 'H'
     out dx, al
 
-    ; For divide-by-zero, skip the faulting instruction by incrementing RIP
-    ; and returning via IRET
-    ; Stack frame: [RSP] = RIP, [RSP+8] = CS, [RSP+16] = RFLAGS
-    add qword [rsp], 3        ; Skip 3-byte div instruction
-    iretq
+    ; Print [RSP] low byte as 2 hex chars (error code or RIP low byte)
+    ; This helps identify exception type: #PF/#GP have error code first, others have RIP
+    movzx eax, byte [rsp]
+    mov ecx, eax
+    shr ecx, 4
+    and cl, 0x0F
+    add cl, 48              ; '0'-'9'
+    cmp cl, 58
+    jl .eh_hi_ok
+    add cl, 7               ; 'A'-'F'
+.eh_hi_ok:
+    mov al, cl
+    out dx, al
+    movzx ecx, byte [rsp]
+    and cl, 0x0F
+    add cl, 48
+    cmp cl, 58
+    jl .eh_lo_ok
+    add cl, 7
+.eh_lo_ok:
+    mov al, cl
+    out dx, al
+
+    ; Print '-' separator
+    mov al, '-'
+    out dx, al
+
+    ; Print [RSP+8] low byte as 2 hex chars (RIP or CS depending on exception type)
+    movzx eax, byte [rsp+8]
+    mov ecx, eax
+    shr ecx, 4
+    and cl, 0x0F
+    add cl, 48
+    cmp cl, 58
+    jl .eh_hi2_ok
+    add cl, 7
+.eh_hi2_ok:
+    mov al, cl
+    out dx, al
+    movzx ecx, byte [rsp+8]
+    and cl, 0x0F
+    add cl, 48
+    cmp cl, 58
+    jl .eh_lo2_ok
+    add cl, 7
+.eh_lo2_ok:
+    mov al, cl
+    out dx, al
+
+    ; Halt cleanly — no iretq (avoids double-fault from mis-aligned stack)
+    cli
+.ehalt:
+    hlt
+    jmp .ehalt
 
 ; ============================================================================
 ; PHASE 8: IDT TABLE (256 entries × 16 bytes = 4096 bytes)
@@ -1495,13 +1594,15 @@ exception_handler_stub:
 ; ============================================================================
 ; Macro to create a single IDT gate descriptor
 %macro IDT_ENTRY 1
-    ; Gate descriptor for handler at address 0x100274:
-    dw 0x0274              ; Offset bits [0:15]
-    dw 0x0008              ; Code segment selector (kernel code)
-    db 0x00                ; IST (0 = use RSP0)
-    db 0x8E                ; Attributes: interrupt gate, P=1, DPL=0, TYPE=14 (interrupt)
-    dw 0x0010              ; Offset bits [16:31]
-    dd 0x00000000          ; Offset bits [32:63] and reserved
+    ; 64-bit interrupt gate descriptor (16 bytes per Intel spec)
+    ; Handler address (bits 0-15, 16-31, 32-63) is patched at runtime.
+    dw 0x0BB9              ; Offset bits [0:15]   (will be patched)
+    dw 0x0008              ; Code segment selector (GDT entry 1 = kernel code)
+    db 0x00                ; IST = 0 (use RSP0)
+    db 0x8E                ; Type/Attr: P=1, DPL=0, Type=0xE (64-bit interrupt gate)
+    dw 0x0010              ; Offset bits [16:31]  (will be patched)
+    dd 0x00000000          ; Offset bits [32:63]  (always 0 for kernel addr)
+    dd 0x00000000          ; Reserved — REQUIRED for 16-byte alignment
 %endmacro
 
 align 4096

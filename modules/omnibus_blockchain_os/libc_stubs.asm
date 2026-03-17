@@ -13,8 +13,9 @@ global _blockchain_run
 
 _start:
     call init_plugin        ; Boot: identity + NIC + P2P + genesis
-    ret                     ; Returnăm la Ada Mother OS
-_blockchain_run:            ; Ada calls this for run_blockchain_cycle
+    ret                     ; Return to Ada Mother OS scheduler
+
+_blockchain_run:            ; Called by scheduler every 256 cycles
     call run_blockchain_cycle
     ret
 

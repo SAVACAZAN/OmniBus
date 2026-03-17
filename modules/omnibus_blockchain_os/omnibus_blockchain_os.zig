@@ -32,6 +32,7 @@ const p2p_node         = @import("p2p_node.zig");
 const genesis_block    = @import("genesis_block.zig");
 const e1000            = @import("nic_e1000.zig");
 const ipc              = @import("ipc.zig");
+const kraken_feed      = @import("kraken_feed.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -139,9 +140,11 @@ pub export fn init_plugin() void {
     // Phase 64: Oracle Consensus (state now uses module-level BSS global)
     oracle_consensus.init_oracle_consensus();
     uart('A');
-    // Phase 67: WebSocket collector (COLLECTOR_BASE moved to 0x5E1000 in BSS region)
-    ws_collector.init();
-    uart('W');
+    // Phase 67: WebSocket collector – skip in DEV_MODE (fixed addresses alias BSS)
+    if (!p2p_node.DEV_MODE) {
+        ws_collector.init();
+        uart('W');
+    }
 
     // -------------------------------------------------------------------------
     // BOOT SEQUENCE: Identity → Vault → P2P → Genesis
@@ -217,7 +220,12 @@ pub export fn init_plugin() void {
         uart('V'); // [V]ault saved
     }
 
-    uart('K'); // bloo[K] initialized
+    // Phase 67: Kraken real market data feed initialization
+    kraken_feed.init_kraken();
+    kraken_feed.register_pair(.BTCUSD, 0);  // token_id=0 for BTC
+    kraken_feed.register_pair(.ETHUSD, 1);  // token_id=1 for ETH
+    uart('K'); // bloo[K] initialized + Kraken feed
+
     initialized = true;
     uart('!'); // init complete!
 }
@@ -275,12 +283,33 @@ pub fn inject_oracle_prices() void {
 }
 
 // TSC ticks per 100ms (≈3GHz CPU: 3_000_000_000 / 10 = 300_000_000)
-// Adjust at runtime if needed via calibration
 const TSC_PER_100MS: u64 = 300_000_000;
 
 var tsc_last_tick: u64 = 0;
+var cycle_call_count: u64 = 0; // how many times run_blockchain_cycle was called
+
+// DEV_MODE: produce a block every 16 internal cycles (fast for testing)
+// PRODUCTION: every 256 cycles (~real block time with oracle quorum)
+const BLOCK_INTERVAL_MASK: u64 = if (p2p_node.DEV_MODE) 0x0F else 0xFF;
+
+/// Print block height as 4 hex digits to UART: "[" hi lo "]"
+fn uart_block_num(height: u64) void {
+    const h: u8 = @as(u8, @truncate(height >> 8));
+    const l: u8 = @as(u8, @truncate(height));
+    const hex = "0123456789ABCDEF";
+    uart('[');
+    uart(hex[h >> 4]);
+    uart(hex[h & 0xF]);
+    uart(hex[l >> 4]);
+    uart(hex[l & 0xF]);
+    uart(']');
+}
 
 pub export fn run_blockchain_cycle() void {
+    // Alive marker: every 256 calls print '.' to show we're running
+    cycle_call_count +%= 1;
+    if ((cycle_call_count & 0xFF) == 1) uart('.');
+
     if (!initialized) {
         init_plugin();
     }
@@ -288,44 +317,56 @@ pub export fn run_blockchain_cycle() void {
     state.cycle_count += 1;
     state.timestamp = rdtsc();
 
+    // Phase 67: Real Kraken prices in DEV_MODE
+    if (p2p_node.DEV_MODE) {
+        kraken_feed.fetch_prices_cycle();  // Fetch BTC/ETH prices every cycle
+    }
+
     // Inject oracle prices into ws_collector ring buffer
-    inject_oracle_prices();
+    // PRODUCTION: read from Kraken/Coinbase external buffers
+    if (!p2p_node.DEV_MODE) {
+        inject_oracle_prices();
+    }
 
     // Tick the ws_collector pipeline (0.1s sub-blocks → 1s main block)
-    ws_collector.tick_100ms();
-
-    // Oracle block production: every 256 cycles attempt quorum-based block
-    if ((state.cycle_count & 0xFF) == 0) {
+    // DEV_MODE: skip – no real WS feeds, avoids BSS aliasing with fixed addresses
+    if (!p2p_node.DEV_MODE) {
+        ws_collector.tick_100ms();
+    }
+    // Block production: DEV=every 16 cycles, PROD=every 256 cycles
+    if ((state.cycle_count & BLOCK_INTERVAL_MASK) == 0) {
         _ = oracle_consensus.create_price_snapshot();
-        {
-            state.block_height += 1;
-            state.block_timestamp = rdtsc();
 
-            var merkle: [32]u8 = state.block_hash;
-            merkle[0] ^= @as(u8, @truncate(state.block_height));
-            merkle[1] ^= @as(u8, @truncate(state.block_height >> 8));
+        state.block_height += 1;
+        state.block_timestamp = rdtsc();
 
-            vault_storage.save_block(state.block_height, &merkle, &state.block_hash);
-            p2p_node.broadcast_block();
+        // Update merkle root: XOR height into previous hash
+        var merkle: [32]u8 = state.block_hash;
+        merkle[0] ^= @as(u8, @truncate(state.block_height));
+        merkle[1] ^= @as(u8, @truncate(state.block_height >> 8));
+        merkle[2] ^= @as(u8, @truncate(state.block_height >> 16));
+        merkle[3] ^= @as(u8, @truncate(state.block_height >> 24));
 
-            // IPC: raportează block_height la Ada Mother OS (non-blocking)
-            ipc.report_metric(ipc.MODULE_OMNI_BLOCKCHAIN, state.block_height);
-        }
+        // Compute block reward (halving every 210,000 blocks)
+        const halvings = state.block_height / 210_000;
+        const block_reward: u64 = if (halvings >= 33) 0 else (@as(u64, 50_0000_0000) >> @as(u6, @intCast(halvings)));
+
+        state.total_omni_circulating +|= block_reward;
+
+        vault_storage.save_block(state.block_height, &merkle, &state.block_hash);
+        p2p_node.broadcast_block();
+
+        // IPC: raportează block_height la Ada Mother OS
+        ipc.report_metric(ipc.MODULE_OMNI_BLOCKCHAIN, state.block_height);
+
+        // UART: afișează numărul blocului (ex: [0001] [0002] ...)
+        uart_block_num(state.block_height);
     }
 
-    // Procesăm un ciclu P2P: primim pachete de la vecini, trimitem heartbeat
-    if (state.p2p_initialized != 0) {
+    // Procesăm un ciclu P2P – skip in DEV_MODE (single-node, no peers)
+    if (!p2p_node.DEV_MODE and state.p2p_initialized != 0) {
         p2p_node.run_cycle();
     }
-
-    // Process pending blockchain operations
-    // - Check for new transactions in queue
-    // - Execute smart contracts if needed
-    // - Update token balances
-    // - Calculate staking rewards
-    // - Validate validator block rewards
-    // - Process referral bonuses
-    // - Update wallet state
 }
 
 // ============================================================================
