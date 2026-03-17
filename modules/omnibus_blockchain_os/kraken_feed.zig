@@ -1,5 +1,6 @@
 // Kraken API Feed Integration – Real market prices via REST
-// Bare-metal HTTP client: fetch BTC/ETH/EGLD prices, push to oracle
+// Phase 22: Writes to shared ExchangeBuffer @ 0x140000 (feeds analytics_os)
+// Bare-metal HTTP client: fetch BTC/ETH/LCX prices, push to exchange buffer
 // No libc, no malloc – fixed buffers only
 //
 // Memory layout:
@@ -7,9 +8,9 @@
 //   0x5E6000  HTTP request buffer (4KB)
 //   0x5E7000  HTTP response buffer (16KB)
 //   0x5EB000  Price cache (1KB)
+//   0x140000  ExchangeBuffer (shared with analytics_os) ← DESTINATION
 
 const std = @import("std");
-const ws_collector = @import("ws_collector.zig");
 
 // ============================================================================
 // CONSTANTS
@@ -26,6 +27,28 @@ pub const KRAKEN_API_PATH = "/0/public/Ticker";
 pub const MAX_PAIRS: usize = 10;
 pub const REQ_BUF_SIZE: usize = 4096;
 pub const RESP_BUF_SIZE: usize = 16384;
+
+// ============================================================================
+// SHARED EXCHANGE BUFFER (matches analytics_os/exchange_reader.zig)
+// ============================================================================
+
+pub const ExchangeBuffer = extern struct {
+    timestamp: u64,           // 0x140000: Last update time
+    btc_price_cents: u64,     // 0x140008: BTC_USD in cents
+    btc_volume_sats: u64,     // 0x140010: BTC volume in satoshis
+    eth_price_cents: u64,     // 0x140018: ETH_USD in cents
+    eth_volume_sats: u64,     // 0x140020: ETH volume in satoshis
+    exchange_flags: u32,      // 0x140028: Kraken=0x01, Coinbase=0x02, LCX=0x04
+    _reserved: u32,           // 0x14002C
+    last_tsc: u64,            // 0x140030: TSC of last read
+    lcx_price_cents: u64,     // 0x140038: LCX_USD in cents
+    lcx_volume_sats: u64,     // 0x140040: LCX volume in satoshis
+};
+
+pub const EXCHANGE_BUFFER_ADDR: usize = 0x140000;
+pub const KRAKEN_VALID: u32 = 0x01;
+pub const COINBASE_VALID: u32 = 0x02;
+pub const LCX_VALID: u32 = 0x04;
 
 // Trading pairs (Kraken format)
 pub const TradingPair = enum(u8) {
@@ -215,50 +238,45 @@ pub fn fetch_prices_cycle() void {
     // Parse response (DEV_MODE: hardcoded prices for now)
     parse_ticker_response();
 
-    // Push prices to ws_collector
-    push_prices_to_oracle();
+    // Write prices to shared ExchangeBuffer @ 0x140000 (for analytics_os → oracle)
+    write_to_exchange_buffer();
 
     state.fetch_cycle += 1;
     state.last_fetch_time = rdtsc();
 }
 
 // ============================================================================
-// PUSH PRICES TO ORACLE
+// WRITE PRICES TO SHARED EXCHANGE BUFFER (for analytics_os)
 // ============================================================================
 
-fn push_prices_to_oracle() void {
+fn write_to_exchange_buffer() void {
     if (!initialized) return;
 
-    var state = @as(*KrakenState, @ptrFromInt(KRAKEN_BASE));
+    const state = @as(*KrakenState, @ptrFromInt(KRAKEN_BASE));
+    var exchange_buf = @as(*volatile ExchangeBuffer, @ptrFromInt(EXCHANGE_BUFFER_ADDR));
 
-    // Push each pair's price to ws_collector ring buffer
-    for (0..state.pair_count) |idx| {
-        const pair = &state.pairs[idx];
-        if (pair.fetch_count == 0) continue;
-
-        var entry: ws_collector.PriceFeedEntry = undefined;
-        entry.token_id = pair.token_id;
-        entry.exchange_id = @intFromEnum(ws_collector.ExchangeId.KRAKEN);
-        entry.price_cents = pair.last_price_cents;
-        entry.bid_cents = pair.last_bid_cents;
-        entry.ask_cents = pair.last_ask_cents;
-        entry.tsc_low = @truncate(rdtsc());
-
-        // Write to ring buffer (atomic CAS)
-        _ = write_to_feed_ring(&entry);
+    // Write BTC price (pair 0)
+    if (state.pair_count > 0 and state.pairs[0].last_price_cents > 0) {
+        exchange_buf.btc_price_cents = state.pairs[0].last_price_cents;
+        exchange_buf.btc_volume_sats = 1000000000;  // 10 BTC in satoshis
     }
-}
 
-fn write_to_feed_ring(entry: *const ws_collector.PriceFeedEntry) bool {
-    var ring_hdr = @as(*ws_collector.FeedRingHeader, @ptrFromInt(ws_collector.FEED_RING_BASE));
-    var ring_buf = @as([*]ws_collector.PriceFeedEntry,
-                       @ptrFromInt(ws_collector.FEED_RING_BASE + 16));
+    // Write ETH price (pair 1)
+    if (state.pair_count > 1 and state.pairs[1].last_price_cents > 0) {
+        exchange_buf.eth_price_cents = state.pairs[1].last_price_cents;
+        exchange_buf.eth_volume_sats = 10000000000;  // 100 ETH in satoshis
+    }
 
-    const idx = @as(usize, ring_hdr.write_idx) % ws_collector.FEED_RING_SIZE;
-    ring_buf[idx] = entry.*;
-    ring_hdr.write_idx +%= 1;
+    // Write LCX price if available (pair 6)
+    if (state.pair_count > 6 and state.pairs[6].last_price_cents > 0) {
+        exchange_buf.lcx_price_cents = state.pairs[6].last_price_cents;
+        exchange_buf.lcx_volume_sats = 100000000;  // 1 LCX in smallest units
+    }
 
-    return true;
+    // Set timestamp and flags
+    exchange_buf.timestamp = rdtsc();
+    exchange_buf.exchange_flags = KRAKEN_VALID;  // Mark as Kraken data
+    exchange_buf.last_tsc = @truncate(rdtsc());
 }
 
 // ============================================================================
