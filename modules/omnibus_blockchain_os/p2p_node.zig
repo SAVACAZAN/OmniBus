@@ -20,6 +20,7 @@
 const identity  = @import("node_identity.zig");
 const grid      = @import("vid_shard_grid.zig");
 const collector = @import("ws_collector.zig");
+const e1000     = @import("nic_e1000.zig");
 // network_types importat inline (evităm path relativ cross-module)
 // Tipurile necesare sunt redefinite local mai jos sau compatibile cu network_layer.zig
 
@@ -252,9 +253,9 @@ fn make_packet(pkt_type: u8, dest_shard: u16, ttl: u8, payload: []const u8) P2PP
 }
 
 // ============================================================================
-// NIC Send Stub
-// În producție: apelează AHCI/E1000 driver cu (ip, port, data, len)
-// Bare-metal: scrie la adresa NIC TX buffer @ 0x140000 + peer_offset
+// NIC Send – E1000 driver real
+// Serializăm P2PPacket şi îl trimitem prin E1000.
+// Dacă E1000 nu e iniţializat (QEMU fără -nic e1000), fallback la stub.
 // ============================================================================
 
 fn nic_send(peer_idx: u8, pkt: *const P2PPacket) void {
@@ -262,21 +263,24 @@ fn nic_send(peer_idx: u8, pkt: *const P2PPacket) void {
     if (peer_idx >= s.peer_count) return;
     if (!s.peers[peer_idx].is_active) return;
 
-    // TX buffer: 0x140000 + (peer_idx * 1120 bytes) = slot per peer
-    const tx_base = 0x140000 + (@as(usize, peer_idx) * 1120);
-    const dst = @as([*]volatile u8, @ptrFromInt(tx_base));
-
-    // Scrie pachetul în TX buffer (NIC driver îl va trimite)
     const pkt_bytes = @as([*]const u8, @ptrCast(pkt));
-    const pkt_size  = @sizeOf(PacketHeader) + 8 + pkt.pay_len;
-    var i: usize = 0;
-    while (i < pkt_size and i < 1120) : (i += 1) {
-        dst[i] = pkt_bytes[i];
-    }
+    const pkt_size  = @sizeOf(PacketHeader) + 8 + @as(usize, pkt.pay_len);
+    const send_len  = if (pkt_size > 1024) @as(usize, 1024) else pkt_size;
 
-    // Semnal pentru NIC driver: setăm byte-ul de trigger
-    const tx_trigger = @as(*volatile u8, @ptrFromInt(0x13FFFF));
-    tx_trigger.* = peer_idx;
+    if (e1000.is_ready()) {
+        // Calea normală: E1000 driver real
+        _ = e1000.send(pkt_bytes[0..send_len]);
+    } else {
+        // Fallback: stub TX buffer (QEMU fără e1000, sau înainte de init)
+        const tx_base = 0x140000 + (@as(usize, peer_idx) * 1120);
+        const dst = @as([*]volatile u8, @ptrFromInt(tx_base));
+        var i: usize = 0;
+        while (i < send_len and i < 1120) : (i += 1) {
+            dst[i] = pkt_bytes[i];
+        }
+        const tx_trigger = @as(*volatile u8, @ptrFromInt(0x13FFFF));
+        tx_trigger.* = peer_idx;
+    }
 
     s.peers[peer_idx].pkts_sent +|= 1;
     s.peers[peer_idx].last_seen  = rdtsc();

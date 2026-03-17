@@ -69,7 +69,7 @@ fn adjust_difficulty(current_hashrate: u64) u32 {
     }
 
     // Apply adjustment to difficulty
-    const new_diff = diff_state.baseline_difficulty;
+    var new_diff = diff_state.baseline_difficulty;
     if (adjustment > 0) {
         const adj_amount = @divTrunc(adjustment, 500000);
         new_diff = @as(u32, @intCast(@as(i32, @intCast(new_diff)) + adj_amount));
@@ -164,7 +164,7 @@ fn process_batches() u32 {
             var work_data: [64]u8 = undefined;
             var hash_result: [32]u8 = undefined;
 
-            const nonce = batch.nonce_start;
+            var nonce = batch.nonce_start;
             var share_count: u64 = 0;
 
             while (nonce < batch.nonce_end) : (nonce += 1) {

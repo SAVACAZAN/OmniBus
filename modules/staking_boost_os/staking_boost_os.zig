@@ -163,20 +163,20 @@ pub fn unstake(staker_address: u64, amount: u64) u8 {
         return 1; // Not staking
     }
 
-    const stake = &stakes[slot];
+    const entry = &stakes[slot];
 
-    if (stake.amount_staked < amount) {
+    if (entry.amount_staked < amount) {
         return 1; // Insufficient stake
     }
 
     // Claim rewards first
     _ = claim_rewards(staker_address);
 
-    stake.amount_staked -= amount;
+    entry.amount_staked -= amount;
     staking_state.total_staked -|= amount;
 
-    if (stake.amount_staked == 0) {
-        stake.staker_address = 0;
+    if (entry.amount_staked == 0) {
+        entry.staker_address = 0;
         staking_state.stake_count -|= 1;
     }
 
@@ -189,16 +189,16 @@ pub fn unstake(staker_address: u64, amount: u64) u8 {
 pub fn calculate_rewards(staker_address: u64) u64 {
     // Find stake
     const slot = find_stake(staker_address) orelse return 0;
-    const stake = stakes[slot];
+    const entry = stakes[slot];
 
-    if (stake.amount_staked == 0) {
+    if (entry.amount_staked == 0) {
         return 0;
     }
 
     // Time elapsed in seconds
     const now = get_tsc();
-    const time_elapsed = if (now > stake.last_claim)
-        now - stake.last_claim
+    const time_elapsed = if (now > entry.last_claim)
+        now - entry.last_claim
     else
         0;
 
@@ -232,12 +232,12 @@ pub fn claim_rewards(staker_address: u64) u8 {
 
     // Find stake
     const slot = find_stake(staker_address) orelse return 1;
-    const stake = &stakes[slot];
+    const entry = &stakes[slot];
 
     // In production, would transfer/mint OMNI rewards here
     // For now, just update state
-    stake.amount_staked +|= rewards;
-    stake.last_claim = get_tsc();
+    entry.amount_staked +|= rewards;
+    entry.last_claim = get_tsc();
 
     staking_state.total_rewards_paid +|= rewards;
     staking_state.total_staked +|= rewards;

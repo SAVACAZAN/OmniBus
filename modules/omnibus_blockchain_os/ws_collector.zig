@@ -13,10 +13,10 @@
 //                                               └─→ pqc_bridge.sign_tx()
 //                                                     └─→ MainBlock ready to broadcast
 //
-// Memory layout (within 0x5D0000–0x5DFFFF, after oracle_consensus at 0x5D8FFF):
-//   0x5D9000  WsCollectorState  (~16KB)
-//   0x5D9100  Price feed ring buffer  (256 entries × 32B = 8KB)
-//   0x5DB100  MainBlock assembly area (~8KB)
+// Memory layout (BSS region 0x5E1000+, beyond code end ~0x5DC000):
+//   0x5E1000  WsCollectorState  (~24KB)
+//   0x5E1100  Price feed ring buffer  (256 entries × 32B = 8KB)
+//   0x5E3100  MainBlock assembly area (~16KB)
 
 const oracle = @import("oracle_consensus.zig");
 const pqc    = @import("pqc_wallet_bridge.zig");
@@ -26,9 +26,9 @@ const wallet = @import("omnibus_wallet.zig");
 // Constants
 // ============================================================================
 
-pub const COLLECTOR_BASE  : usize = 0x5D9000;
-pub const FEED_RING_BASE  : usize = 0x5D9100;
-pub const MAIN_BLOCK_BASE : usize = 0x5DB100;
+pub const COLLECTOR_BASE  : usize = 0x5E1000;
+pub const FEED_RING_BASE  : usize = 0x5E1100;
+pub const MAIN_BLOCK_BASE : usize = 0x5E3100;
 
 pub const MAX_TOKENS     : usize = 50;
 pub const MAX_EXCHANGES  : usize = 8;

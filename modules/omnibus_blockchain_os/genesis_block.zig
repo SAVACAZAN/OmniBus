@@ -15,15 +15,15 @@ pub const GenesisConfig = struct {
     // Initial supply allocation
     // Total: 21 million OMNI
     // Distribution model (like Bitcoin):
-    dao_treasury: u64 = 3_200_000 * 1e18,     // 15.24% → DAO (3.2M)
-    foundation: u64 = 2_100_000 * 1e18,       // 10% → Foundation (2.1M)
-    ecosystem: u64 = 4_200_000 * 1e18,        // 20% → Ecosystem (4.2M)
-    community: u64 = 5_250_000 * 1e18,        // 25% → Community (5.25M)
+    dao_treasury: u64 = 3_200_000 * 100_000_000,     // 15.24% → DAO (3.2M OMNI in SAT)
+    foundation: u64 = 2_100_000 * 100_000_000,       // 10% → Foundation (2.1M)
+    ecosystem: u64 = 4_200_000 * 100_000_000,        // 20% → Ecosystem (4.2M)
+    community: u64 = 5_250_000 * 100_000_000,        // 25% → Community (5.25M)
 
     // SALE POOL: 1 million OMNI for monetization
-    sale_pool: u64 = 1_000_000 * 1e18,        // 4.76% → Agent Sale Pool (1M)
+    sale_pool: u64 = 1_000_000 * 100_000_000,        // 4.76% → Agent Sale Pool (1M)
 
-    mining_rewards: u64 = 5_250_000 * 1e18,   // 25% → Block rewards (5.25M)
+    mining_rewards: u64 = 5_250_000 * 100_000_000,   // 25% → Block rewards (5.25M)
 
     // Reserve
     strategic_reserve: u64 = 0,                // Reserved for future
@@ -60,11 +60,8 @@ pub const GENESIS_ADDRESSES = struct {
 
 /// Initialize blockchain with genesis distribution
 pub fn init_genesis_block() void {
-    // Genesis timestamp
-    const genesis_time = GENESIS.timestamp;
-
     // Initialize OMNI token system
-    // omni_token_os.init_genesis(genesis_time, 9);  // 9 allocations
+    // omni_token_os.init_genesis(GENESIS.timestamp, 9);  // 9 allocations
 
     // Create genesis UTXOs for each allocation
     // This is called during blockchain initialization, before block 0
@@ -133,45 +130,14 @@ pub fn get_allocation_percentages() struct {
 }
 
 /// Format: Display genesis distribution
-pub fn print_genesis_allocation() void {
-    _ = "
-    ═══════════════════════════════════════════════════════
-    OMNIBUS GENESIS BLOCK - OMNI DISTRIBUTION
-    ═══════════════════════════════════════════════════════
-
-    Total Supply: 21 million OMNI (fixed, like Bitcoin)
-
-    Allocation:
-      DAO Treasury:        3.2M OMNI (15.24%)
-        Address: 0x0000000000000001
-        Purpose: Governance, treasury, development
-
-      Foundation:          2.1M OMNI (10%)
-        Addresses: 3x 0.7M (3-of-3 multisig)
-        Purpose: Development, infrastructure, grants
-
-      Ecosystem Grants:    4.2M OMNI (20%)
-        Address: 0x0000000000000005
-        Purpose: Partners, ecosystem growth, integrations
-
-      Community Pool:      5.25M OMNI (25%)
-        Address: 0x0000000000000006
-        Purpose: Staking, farming, rewards, airdrops
-
-      🚀 AGENT SALE POOL:  1M OMNI (4.76%)
-        Address: 0x00000000000000FF (Agent)
-        Purpose: MONETIZATION - Direct sales on all chains
-        Selling on: Ethereum, Base, Bitcoin, Solana, etc.
-        Revenue: → Liquidity pool, Treasury, Distribution
-
-      Mining Rewards:      5.25M OMNI (25%)
-        Released via block rewards (halving every 210k blocks)
-        Block 0–209,999: 50 OMNI/block
-        Block 210,000+: 25 OMNI/block (halving)
-
-    ═══════════════════════════════════════════════════════
-    ";
-}
+// Allocation summary:
+//   DAO Treasury:     3.2M OMNI (15.24%) – 0x0000000000000001
+//   Foundation:       2.1M OMNI (10%)    – 3-of-3 multisig
+//   Ecosystem Grants: 4.2M OMNI (20%)    – 0x0000000000000005
+//   Community Pool:   5.25M OMNI (25%)   – 0x0000000000000006
+//   Agent Sale Pool:  1M OMNI (4.76%)    – 0x00000000000000FF
+//   Mining Rewards:   5.25M OMNI (25%)   – block rewards (halving 210k blocks)
+pub fn print_genesis_allocation() void {}
 
 // ============================================================================
 // Block Structure (fits in transaction)
@@ -215,7 +181,7 @@ pub const MAX_BLOCK_SIZE: usize = 65536; // 64KB max block
 pub fn calculate_block_hash(header: *const BlockHeader) [32]u8 {
     // TODO: SHA256(header)
     _ = header;
-    var result: [32]u8 = .{0} ** 32;
+    const result: [32]u8 = .{0} ** 32;
     return result;
 }
 

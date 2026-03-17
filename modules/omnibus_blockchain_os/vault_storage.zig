@@ -126,7 +126,7 @@ pub fn save_identity(id: *const identity_mod.NodeIdentity) void {
 pub fn load_identity(out: *identity_mod.NodeIdentity) bool {
     var buf: [@sizeOf(identity_mod.NodeIdentity)]u8 = undefined;
     disk_read(SECTOR_IDENTITY, &buf);
-    const loaded = @as(*const identity_mod.NodeIdentity, @ptrCast(&buf));
+    const loaded = @as(*const identity_mod.NodeIdentity, @ptrCast(@alignCast(&buf)));
     if (loaded.magic != identity_mod.IDENTITY_MAGIC) return false;
     out.* = loaded.*;
     return true;
@@ -225,7 +225,7 @@ pub fn load_pq_wallet(pw: *pqc.PqWallet) u8 {
 fn get_block_ring_header(out: *BlockRingHeader) bool {
     var buf: [SECTOR_SIZE]u8 = undefined;
     disk_read(SECTOR_BLOCK_HDR, &buf);
-    const loaded = @as(*const BlockRingHeader, @ptrCast(&buf));
+    const loaded = @as(*const BlockRingHeader, @ptrCast(@alignCast(&buf)));
     if (loaded.magic != 0x424C4B52) return false;
     out.* = loaded.*;
     return true;

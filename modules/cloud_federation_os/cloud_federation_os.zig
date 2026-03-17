@@ -84,7 +84,7 @@ fn health_check_node(node_idx: u32, latency_ms: u16, packet_loss_ppm: u32) u8 {
     node.last_heartbeat = state.cycle_count;
 
     // Determine status
-    const new_status = types.NodeStatus.healthy;
+    var new_status = types.NodeStatus.healthy;
     var failure_increment: u8 = 0;
 
     if (latency_ms > 500 or packet_loss_ppm > 10000) {
@@ -164,7 +164,7 @@ fn trigger_failover(reason: u8) u8 {
     const primary = getRegionPtr(primary_id);
 
     // Find best secondary region
-    const secondary_id = elect_primary_region();
+    var secondary_id = elect_primary_region();
     if (secondary_id == primary_id) {
         secondary_id = if (secondary_id + 1 < state.region_count) secondary_id + 1 else 0;
     }

@@ -5,8 +5,8 @@
 
 MEMORY
 {
-    blockchain_code : ORIGIN = 0x5D0000, LENGTH = 0x8000     /* 32KB code */
-    blockchain_data : ORIGIN = 0x5D8000, LENGTH = 0x8000     /* 32KB data + BSS */
+    blockchain_code : ORIGIN = 0x5D0000, LENGTH = 0xC000     /* 48KB code (extended for boot modules) */
+    blockchain_data : ORIGIN = 0x5DC000, LENGTH = 0x10000    /* 64KB data + BSS (oracle/ws state) */
 }
 
 SECTIONS

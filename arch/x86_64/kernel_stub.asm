@@ -45,13 +45,74 @@ kernel_stub:
     mov al, 0x03
     out dx, al
 
-    ; Write "O" to UART to confirm kernel is running
+    ; Write "O" to UART – kernel activ
     mov al, 'O'
     mov dx, 0x3F8
     out dx, al
 
-    ; Infinite loop
-    jmp $
+    ; =========================================================================
+    ; Încărcăm OmniBus Blockchain OS din disc via ATA PIO
+    ; Sector LBA 7888 → 0x5D0000 (120 sectoare = 60KB, binary e ~40KB)
+    ; =========================================================================
 
-    ; Padding to fill kernel stub area
+    ; Drive/Head: LBA mode, drive 0
+    mov dx, 0x1F6
+    mov al, 0xE0
+    out dx, al
+
+    ; Sector count: 120
+    mov dx, 0x1F2
+    mov al, 120
+    out dx, al
+
+    ; LBA = 7888 = 0x001ED0
+    mov dx, 0x1F3
+    mov al, 0xD0        ; bits  0-7
+    out dx, al
+    mov dx, 0x1F4
+    mov al, 0x1E        ; bits  8-15
+    out dx, al
+    mov dx, 0x1F5
+    mov al, 0x00        ; bits 16-23
+    out dx, al
+
+    ; Comandă: READ SECTORS
+    mov dx, 0x1F7
+    mov al, 0x20
+    out dx, al
+
+    mov rdi, 0x5D0000   ; Destinaţie în RAM
+    mov rcx, 120        ; Sectoare rămase
+
+.ata_sector:
+    ; Aşteptăm BSY=0 şi DRQ=1
+.ata_busy:
+    mov dx, 0x1F7
+    in al, dx
+    test al, 0x80
+    jnz .ata_busy
+    test al, 0x08
+    jz .ata_busy
+
+    ; Citim 256 words (512 bytes) din portul de date 0x1F0
+    push rcx
+    mov rcx, 256
+    mov dx, 0x1F0
+.ata_words:
+    in ax, dx
+    mov [rdi], ax
+    add rdi, 2
+    loop .ata_words
+    pop rcx
+    loop .ata_sector
+
+    ; "B" pe UART – Blockchain OS încărcat în RAM
+    mov al, 'B'
+    mov dx, 0x3F8
+    out dx, al
+
+    ; Salt la entry point: 0x5D0000 (_start din libc_stubs.asm)
+    jmp 0x5D0000
+
+    ; Padding
     times (0x1000 - ($ - $$)) db 0

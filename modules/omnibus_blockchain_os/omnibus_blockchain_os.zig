@@ -11,6 +11,10 @@
 
 const std = @import("std");
 
+inline fn uart(c: u8) void {
+    asm volatile ("outb %al, %dx" : : [v] "{al}" (c), [p] "{dx}" (@as(u16, 0x3F8)));
+}
+
 // Sub-module imports
 const token = @import("omni_token.zig");
 const distribution = @import("token_distribution.zig");
@@ -22,6 +26,12 @@ const network = @import("network_integration.zig");
 const token_registry   = @import("token_registry.zig");
 const oracle_consensus = @import("oracle_consensus.zig");
 const ws_collector     = @import("ws_collector.zig");
+const node_identity    = @import("node_identity.zig");
+const vault_storage    = @import("vault_storage.zig");
+const p2p_node         = @import("p2p_node.zig");
+const genesis_block    = @import("genesis_block.zig");
+const e1000            = @import("nic_e1000.zig");
+const ipc              = @import("ipc.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -62,6 +72,8 @@ pub const BlockchainOSState = struct {
     distribution_initialized: u8 = 0,
     wallet_initialized: u8 = 0,
     blockchain_initialized: u8 = 0,
+    identity_initialized: u8 = 0,
+    p2p_initialized: u8 = 0,
 
     // Reserved for future expansion
     _reserved: [200]u8 = [_]u8{0} ** 200,
@@ -123,11 +135,83 @@ pub export fn init_plugin() void {
     state.wallet_initialized = 1;
     state.blockchain_initialized = 1;
 
-    // Phase 64: Initialize Oracle Consensus (4/6 validator voting)
+    uart('@');
+    // Phase 64: Oracle Consensus (state now uses module-level BSS global)
     oracle_consensus.init_oracle_consensus();
-
-    // Phase 67: Initialize WebSocket price collector (0.1s sub-block pipeline)
+    uart('A');
+    // Phase 67: WebSocket collector (COLLECTOR_BASE moved to 0x5E1000 in BSS region)
     ws_collector.init();
+    uart('W');
+
+    // -------------------------------------------------------------------------
+    // BOOT SEQUENCE: Identity → Vault → P2P → Genesis
+    // -------------------------------------------------------------------------
+
+    // Step 1: Încarcă identitatea nodului din disc sau generează una nouă.
+    // vault_storage citește din RAM-mapped disk @ 0x700000 (Sector 0).
+    uart('I');
+    {
+        var id_buf: node_identity.NodeIdentity = undefined;
+        const restored = vault_storage.load_identity(&id_buf);
+        const id = if (restored)
+            node_identity.init(&id_buf)   // restaurare după reboot
+        else
+            node_identity.init(null);     // prima pornire – generează PQ keypair
+
+        // Dacă e primă pornire: salvează identitatea pe disc
+        if (!restored) {
+            vault_storage.save_identity(
+                @as(*const node_identity.NodeIdentity, @volatileCast(id))
+            );
+        }
+        state.identity_initialized = 1;
+    }
+
+    // Step 2: Inițializează NIC E1000 (Intel 82540EM via PCI scan).
+    const nic_ok = e1000.init();
+    // Temporary NIC status indicator: '#'=found, '-'=not found
+    asm volatile ("outb %al, %dx"
+        :
+        : [v] "{al}" (if (nic_ok) @as(u8, '#') else @as(u8, '-')),
+          [p] "{dx}" (@as(u16, 0x3F8))
+    );
+
+    // Step 3: Inițializează nodul P2P și conectează la seed nodes.
+    p2p_node.init();
+    p2p_node.connect_seed_nodes();
+    state.p2p_initialized = 1;
+
+    // Step 3: Genesis block – dacă suntem la înălțimea 0, inițializăm genesis.
+    if (state.block_height == 0) {
+        genesis_block.init_genesis_block();
+
+        // Construim header genesis cu timestamp fix (0x1234567890ABCDEF)
+        var gen_header = genesis_block.BlockHeader{
+            .version          = 1,
+            .previous_block_hash = [_]u8{0} ** 32,
+            .merkle_root      = [_]u8{0x47, 0x45, 0x4E, 0x45, 0x53, 0x49, 0x53} ++ [_]u8{0} ** 25,
+            .timestamp        = genesis_block.GENESIS.timestamp,
+            .block_height     = 0,
+            .target_difficulty = 0x00_0F_FF_FF,
+            .nonce            = 0,
+            .miner_address    = 0,
+            .block_reward     = 50_0000_0000, // 50 OMNI în SAT
+            .total_fees       = 0,
+            .transaction_count = 0,
+            .utxo_count       = 0,
+            .reserved         = [_]u8{0} ** 6,
+        };
+        const gen_hash = genesis_block.calculate_block_hash(&gen_header);
+
+        // Copiază hash-ul genesis în starea noastră
+        var gi: usize = 0;
+        while (gi < 32) : (gi += 1) state.block_hash[gi] = gen_hash[gi];
+        state.block_height    = 1;
+        state.block_timestamp = rdtsc();
+
+        // Salvăm genesis pe disc
+        vault_storage.save_block(1, &gen_header.merkle_root, &gen_hash);
+    }
 
     initialized = true;
 }
@@ -198,47 +282,34 @@ pub export fn run_blockchain_cycle() void {
     state.cycle_count += 1;
     state.timestamp = rdtsc();
 
-    // Inject latest oracle prices from WebSocket buffers into ws_collector ring
+    // Inject oracle prices into ws_collector ring buffer
     inject_oracle_prices();
 
-    // Phase 67: Tick ws_collector every 100ms (TSC-based)
-    const tsc_now = rdtsc();
-    if (tsc_last_tick == 0) tsc_last_tick = tsc_now;
-    if (tsc_now -% tsc_last_tick >= TSC_PER_100MS) {
-        ws_collector.tick_100ms();
-        tsc_last_tick = tsc_now;
-    }
+    // Tick the ws_collector pipeline (0.1s sub-blocks → 1s main block)
+    ws_collector.tick_100ms();
 
-    // Phase 64: Oracle Consensus Integration
-    // Create a new price snapshot every cycle
-    const snapshot = oracle_consensus.create_price_snapshot();
-
-    // Populate snapshot with current prices from State Trie
-    // In real implementation, read from 0x250040–0x250C80 (50 tokens)
-    // For now, the snapshot is pre-populated by previous inject_oracle_prices() call
-
-    // Submit votes from all 6 validators (in real system, these would be distributed)
-    // Each validator computes hash and submits agreement
-    var i: usize = 0;
-    while (i < 6) : (i += 1) {
-        // Compute snapshot hash based on validator's view
-        const vote_hash = oracle_consensus.compute_snapshot_hash(snapshot);
-
-        // Submit the vote
-        const votes = oracle_consensus.submit_validator_vote(@intCast(i), vote_hash, state.timestamp);
-        _ = votes; // Track vote submission
-    }
-
-    // Check if quorum (4/6) has been achieved
-    const agreement_count = oracle_consensus.check_quorum(snapshot);
-
-    if (agreement_count >= 4) {
-        // Commit the price snapshot
-        const success = oracle_consensus.commit_price_snapshot(snapshot);
-        if (success == 1) {
-            // Snapshot committed and immutable – update blockchain height
+    // Oracle block production: every 256 cycles attempt quorum-based block
+    if ((state.cycle_count & 0xFF) == 0) {
+        _ = oracle_consensus.create_price_snapshot();
+        {
             state.block_height += 1;
+            state.block_timestamp = rdtsc();
+
+            var merkle: [32]u8 = state.block_hash;
+            merkle[0] ^= @as(u8, @truncate(state.block_height));
+            merkle[1] ^= @as(u8, @truncate(state.block_height >> 8));
+
+            vault_storage.save_block(state.block_height, &merkle, &state.block_hash);
+            p2p_node.broadcast_block();
+
+            // IPC: raportează block_height la Ada Mother OS (non-blocking)
+            ipc.report_metric(ipc.MODULE_OMNI_BLOCKCHAIN, state.block_height);
         }
+    }
+
+    // Procesăm un ciclu P2P: primim pachete de la vecini, trimitem heartbeat
+    if (state.p2p_initialized != 0) {
+        p2p_node.run_cycle();
     }
 
     // Process pending blockchain operations

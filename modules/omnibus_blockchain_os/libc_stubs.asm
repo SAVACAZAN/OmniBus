@@ -2,11 +2,21 @@
 
 ; libc stubs for OmniBus Blockchain OS
 global memset, memcpy, strlen, _start
+extern init_plugin, run_blockchain_cycle
 
 section .text
 
+; === FIXED ENTRY TABLE (Ada Mother OS jump targets) ===
+; 0x5D0000: _start → init_plugin + ret
+; 0x5D0010: _blockchain_run → run_blockchain_cycle + ret
+global _blockchain_run
+
 _start:
-    jmp $
+    call init_plugin        ; Boot: identity + NIC + P2P + genesis
+    ret                     ; Returnăm la Ada Mother OS
+_blockchain_run:            ; Ada calls this for run_blockchain_cycle
+    call run_blockchain_cycle
+    ret
 
 memset:
     mov r8, rdi

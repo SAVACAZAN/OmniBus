@@ -92,6 +92,18 @@ startup_begin:
     mov dword [0x203008], 0x200083  ; phys 0x200000, PS|RW|P
     mov dword [0x20300C], 0
 
+    ; PD[2..511] → identity-mapped 2MB pages (covers 0x400000-0x3FFFFFFF)
+    ; Required for: OmniStruct@0x400000, BlockchainOS@0x5D0000, NIC@0x610000
+    mov edi, 0x203010       ; PD[2] = base + 2*8
+    mov eax, 0x400083       ; phys 0x400000, PS|RW|P
+    mov ecx, 510
+.extend_pd_map:
+    mov [edi], eax
+    mov dword [edi+4], 0
+    add edi, 8
+    add eax, 0x200000
+    loop .extend_pd_map
+
     ; UART 'C'
     mov dx, 0x3F8
     mov al, 'C'
@@ -187,6 +199,19 @@ long_mode_entry:
 
     ; Set 64-bit stack
     mov rsp, 0x7E000                   ; Stack at 0x7E000 (16-byte aligned: 0x7E000 % 16 == 0)
+
+    ; ========================================================================
+    ; Enable SSE (required for Zig-compiled modules using xorps/movups etc.)
+    ; CR4.OSFXSR (bit 9) + CR4.OSXMMEXCPT (bit 10) must be set
+    ; CR0.EM (bit 2) must be clear, CR0.MP (bit 1) should be set
+    ; ========================================================================
+    mov rax, cr0
+    and rax, ~(1 << 2)                 ; Clear CR0.EM (x87 FPU emulation off)
+    or  rax, (1 << 1)                  ; Set CR0.MP (monitor coprocessor)
+    mov cr0, rax
+    mov rax, cr4
+    or  rax, (1 << 9) | (1 << 10)     ; CR4.OSFXSR | CR4.OSXMMEXCPT
+    mov cr4, rax
 
     ; VGA 'M' GREEN = long mode confirmed alive
     mov word [0xB800A], 0x0A4D
@@ -372,6 +397,23 @@ long_mode_entry:
     mov rcx, 16
     call load_sectors_pio
 
+    ; UART 'K' = Phase 66: OmniBus Blockchain OS (NIC E1000 + P2P + PQC) load starting
+    mov al, 'K'
+    out dx, al
+
+    ; Load OmniBus Blockchain OS from sectors 7888+ (120 sectors = 60KB) → 0x5D0000
+    mov rax, 7888
+    mov rdi, 0x5D0000
+    mov rcx, 120
+    call load_sectors_pio
+
+    ; Zero OmniBus BC .bss (0x5DC000-0x5EBFFF = 64KB) after load
+    ; (Binary is ~20KB; extra sectors from next module corrupt BSS if not zeroed)
+    mov rdi, 0x5DC000
+    mov rcx, 0x10000 / 8     ; 64KB in 8-byte units
+    xor rax, rax
+    rep stosq
+
     ; UART 'U' = Phase 52: Multi-Node Federation OS load starting
     mov al, 'U'
     out dx, al
@@ -493,6 +535,7 @@ ada64_stub_initialize:
     out dx, al
     mov al, 0x0A
     out dx, al
+    ret                         ; Return to caller (PHASE 5B disk loading)
 
 ; ============================================================================
 ; PHASE 9: KERNEL SCHEDULER (Cycle-based module management)
@@ -795,17 +838,19 @@ ada64_stub_event_loop:
     mov al, 'C'
     out dx, al
 
-    ; Grid OS init_plugin @ 0x110100
-    call 0x110100
+    ; Grid/Analytics/Execution/BlockchainOS@0x250000: skip init_plugin
+    ; (auto-initialize on first cycle call in scheduler loop)
 
-    ; Analytics OS init_plugin @ 0x150000
-    call 0x150000
-
-    ; Execution OS init_plugin @ 0x1373c0
-    call 0x1373c0
-
-    ; BlockchainOS init_plugin @ 0x250000
-    call 0x250000
+    ; OmniBus Blockchain OS (Phase 66: NIC E1000 + P2P + PQC) init_plugin @ 0x5D0000
+    ; Use register-indirect call to avoid NASM elf64 relocation offset error
+    ; Check initialized flag BEFORE calling (diagnostic)
+    movzx eax, byte [0x5DC000]          ; Read initialized flag
+    add al, '0'                          ; '0' if 0, '1' if 1
+    out dx, al                           ; Print flag value
+    mov rax, 0x5D0000
+    call rax
+    mov al, '!'                          ; Print if blockchain init returned
+    out dx, al
 
     ; NeuroOS init_plugin @ 0x2D0000
     call 0x2D0000
@@ -972,6 +1017,23 @@ scheduler_loop:
     mov qword [0x100228], rax           ; Store blockchain latency
 
 .skip_blockchain_dispatch:
+
+    ; === PHASE 66: OMNIBLOCKCHAIN OS EXECUTION (NIC E1000 + P2P + PQC) ===
+    ; run_blockchain_cycle @ 0x5D0010 (la offset 16 după _start/init_plugin ret)
+    ; Apelat la fiecare 256 cicluri (acelaşi ritm ca BlockchainOS)
+    mov rax, r11
+    test al, 0xFF
+    jnz .skip_omniblockchain_dispatch
+    ; register-indirect call to avoid elf64 relocation offset error
+    mov rax, 0x5D0006                   ; OmniBus Blockchain OS: _blockchain_run (offset +6 after _start)
+    call rax
+
+    ; IPC: citește block_height raportat de OmniBus Blockchain OS
+    ; Format: ipc_return_value @ 0x100120 (OFF_RETURN_VAL = 16 de la IPC_BLOCK_BASE 0x100110)
+    mov rax, [0x100120]                 ; block_height (u64)
+    mov [0x100230], rax                 ; stochează în kernel metrics @ 0x100230
+
+.skip_omniblockchain_dispatch:
 
     ; === PHASE 22: NEURO REAL EXECUTION ===
     ; NeuroOS: trigger every 512 cycles
@@ -1342,6 +1404,33 @@ scheduler_loop:
     jnz .skip_gcp_dispatch
     call 0x630100                       ; GCPOS: run_gcp_cycle @ 0x630100
 .skip_gcp_dispatch:
+
+    ; === IPC AUTH GATE: check if any module sent a request (0x100050) ===
+    movzx eax, byte [0x100050]
+    test al, al
+    jz .skip_ipc_dispatch
+
+    ; Module IPC request pending — read control block
+    movzx ecx, byte [0x100110]      ; ipc_request code
+    movzx edx, word [0x100112]      ; ipc_module_id
+
+    ; Handle IPC_REQUEST_REPORT_BLOCK (0x10) — module reporting new block height
+    cmp cl, 0x10
+    jne .ipc_unknown
+    ; Block height is in ipc_return_value (0x100120) — already read above
+    ; Mark done
+    mov byte [0x100111], 0x02       ; STATUS_DONE
+    jmp .ipc_handled
+
+.ipc_unknown:
+    ; Unknown request: set STATUS_ERROR, clear
+    mov byte [0x100111], 0x03       ; STATUS_ERROR
+
+.ipc_handled:
+    ; Clear auth gate
+    mov byte [0x100050], 0x00
+
+.skip_ipc_dispatch:
 
     ; Busy loop (prevent QEMU timeout)
     mov rcx, 50000

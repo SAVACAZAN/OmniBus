@@ -124,11 +124,13 @@ fn ipc_call(opcode: u8, param: u64) u64 {
     ipc_result.* = param;
     ipc_req.*    = opcode;              // trigger pqc_gate_os.ipc_dispatch()
 
-    // Bare-metal spin-wait – no sleep, no OS, max 1M cycles
+    // Bare-metal spin-wait – max 256 tries during init context to avoid deadlock.
+    // (Ada event loop is blocked on init_plugin; pqc_gate_os IPC will never respond
+    //  during init. After init returns, Ada's event loop resumes pqc_gate_os dispatch.)
     var tries: u32 = 0;
     while (ipc_status.* != IPC_STATUS_DONE and
            ipc_status.* != IPC_STATUS_ERROR and
-           tries < 1_000_000) : (tries += 1)
+           tries < 256) : (tries += 1)
     {
         asm volatile ("pause");
     }

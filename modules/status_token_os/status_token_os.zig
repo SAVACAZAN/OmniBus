@@ -347,7 +347,6 @@ fn get_balances_mut(token_type: u8) ?*[256]BalanceEntry {
 
 fn find_balance_slot(balances: *const [256]BalanceEntry, address: u64) usize {
     const hash = address % 256;
-    var slot = hash;
 
     // Linear probing
     for (0..256) |i| {
