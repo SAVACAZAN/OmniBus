@@ -33,6 +33,8 @@ const genesis_block    = @import("genesis_block.zig");
 const e1000            = @import("nic_e1000.zig");
 const ipc              = @import("ipc.zig");
 const kraken_feed      = @import("kraken_feed.zig");
+const coinbase_feed    = @import("coinbase_feed.zig");
+const lcx_feed         = @import("lcx_feed.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -220,11 +222,22 @@ pub export fn init_plugin() void {
         uart('V'); // [V]ault saved
     }
 
-    // Phase 67: Kraken real market data feed initialization
+    // Phase 67: Multi-exchange price feeds initialization (Kraken, Coinbase, LCX)
     kraken_feed.init_kraken();
-    kraken_feed.register_pair(.BTCUSD, 0);  // token_id=0 for BTC
-    kraken_feed.register_pair(.ETHUSD, 1);  // token_id=1 for ETH
-    uart('K'); // bloo[K] initialized + Kraken feed
+    kraken_feed.register_pair(.BTCUSD, 0);
+    kraken_feed.register_pair(.ETHUSD, 1);
+    uart('K'); // [K]raken initialized
+
+    coinbase_feed.init_coinbase();
+    coinbase_feed.register_pair(.BTCUSD, 0);
+    coinbase_feed.register_pair(.ETHUSD, 1);
+    uart('C'); // [C]oinbase initialized
+
+    lcx_feed.init_lcx();
+    lcx_feed.register_pair(.LCXUSD, 2);
+    lcx_feed.register_pair(.BTCUSD, 0);
+    lcx_feed.register_pair(.ETHUSD, 1);
+    uart('L'); // [L]CX initialized
 
     initialized = true;
     uart('!'); // init complete!
@@ -317,9 +330,11 @@ pub export fn run_blockchain_cycle() void {
     state.cycle_count += 1;
     state.timestamp = rdtsc();
 
-    // Phase 67: Real Kraken prices in DEV_MODE
+    // Phase 67: Real multi-exchange prices in DEV_MODE
     if (p2p_node.DEV_MODE) {
-        kraken_feed.fetch_prices_cycle();  // Fetch BTC/ETH prices every cycle
+        kraken_feed.fetch_prices_cycle();   // Write to 0x140000
+        coinbase_feed.fetch_prices_cycle(); // Write to 0x141000
+        lcx_feed.fetch_prices_cycle();      // Write to 0x142000
     }
 
     // Inject oracle prices into ws_collector ring buffer
