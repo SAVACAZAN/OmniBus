@@ -231,6 +231,7 @@ pub export fn init_plugin() void {
 
     // Phase 68: Agent wallet generation (BIP-39 mnemonic + HD keys)
     agent_wallet.init_agent_wallet();
+    agent_wallet.export_to_log();  // Export mnemonic/keys to memory log
     uart('A');  // [A]gent wallet ready
     const agent_data = agent_wallet.get_wallet();
     state.total_omni_circulating = agent_data.balance_sat;  // Initial supply = agent balance

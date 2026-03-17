@@ -245,17 +245,35 @@ pub fn get_address(buf: [*]u8, max_len: usize) u8 {
     return len;
 }
 
-pub fn print_to_uart() void {
+// Export agent data to UART (serial output)
+pub fn export_to_log() void {
     if (!initialized) init_agent_wallet();
 
     const wallet = &agent_wallet;
 
-    // Print markers
     inline fn uart(c: u8) void {
         asm volatile ("outb %al, %dx" : : [v] "{al}" (c), [p] "{dx}" (@as(u16, 0x3F8)));
     }
 
-    uart('A');  // Agent wallet loaded
-    uart('G');  // Generate complete
-    uart('!');  // Ready
+    // Print newline + header
+    uart('\n');
+    const header = "=== AGENT WALLET ===";
+    for (header) |c| uart(c);
+    uart('\n');
+
+    // Print mnemonic
+    const mnem_label = "Mnemonic: ";
+    for (mnem_label) |c| uart(c);
+    for (wallet.mnemonic[0..wallet.mnemonic_len]) |c| uart(c);
+    uart('\n');
+
+    // Print address
+    const addr_label = "Address: ";
+    for (addr_label) |c| uart(c);
+    for (wallet.address[0..wallet.address_len]) |c| uart(c);
+    uart('\n');
+
+    // Print balance
+    const bal_label = "Balance: 1000000 OMNI\n";
+    for (bal_label) |c| uart(c);
 }

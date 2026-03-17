@@ -144,7 +144,7 @@ align 4                             ; 4-byte alignment for DAP
 kernel_dap:
     db 0x10                         ; DAP size (16 bytes, required)
     db 0x00                         ; Reserved (must be 0)
-    dw 16                           ; Number of sectors to read (16 sectors = 8KB kernel)
+    dw 32                           ; Number of sectors to read (32 sectors = 16KB kernel)
     dw 0x8000                       ; Offset of buffer in segment
     dw 0x0000                       ; Segment of buffer (0x0000:0x8000 = absolute 0x8000)
     dq 2048                         ; LBA sector (sector 2048 = kernel start)
