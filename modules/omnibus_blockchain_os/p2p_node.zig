@@ -34,6 +34,10 @@ pub const DEDUP_SIZE    : usize = 512;   // Fereastră deduplicare (512 hash-uri
 pub const MAX_PEERS     : usize = 64;    // Peers cunoscuți (mai mult decât gossip)
 pub const HEARTBEAT_INTERVAL_TSC: u64 = 900_000_000; // ~300ms @ 3GHz
 
+// DEV_MODE: single-node testing (no seed peers, no network required)
+// Set to false for production deployment with real validators
+pub const DEV_MODE: bool = true;
+
 // Packet types (aliniați cu network_types.zig)
 pub const PKT_TRANSACTION  : u8 = 0x00;
 pub const PKT_BLOCK_PROPOSAL: u8 = 0x03;
@@ -182,7 +186,10 @@ pub fn add_peer(ip: [4]u8, port: u16, shard_id: u16) void {
 
 /// Seed nodes hardcodate (de actualizat cu IP-uri reale la deploy)
 pub fn connect_seed_nodes() void {
-    // Seed nodes: shard 0 → 4 (bootstrap)
+    // DEV_MODE: skip seed peers – single-node genesis, no network required
+    if (DEV_MODE) return;
+
+    // PRODUCTION: shard 0 → 2 bootstrap nodes (update IPs before deploy)
     add_peer(.{10,0,0,1}, OMNI_PORT, 0);
     add_peer(.{10,0,0,2}, OMNI_PORT, 1);
     add_peer(.{10,0,0,3}, OMNI_PORT, 2);

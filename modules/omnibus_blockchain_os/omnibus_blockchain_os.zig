@@ -182,8 +182,10 @@ pub export fn init_plugin() void {
     state.p2p_initialized = 1;
 
     // Step 3: Genesis block – dacă suntem la înălțimea 0, inițializăm genesis.
+    uart('G'); // [G]enesis start
     if (state.block_height == 0) {
         genesis_block.init_genesis_block();
+        uart('D'); // [D]istribution init done
 
         // Construim header genesis cu timestamp fix (0x1234567890ABCDEF)
         var gen_header = genesis_block.BlockHeader{
@@ -209,11 +211,15 @@ pub export fn init_plugin() void {
         state.block_height    = 1;
         state.block_timestamp = rdtsc();
 
+        uart('H'); // [H]ash calculated
         // Salvăm genesis pe disc
         vault_storage.save_block(1, &gen_header.merkle_root, &gen_hash);
+        uart('V'); // [V]ault saved
     }
 
+    uart('K'); // bloo[K] initialized
     initialized = true;
+    uart('!'); // init complete!
 }
 
 // ============================================================================
