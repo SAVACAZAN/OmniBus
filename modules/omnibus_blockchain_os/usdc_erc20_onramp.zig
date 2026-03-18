@@ -5,6 +5,7 @@
 
 const std = @import("std");
 const ethereum_rpc = @import("ethereum_rpc_client.zig");
+const client_wallet = @import("client_wallet.zig");
 // const multi_token_bridge = @import("multi_token_bridge.zig");  // TODO: integrate with bridge in Phase 71
 
 // ============================================================================
@@ -158,6 +159,9 @@ pub fn record_usdc_transfer(
     state.total_usdc_received +|= amount_usdc;
     state.last_poll_tsc = rdtsc();
     state.poll_count += 1;
+
+    // Register in client wallet registry (track USDC transfer from client)
+    _ = client_wallet.record_usdc_transfer(from_addr, from_len, amount_usdc);
 }
 
 // ============================================================================
@@ -188,6 +192,12 @@ pub fn process_usdc_to_omni_mint(transfer_idx: u8) bool {
     state.total_omni_minted +|= omni_amount;
     state.successful_mints += 1;
     state.pending_transfers -|= 1;
+
+    // Find client by ERC20 address (sender) and record OMNI transfer to quantum address
+    if (client_wallet.find_client_by_erc20(transfer.from_address[0..], transfer.from_len)) |found_client| {
+        // Record OMNI transfer to the client's quantum address
+        _ = client_wallet.record_omni_transfer(found_client.quantum_address[0..], found_client.quantum_len, omni_amount);
+    }
 
     return true;
 }

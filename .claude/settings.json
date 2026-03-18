@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(grep -n \"DEV_MODE\\\\|VALIDATOR_COUNT\\\\|MIN_NODES\" /home/kiss/OmniBus/modules/omnibus_blockchain_os/*.zig)",
-      "Bash(ls -la /home/kiss/OmniBus/modules/omnibus_blockchain_os/*.zig)",
-      "Bash(grep -l \"socket\\\\|Socket\\\\|TCP\\\\|tcp\" /home/kiss/OmniBus/modules/omnibus_blockchain_os/*.zig)"
-    ]
-  }
-}

@@ -38,6 +38,7 @@ const lcx_feed         = @import("lcx_feed.zig");
 const agent_wallet     = @import("agent_wallet.zig");
 const block_explorer   = @import("block_explorer_os.zig");
 const usdc_onramp      = @import("usdc_erc20_onramp.zig");
+const client_wallet    = @import("client_wallet.zig");
 
 // ============================================================================
 // BLOCKCHAIN OS CONSTANTS
@@ -257,6 +258,16 @@ pub export fn init_plugin() void {
     usdc_onramp.init_usdc_onramp(usdc_agent_addr, 42);
     uart('U');  // [U]SDC on-ramp ready
 
+    // Phase 72: Client wallet registry initialization
+    client_wallet.init_client_registry();
+    uart('C');  // [C]lient wallet registry ready
+
+    // Create test client wallet for user (ID=1, Name="User")
+    const user_wallet = client_wallet.generate_client_wallet(1, "User"[0..], 4);
+    if (user_wallet != null) {
+        uart('W');  // [W]allet generated for client
+    }
+
     uart('!'); // init complete!
 }
 
@@ -421,6 +432,11 @@ pub export fn run_blockchain_cycle() void {
     // Phase 70: Display USDC on-ramp status every 128 cycles
     if ((state.cycle_count & 0x7F) == 0) {  // Every 128 cycles
         usdc_onramp.display_onramp_status();
+    }
+
+    // Phase 72: Display client wallet registry every 256 cycles
+    if ((state.cycle_count & 0xFF) == 0) {  // Every 256 cycles
+        client_wallet.display_client_registry();
     }
 
     // Procesăm un ciclu P2P – skip in DEV_MODE (single-node, no peers)
