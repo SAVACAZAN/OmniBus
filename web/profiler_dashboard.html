@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniBus Performance Profiler</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #0a0e27;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 15px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #60a5fa;
+            margin-bottom: 5px;
+        }
+        .status {
+            font-size: 12px;
+            color: #10b981;
+        }
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .panel {
+            background: #111827;
+            border: 1px solid #1e3a8a;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .panel h2 {
+            font-size: 14px;
+            color: #60a5fa;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #1e3a8a;
+            padding-bottom: 10px;
+        }
+        .stat-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 11px;
+            padding: 5px 0;
+            border-bottom: 1px solid #1e3a8a;
+        }
+        .stat-label {
+            color: #9ca3af;
+            font-weight: bold;
+        }
+        .stat-value {
+            color: #10b981;
+            text-align: right;
+        }
+        .module-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-top: 15px;
+        }
+        .module-table th {
+            background: #1a202c;
+            color: #60a5fa;
+            padding: 8px;
+            text-align: left;
+            border-bottom: 2px solid #1e3a8a;
+        }
+        .module-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #1e3a8a;
+        }
+        .module-table tr:hover {
+            background: #1a202c;
+        }
+        .latency-bar {
+            background: linear-gradient(90deg, #10b981 0%, #f97316 50%, #dc2626 100%);
+            height: 20px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 5px;
+            font-size: 9px;
+            color: white;
+        }
+        .latency-container {
+            display: grid;
+            grid-template-columns: 1fr 80px;
+            gap: 10px;
+        }
+        .percentile-chart {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .percentile-bar {
+            background: #3b82f6;
+            border-radius: 4px;
+            padding: 5px;
+            text-align: center;
+            font-size: 9px;
+        }
+        .percentile-label {
+            color: #9ca3af;
+            font-size: 8px;
+            margin-top: 3px;
+        }
+        .error {
+            color: #ef4444;
+        }
+        .success {
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ OmniBus Performance Profiler</h1>
+            <p class="status" id="status">Loading profiler data...</p>
+        </div>
+
+        <div class="panels">
+            <!-- Summary Panel -->
+            <div class="panel">
+                <h2>Profiler Summary</h2>
+                <div id="summary-stats"></div>
+            </div>
+
+            <!-- Top Modules Panel -->
+            <div class="panel">
+                <h2>Hottest Modules (Max Latency)</h2>
+                <div id="hottest-modules"></div>
+            </div>
+        </div>
+
+        <!-- Detailed Module Breakdown -->
+        <div class="panel">
+            <h2>Module Breakdown (TSC Cycles)</h2>
+            <table class="module-table" id="module-table">
+                <thead>
+                    <tr>
+                        <th>Module Name</th>
+                        <th style="width: 80px;">Calls</th>
+                        <th style="width: 100px;">Total Cycles</th>
+                        <th style="width: 100px;">Avg/Call</th>
+                        <th style="width: 100px;">Min</th>
+                        <th style="width: 100px;">Max</th>
+                        <th style="width: 100px;">Moving Avg</th>
+                        <th style="width: 200px;">Latency Profile</th>
+                    </tr>
+                </thead>
+                <tbody id="module-tbody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let profilerData = null;
+
+        // Initialize
+        async function init() {
+            updateStatus('Fetching profiler data...', false);
+            await fetchProfilerData();
+            setInterval(fetchProfilerData, 2000);  // Update every 2 seconds
+        }
+
+        // Fetch profiler summary
+        async function fetchProfilerData() {
+            try {
+                const response = await fetch(`${API_BASE}/api/profiler/summary`);
+                profilerData = await response.json();
+
+                renderSummary();
+                renderModuleTable();
+                updateStatus('Connected: Profiler active', true);
+            } catch (e) {
+                updateStatus(`Error: ${e.message}`, false);
+            }
+        }
+
+        // Render summary statistics
+        function renderSummary() {
+            if (!profilerData) return;
+
+            const stats = profilerData;
+            const html = `
+                <div class="stat-row">
+                    <div class="stat-label">Status</div>
+                    <div class="stat-value">${stats.status || 'unknown'}</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Global Cycle Count</div>
+                    <div class="stat-value">${(stats.global_cycle_count || 0).toLocaleString()}</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Active Modules</div>
+                    <div class="stat-value">${stats.total_modules_active || 0}</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Total Module Calls</div>
+                    <div class="stat-value">${(stats.total_calls || 0).toLocaleString()}</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Total Cycles</div>
+                    <div class="stat-value">${(stats.total_cycles || 0).toLocaleString()}</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Slowest Module</div>
+                    <div class="stat-value">${stats.slowest_module ? stats.slowest_module.name : 'N/A'}</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Max Latency</div>
+                    <div class="stat-value">${(stats.slowest_module?.max_cycles || 0).toLocaleString()} cycles</div>
+                </div>
+            `;
+            document.getElementById('summary-stats').innerHTML = html;
+        }
+
+        // Render module table
+        function renderModuleTable() {
+            if (!profilerData || !profilerData.module_breakdown) return;
+
+            const modules = profilerData.module_breakdown;
+            const tbody = document.getElementById('module-tbody');
+            tbody.innerHTML = '';
+
+            // Find max latency for scaling
+            const maxLatency = Math.max(...modules.map(m => m.max_cycles || 0));
+
+            modules.forEach(module => {
+                const row = document.createElement('tr');
+                const avgLatency = module.avg_per_call || 0;
+                const maxCycles = module.max_cycles || 0;
+                const barWidth = maxCycles > 0 ? (maxCycles / maxLatency) * 100 : 0;
+
+                // Color: green < 1000, orange 1000-10000, red > 10000
+                let barColor = '#10b981';  // green
+                if (maxCycles > 10000) barColor = '#dc2626';  // red
+                else if (maxCycles > 1000) barColor = '#f97316';  // orange
+
+                row.innerHTML = `
+                    <td>${module.module_name}</td>
+                    <td>${module.calls.toLocaleString()}</td>
+                    <td>${(module.total_cycles || 0).toLocaleString()}</td>
+                    <td>${module.avg_per_call.toLocaleString()}</td>
+                    <td>${(module.min_cycles || 0).toLocaleString()}</td>
+                    <td>${(module.max_cycles || 0).toLocaleString()}</td>
+                    <td>${(module.moving_avg || 0).toLocaleString()}</td>
+                    <td>
+                        <div style="width: ${Math.min(barWidth, 100)}%; height: 20px; background: ${barColor}; border-radius: 3px;"></div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update status
+        function updateStatus(msg, isOk) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = isOk ? 'status success' : 'status error';
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

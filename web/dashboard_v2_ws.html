@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniBus Trading System — Live Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { scrollbar-width: thin; scrollbar-color: #334155 #1e293b; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 100%);
+            color: #e2e8f0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.3); }
+        .stat-box { background: rgba(51, 65, 85, 0.2); border-left: 4px solid #2563eb; padding: 16px; border-radius: 8px; }
+        .stat-box:hover { background: rgba(51, 65, 85, 0.4); transform: translateY(-2px); }
+        .price-up { color: #22c55e; }
+        .price-down { color: #ef4444; }
+        .ws-status { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
+        .ws-status.connected { background: #22c55e; animation: pulse 2s infinite; }
+        .ws-status.disconnected { background: #ef4444; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .orderbook-bid { background: rgba(34, 197, 94, 0.1); }
+        .orderbook-ask { background: rgba(239, 68, 68, 0.1); }
+        .depth-bar { height: 20px; background: rgba(51, 65, 85, 0.3); border-radius: 2px; transition: width 0.2s; }
+    </style>
+</head>
+<body>
+
+<div class="min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">OmniBus</h1>
+                <p class="text-gray-400">Real-time Arbitrage Trading</p>
+            </div>
+            <div class="text-right">
+                <div class="flex items-center gap-2">
+                    <span class="ws-status connected" id="ws-indicator"></span>
+                    <span id="ws-text" class="text-sm text-green-400">WebSocket Live</span>
+                </div>
+                <p class="text-xs text-gray-500" id="current-time">--:--:--</p>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-5 gap-4 mb-8">
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">Users</p>
+                <p id="stat-users" class="text-2xl font-bold">--</p>
+            </div>
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">BTC Price</p>
+                <p id="stat-price" class="text-2xl font-bold price-up">$--,---</p>
+            </div>
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">BTC Spread</p>
+                <p id="stat-spread" class="text-2xl font-bold text-yellow-400">-- bps</p>
+            </div>
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">Updates/min</p>
+                <p id="stat-updates" class="text-2xl font-bold">--</p>
+            </div>
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">Pairs</p>
+                <p class="text-2xl font-bold text-cyan-400">3</p>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-3 gap-6">
+            <!-- BTC Card -->
+            <div class="glass rounded-lg p-6 border border-gray-700">
+                <h3 class="text-lg font-bold mb-4 text-blue-400">₿ BTC/USD</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-gray-500 text-sm">Price</p>
+                        <p id="price-btc" class="text-4xl font-bold price-up">$--,---</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-700 pt-3">
+                        <div>
+                            <p class="text-gray-500">Best Bid</p>
+                            <p id="bid-btc" class="text-green-400 font-bold">$--,---</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Best Ask</p>
+                            <p id="ask-btc" class="text-red-400 font-bold">$--,---</p>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        Spread: <span id="spread-btc" class="text-yellow-400 font-bold">--</span> bps
+                    </div>
+                </div>
+            </div>
+
+            <!-- ETH Card -->
+            <div class="glass rounded-lg p-6 border border-gray-700">
+                <h3 class="text-lg font-bold mb-4 text-purple-400">Ξ ETH/USD</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-gray-500 text-sm">Price</p>
+                        <p id="price-eth" class="text-4xl font-bold price-up">$--,---</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-700 pt-3">
+                        <div>
+                            <p class="text-gray-500">Best Bid</p>
+                            <p id="bid-eth" class="text-green-400 font-bold">$--,---</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Best Ask</p>
+                            <p id="ask-eth" class="text-red-400 font-bold">$--,---</p>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        Spread: <span id="spread-eth" class="text-yellow-400 font-bold">--</span> bps
+                    </div>
+                </div>
+            </div>
+
+            <!-- LCX Card -->
+            <div class="glass rounded-lg p-6 border border-gray-700">
+                <h3 class="text-lg font-bold mb-4 text-orange-400">🔶 LCX/USD</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-gray-500 text-sm">Price</p>
+                        <p id="price-lcx" class="text-4xl font-bold price-up">$--</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-700 pt-3">
+                        <div>
+                            <p class="text-gray-500">Best Bid</p>
+                            <p id="bid-lcx" class="text-green-400 font-bold">$--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Best Ask</p>
+                            <p id="ask-lcx" class="text-red-400 font-bold">$--</p>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        Spread: <span id="spread-lcx" class="text-yellow-400 font-bold">--</span> bps
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orderbooks Section -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-bold mb-4">Live Orderbooks (BTC/USD)</h2>
+            <div class="grid grid-cols-3 gap-6">
+                <!-- Kraken -->
+                <div class="glass rounded-lg p-4 border border-gray-700">
+                    <h4 class="font-bold text-blue-400 mb-3">🔹 Kraken</h4>
+                    <div class="space-y-2 text-xs">
+                        <div>
+                            <p class="text-green-400 font-bold mb-1">Bids</p>
+                            <div id="kraken-bids" class="space-y-1">
+                                <p class="text-gray-500">--</p>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-600 pt-2">
+                            <p class="text-red-400 font-bold mb-1">Asks</p>
+                            <div id="kraken-asks" class="space-y-1">
+                                <p class="text-gray-500">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coinbase -->
+                <div class="glass rounded-lg p-4 border border-gray-700">
+                    <h4 class="font-bold text-cyan-400 mb-3">🔷 Coinbase</h4>
+                    <div class="space-y-2 text-xs">
+                        <div>
+                            <p class="text-green-400 font-bold mb-1">Bids</p>
+                            <div id="coinbase-bids" class="space-y-1">
+                                <p class="text-gray-500">--</p>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-600 pt-2">
+                            <p class="text-red-400 font-bold mb-1">Asks</p>
+                            <div id="coinbase-asks" class="space-y-1">
+                                <p class="text-gray-500">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LCX -->
+                <div class="glass rounded-lg p-4 border border-gray-700">
+                    <h4 class="font-bold text-orange-400 mb-3">🔶 LCX</h4>
+                    <div class="space-y-2 text-xs">
+                        <div>
+                            <p class="text-green-400 font-bold mb-1">Bids</p>
+                            <div id="lcx-bids" class="space-y-1">
+                                <p class="text-gray-500">--</p>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-600 pt-2">
+                            <p class="text-red-400 font-bold mb-1">Asks</p>
+                            <div id="lcx-asks" class="space-y-1">
+                                <p class="text-gray-500">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+class LiveDashboard {
+    constructor() {
+        this.userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        this.wsPrice = null;
+        this.wsOrders = null;
+        this.priceBuffer = {};
+        this.updateCounter = 0;
+        this.startTime = Date.now();
+        
+        this.init();
+    }
+
+    init() {
+        this.connectWebSockets();
+        this.updateClock();
+        setInterval(() => this.updateClock(), 1000);
+        setInterval(() => this.updateStats(), 1000);
+        this.loadOrderbooksREST();
+        setInterval(() => this.loadOrderbooksREST(), 3000);
+    }
+
+    connectWebSockets() {
+        // Connect to price WebSocket
+        const priceUrl = `ws://localhost:8000/ws/prices/kraken?token=${this.userId}`;
+        this.wsPrice = new WebSocket(priceUrl);
+        
+        this.wsPrice.onopen = () => {
+            console.log('✅ Price WebSocket connected');
+            this.setWSStatus(true);
+        };
+
+        this.wsPrice.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'price_update') {
+                this.priceBuffer[data.asset] = data.bid;
+                this.updateCounter++;
+                this.updatePrices();
+            }
+        };
+
+        this.wsPrice.onclose = () => {
+            console.log('❌ Price WebSocket disconnected');
+            this.setWSStatus(false);
+            setTimeout(() => this.connectWebSockets(), 3000);
+        };
+
+        this.wsPrice.onerror = (e) => {
+            console.error('WebSocket error:', e);
+            this.setWSStatus(false);
+        };
+    }
+
+    setWSStatus(connected) {
+        const indicator = document.getElementById('ws-indicator');
+        const text = document.getElementById('ws-text');
+        if (connected) {
+            indicator.classList.remove('disconnected');
+            indicator.classList.add('connected');
+            text.textContent = 'WebSocket Live';
+            text.classList.remove('text-red-400');
+            text.classList.add('text-green-400');
+        } else {
+            indicator.classList.remove('connected');
+            indicator.classList.add('disconnected');
+            text.textContent = 'WebSocket Offline';
+            text.classList.remove('text-green-400');
+            text.classList.add('text-red-400');
+        }
+    }
+
+    updatePrices() {
+        // Prices from WebSocket are already in dollars (not cents)
+        // API sends: price = btc_cents / 100.0, so no further division needed
+
+        if (this.priceBuffer.BTC) {
+            const btc = this.priceBuffer.BTC;  // Already in dollars
+            document.getElementById('price-btc').textContent = `$${btc.toFixed(2)}`;
+            document.getElementById('stat-price').textContent = `$${btc.toFixed(2)}`;
+        }
+        if (this.priceBuffer.ETH) {
+            const eth = this.priceBuffer.ETH;  // Already in dollars
+            document.getElementById('price-eth').textContent = `$${eth.toFixed(2)}`;
+        }
+        if (this.priceBuffer.LCX) {
+            const lcx = this.priceBuffer.LCX;
+            document.getElementById('price-lcx').textContent = `$${lcx.toFixed(6)}`;
+        }
+    }
+
+    async loadOrderbooksREST() {
+        try {
+            const response = await fetch('/api/orderbook?pair=BTC/USD');
+            const data = await response.json();
+
+            this.displayOrderbook(data, 'kraken');
+            this.displayOrderbook(data, 'coinbase');
+            this.displayOrderbook(data, 'lcx');
+
+            // Update BTC stats from Kraken
+            if (data.kraken && data.kraken.bids && data.kraken.asks) {
+                const bid = data.kraken.bids[0]?.price || 0;
+                const ask = data.kraken.asks[0]?.price || 0;
+                if (bid > 0 && ask > 0) {
+                    document.getElementById('bid-btc').textContent = `$${bid.toFixed(2)}`;
+                    document.getElementById('ask-btc').textContent = `$${ask.toFixed(2)}`;
+                    if (data.kraken.spread) {
+                        document.getElementById('stat-spread').textContent = data.kraken.spread.toFixed(2) + ' bps';
+                        document.getElementById('spread-btc').textContent = data.kraken.spread.toFixed(2);
+                    }
+                }
+            }
+
+            // If LCX not available from orderbook, try alternative pair
+            if ((!data.lcx || !data.lcx.bids) && !this.priceBuffer.LCX) {
+                try {
+                    const lcxResponse = await fetch('/api/orderbook?pair=LCX/USDC');
+                    const lcxData = lcxResponse.ok ? await lcxResponse.json() : null;
+                    if (lcxData && lcxData.kraken && lcxData.kraken.bids) {
+                        data.lcx = lcxData.kraken;
+                        this.displayOrderbook(data, 'lcx');
+                    }
+                } catch (e) {
+                    console.debug('LCX/USDC pair not available');
+                }
+            }
+        } catch (e) {
+            console.error('Orderbook fetch failed:', e);
+        }
+    }
+
+    displayOrderbook(data, exchange) {
+        const ob = data[exchange];
+        if (!ob || !ob.bids || !ob.asks) return;
+
+        const bidsDiv = document.getElementById(`${exchange}-bids`);
+        const asksDiv = document.getElementById(`${exchange}-asks`);
+
+        bidsDiv.innerHTML = ob.bids.slice(0, 5).map(bid => 
+            `<div class="flex justify-between"><span>$${bid.price.toFixed(2)}</span><span>${bid.size.toFixed(4)}</span></div>`
+        ).join('');
+
+        asksDiv.innerHTML = ob.asks.slice(0, 5).map(ask => 
+            `<div class="flex justify-between"><span>$${ask.price.toFixed(2)}</span><span>${ask.size.toFixed(4)}</span></div>`
+        ).join('');
+    }
+
+    updateStats() {
+        const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+        const updatesPerMin = elapsed > 0 ? Math.floor((this.updateCounter / elapsed) * 60) : 0;
+        document.getElementById('stat-updates').textContent = updatesPerMin;
+    }
+
+    updateClock() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString();
+    }
+}
+
+// Start dashboard
+window.addEventListener('DOMContentLoaded', () => {
+    new LiveDashboard();
+});
+</script>
+
+</body>
+</html>

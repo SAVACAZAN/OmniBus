@@ -1,0 +1,96 @@
+<div class="space-y-2">
+    <div class="flex justify-between items-center border-b border-omnibus-accent pb-2">
+        <h2 class="text-lg font-bold text-omnibus-accent">📋 AUDIT LOG</h2>
+        <span class="text-xs text-gray-400">Recent Events (16)</span>
+    </div>
+
+    <div class="space-y-1 max-h-48 overflow-y-auto">
+        <!-- Sample Audit Events -->
+        <div class="p-2 bg-black rounded border-l-2 border-omnibus-success text-xs">
+            <div class="flex justify-between">
+                <span class="text-gray-400">Grid OS</span>
+                <span class="text-gray-500" id="event-time-1">12:34:56</span>
+            </div>
+            <div class="text-omnibus-success">✓ Trading cycle completed</div>
+        </div>
+
+        <div class="p-2 bg-black rounded border-l-2 border-omnibus-accent text-xs">
+            <div class="flex justify-between">
+                <span class="text-gray-400">Execution OS</span>
+                <span class="text-gray-500" id="event-time-2">12:34:45</span>
+            </div>
+            <div class="text-omnibus-accent">→ Order submitted (BTC/Kraken)</div>
+        </div>
+
+        <div class="p-2 bg-black rounded border-l-2 border-omnibus-success text-xs">
+            <div class="flex justify-between">
+                <span class="text-gray-400">Analytics OS</span>
+                <span class="text-gray-500" id="event-time-3">12:34:30</span>
+            </div>
+            <div class="text-omnibus-success">✓ Consensus price updated</div>
+        </div>
+
+        <div class="p-2 bg-black rounded border-l-2 border-omnibus-success text-xs">
+            <div class="flex justify-between">
+                <span class="text-gray-400">Grid OS</span>
+                <span class="text-gray-500" id="event-time-4">12:34:15</span>
+            </div>
+            <div class="text-omnibus-success">✓ Rebalance completed (+$12.34)</div>
+        </div>
+
+        <div class="p-2 bg-black rounded border-l-2 border-omnibus-success text-xs">
+            <div class="flex justify-between">
+                <span class="text-gray-400">Checksum OS</span>
+                <span class="text-gray-500" id="event-time-5">12:34:00</span>
+            </div>
+            <div class="text-omnibus-success">✓ Integrity verified</div>
+        </div>
+
+        <div class="p-2 bg-black rounded border-l-2 border-blue-500 text-xs">
+            <div class="flex justify-between">
+                <span class="text-gray-400">Zorin OS</span>
+                <span class="text-gray-500" id="event-time-6">12:33:45</span>
+            </div>
+            <div class="text-blue-400">ℹ Access: London zone active</div>
+        </div>
+
+        <div class="p-2 bg-black rounded border-l-2 border-omnibus-success text-xs">
+            <div class="flex justify-between">
+                <span class="text-gray-400">BlockchainOS</span>
+                <span class="text-gray-500" id="event-time-7">12:33:30</span>
+            </div>
+            <div class="text-omnibus-success">✓ Solana flash loan available</div>
+        </div>
+
+        <div class="p-2 bg-black rounded border-l-2 border-omnibus-success text-xs">
+            <div class="flex justify-between">
+                <span class="text-gray-400">NeuroOS</span>
+                <span class="text-gray-500" id="event-time-8">12:33:15</span>
+            </div>
+            <div class="text-omnibus-success">✓ Generation 24 evolved</div>
+        </div>
+    </div>
+
+    <!-- Event Counter -->
+    <div class="p-2 bg-black rounded text-xs text-gray-400 border-t border-gray-700">
+        <span>Total events: <span class="font-bold text-omnibus-accent">1,247</span></span>
+    </div>
+</div>
+
+<script>
+    // Update event times
+    function updateEventTimes() {
+        const now = new Date();
+        const times = [];
+        for (let i = 0; i < 8; i++) {
+            const time = new Date(now - i * 15000);  // 15s apart
+            times.push(time.toLocaleTimeString());
+        }
+        for (let i = 0; i < 8; i++) {
+            const el = document.getElementById(`event-time-${i+1}`);
+            if (el) el.textContent = times[i];
+        }
+    }
+    updateEventTimes();
+    setInterval(updateEventTimes, 5000);
+</script>

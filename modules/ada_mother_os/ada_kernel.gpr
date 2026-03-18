@@ -1,0 +1,53 @@
+-- Ada Project File for OmniBus Kernel
+-- ===================================
+-- Compiles Ada kernel to freestanding x86-64 binary
+
+project Ada_Kernel is
+
+   for Source_Dirs use (".");
+   for Object_Dir use "./build";
+   for Library_Dir use "./build";
+   for Library_Name use "ada_kernel";
+   for Library_Kind use "static";
+
+   -- =============================================
+   -- COMPILER SETTINGS
+   -- =============================================
+
+   package Compiler is
+      for Switches ("Ada") use
+        (
+         "-gnat2022",          -- Ada 2022 standard
+         "-gnatf",             -- Full errors (not truncated)
+         "-O2",                -- Optimize for performance
+         "-fPIC",              -- Position-independent code
+         "-fno-common",        -- Strict linkage
+         "-gnatpn",            -- No pragma Normalize_Scalars (reduce size)
+         "-gnata",             -- Assertions enabled (for verification)
+         "-gnatd.e",           -- Disable dynamic elaboration
+         "-ffunction-sections", -- Place each function in its own section
+         "-fdata-sections"      -- Place each data item in its own section
+        );
+   end Compiler;
+
+   -- =============================================
+   -- BINDER SETTINGS
+   -- =============================================
+
+   package Binder is
+      for Switches ("Ada") use
+        (
+         "-n",                 -- No elaboration code
+         "-Es"                 -- Suppress runtime checks
+        );
+   end Binder;
+
+   -- =============================================
+   -- BUILDER SETTINGS
+   -- =============================================
+
+   package Builder is
+      for Switches ("Ada") use ("-g");  -- Debug symbols
+   end Builder;
+
+end Ada_Kernel;

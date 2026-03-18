@@ -1,0 +1,126 @@
+V "GNAT Lib v13"
+A -O2
+A -gnat2022
+P ZX
+
+RN
+RV NO_DYNAMIC_SIZED_OBJECTS
+RV NO_IMPLEMENTATION_ATTRIBUTES
+RV NO_IMPLICIT_LOOPS
+
+U ada_kernel%b		ada_kernel.adb		873fd937 NE OO PK
+W interfaces%s		interfac.ads		interfac.ali
+W system%s		system.ads		system.ali
+W system.machine_code%s	s-maccod.ads		s-maccod.ali
+
+U ada_kernel%s		ada_kernel.ads		9c80a06a EE NE OO PK
+W interfaces%s		interfac.ads		interfac.ali
+W system%s		system.ads		system.ali
+
+D ada_kernel.ads	20260309214740 cb1a9610 ada_kernel%s
+D ada_kernel.adb	20260309223156 d6757143 ada_kernel%b
+D interfac.ads		20240521074738 15f799c2 interfaces%s
+D system.ads		20240521074738 426dafb8 system%s
+D s-maccod.ads		20240521074738 cdca081e system.machine_code%s
+G a e
+G c Z s b [initialize_kernel ada_kernel 100 14 none]
+G c Z s b [run_event_loop ada_kernel 109 14 none]
+G c Z s b [run_cycle ada_kernel 113 14 none]
+G c Z s b [is_authorized ada_kernel 117 13 none]
+G c Z s b [increment_cycle ada_kernel 120 14 none]
+G c Z s b [uart_write_char ada_kernel 127 14 none]
+G c Z s b [uart_write_string ada_kernel 130 14 none]
+G c Z s b [uart_write_hex ada_kernel 133 14 none]
+G c Z s b [sys_panic ada_kernel 137 14 none]
+G c Z s s [taskdescriptorIP ada_kernel 55 9 none]
+G c Z s s [memoryboundsIP ada_kernel 70 9 none]
+G c Z s s [TtaskstatearrayBIP ada_kernel 80 4 none]
+G c Z s s [TtaskcyclearrayBIP ada_kernel 81 4 none]
+G c Z s s [TtaskerrorarrayBIP ada_kernel 82 4 none]
+G c Z s s [schedulerstateIP ada_kernel 84 9 none]
+X 1 ada_kernel.ads
+24K9*Ada_Kernel 151l5 151e15 2|14b14 184l5 184t15
+30m4*KERNEL_BASE{3|80M9}
+31m4*KERNEL_SIZE{3|80M9}
+32m4*AUTH_GATE_ADDR{3|80M9}
+33m4*AUTH_ENABLED{3|69M9}
+34m4*PQC_VAULT_ADDR{3|80M9}
+35m4*PQC_VAULT_SIZE{3|80M9}
+36m4*TASK_TABLE_ADDR{3|80M9}
+37N4*MAX_TASKS
+43E9*TaskId 47e5 56r22 80r34 81r34 82r34 85r26 2|141r17 147r18
+44n7*Grid_OS{43E9} 2|150r15
+45n7*Analytics_OS{43E9} 2|156r15
+46n7*Execution_OS{43E9} 2|160r15
+53E9*TaskState 53e65 57r22 80r45
+53n23*Ready{53E9}
+53n30*Running{53E9}
+53n39*Blocked{53E9}
+53n48*Completed{53E9}
+53n59*Error{53E9}
+55R9*TaskDescriptor 64e14
+56e7*Id{43E9}
+57e7*State{53E9}
+58m7*Entry_Point{3|80M9}
+59m7*Memory_Start{3|80M9}
+60m7*Memory_Size{3|80M9}
+61m7*Cycle_Count{3|83M9}
+62m7*Error_Count{3|80M9}
+63m7*TSC_Last_Run{3|83M9}
+70R9*MemoryBounds 74e14
+71m7*Start{3|80M9}
+72m7*Size{3|80M9}
+73m7*Flags{3|69M9}
+80A9*TaskStateArray(53E9)<43E9> 87r26
+81A9*TaskCycleArray(3|83M9)<43E9> 88r26
+82A9*TaskErrorArray(3|80M9)<43E9> 89r26
+84R9*SchedulerState 90e14
+85e7*Current_Task{43E9}
+86m7*Cycle_Count{3|83M9}
+87a7*Task_States{80A9}
+88a7*Task_Cycle_Count{81A9}
+89a7*Task_Errors{82A9}
+100U14*Initialize_Kernel 2|110b14 134l8 134t25
+109U14*Run_Event_Loop 2|171b14 182l8 182t22
+113U14*Run_Cycle 2|140b14 165l8 165t17 175s13
+117V13*Is_Authorized{boolean} 2|94b13 99l8 99t21 127s10 174s13
+120U14*Increment_Cycle 2|101b14 104l8 104t23 144s7
+127U14*UART_Write_Char 127>31 2|39b14 42l8 42t23 47s10 49s7 59s7 61s7 63s7
+. 65s7 67s7 69s7 71s7 73s7
+127e31 C{character} 2|39b31 41r37
+130U14*UART_Write_String 130>33 2|44b14 50l8 50t25 56s7 78s7 79s7 112s7 122s7
+. 123s7 124s7 125s7 128s10 130s10 151s13 157s13 161s13 178s13
+130a33 S{string} 2|44b33 46r16 47r27
+133U14*UART_Write_Hex 133>30 2|52b14 74l8 74t22
+133m30 Value{3|80M9} 2|52b30 58r25 60r25 62r25 64r25 66r25 68r25 70r25 72r24
+137U14*Sys_Panic 137>25 2|76b14 83l8 83t17
+137a25 Message{string} 2|76b25 79r26
+144m4*Global_Cycle_Count{3|83M9} 145r21 2|103m7 103r29 133m7 147r31
+148a4*Kernel_State(3|69M9) 149r21 2|115r16 116m10
+X 2 ada_kernel.adb
+20m4 UART_PORT{3|72M9}
+28U14 UART_Out_Byte 28b14 28>29 33l8 33t21 41s7
+28m29 Byte{3|69M9} 32r19
+29U17*Write_Byte 29>29 32s7
+29m29 B{3|69M9}
+46i11 I{integer} 47r30
+53a7 Hex_Chars{string} 59r24 61r24 63r24 65r24 67r24 69r24 71r24 73r24
+54m7 B{3|69M9} 58m7 59r44 60m7 61r44 62m7 63r44 64m7 65r44 66m7 67r44 68m7
+. 69r44 70m7 71r44 72m7 73r44
+90m4 Auth_Gate{3|69M9} 98r14
+115i11 I{integer} 116r24
+141e7 Current{1|43E9} 147m7 149r12
+X 3 interfac.ads
+38K9*Interfaces 1|20w6 22r5 2|7w6 10r5 20r25 3|232e15
+69M9*Unsigned_8 1|33r32 73r15 148r38 2|28r36 29r33 54r11 58r12 60r12 62r12
+. 64r12 66r12 68r12 70r12 72r12 90r16
+72M9*Unsigned_16 2|20r36
+80M9*Unsigned_32 1|30r32 31r32 32r32 34r32 35r32 36r32 58r22 59r22 60r22
+. 62r22 71r15 72r15 82r45 133r38 2|52r38
+83M9*Unsigned_64 1|61r22 63r22 81r45 86r26 144r25
+X 4 system.ads
+37K9*System 1|19w6 21r5 2|8w6 9r6 11r5 12r5 91r23 4|153e11
+67M9*Address 2|91r23
+X 5 s-maccod.ads
+36K16*Machine_Code 2|9w13 12r12 5|133e24
+

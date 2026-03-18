@@ -1,0 +1,275 @@
+/* OmniBus Phase 29 HTMX Dashboard Styles */
+
+:root {
+    --omnibus-dark: #0f172a;
+    --omnibus-grid: #1e293b;
+    --omnibus-accent: #0ea5e9;
+    --omnibus-danger: #ef4444;
+    --omnibus-success: #10b981;
+}
+
+* {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--omnibus-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--omnibus-accent);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #00d4ff;
+}
+
+/* Panel Animations */
+@keyframes pulse-accent {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@keyframes float-up {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-pulse-accent {
+    animation: pulse-accent 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-float-up {
+    animation: float-up 0.3s ease-out;
+}
+
+/* Number Animations */
+@keyframes number-increase {
+    0% {
+        color: var(--omnibus-success);
+        transform: scale(1.1);
+    }
+    100% {
+        color: var(--omnibus-success);
+        transform: scale(1);
+    }
+}
+
+@keyframes number-decrease {
+    0% {
+        color: var(--omnibus-danger);
+        transform: scale(1.1);
+    }
+    100% {
+        color: var(--omnibus-danger);
+        transform: scale(1);
+    }
+}
+
+.number-increase {
+    animation: number-increase 0.3s ease-out;
+}
+
+.number-decrease {
+    animation: number-decrease 0.3s ease-out;
+}
+
+/* Panel Hover Effects */
+.panel-card {
+    transition: all 0.2s ease;
+}
+
+.panel-card:hover {
+    border-color: #00d4ff;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+}
+
+/* Responsive Grid */
+@media (max-width: 1024px) {
+    .panel-card {
+        min-height: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 13px;
+    }
+
+    .panel-card {
+        padding: 12px;
+    }
+}
+
+/* Status Indicators */
+.status-active {
+    color: var(--omnibus-success);
+}
+
+.status-idle {
+    color: var(--omnibus-danger);
+}
+
+.status-warning {
+    color: #f59e0b;
+}
+
+/* HTMX Loading State */
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-swapping {
+    opacity: 0;
+    transition: opacity 0.1s ease-out;
+}
+
+.htmx-settling {
+    opacity: 1;
+    transition: opacity 0.1s ease-in;
+}
+
+/* Data Table Styling */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+}
+
+.data-table tr:hover {
+    background-color: rgba(14, 165, 233, 0.05);
+}
+
+/* Badge Styling */
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge-success {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: var(--omnibus-success);
+    border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.badge-danger {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: var(--omnibus-danger);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.badge-info {
+    background-color: rgba(14, 165, 233, 0.2);
+    color: var(--omnibus-accent);
+    border: 1px solid rgba(14, 165, 233, 0.5);
+}
+
+/* Progress Bar */
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: var(--omnibus-dark);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--omnibus-accent), var(--omnibus-success));
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Header Glow Effect */
+header {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.1);
+}
+
+/* Footer Styling */
+footer {
+    opacity: 0.7;
+}
+
+footer:hover {
+    opacity: 1;
+}
+
+/* Connection Status Indicator */
+#connection-status {
+    padding: 4px 12px;
+    border-radius: 4px;
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+#connection-status.connected {
+    background-color: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+#connection-status .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+#connection-status.connected .dot {
+    background-color: var(--omnibus-success);
+    animation: pulse 2s infinite;
+}
+
+#connection-status .dot {
+    background-color: var(--omnibus-danger);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Dark Mode Enhancement */
+body {
+    background: linear-gradient(135deg, var(--omnibus-dark) 0%, #0f172a 100%);
+    background-attachment: fixed;
+}
+
+/* Smooth Transitions for Panel Updates */
+.panel-update {
+    animation: float-up 0.3s ease-out;
+}

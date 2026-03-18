@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniBus Trading System — Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #334155 #1e293b;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 100%);
+            color: #e2e8f0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .gradient-border {
+            position: relative;
+            background: #1e293b;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            border-radius: inherit;
+            z-index: -1;
+        }
+
+        .stat-box {
+            background: rgba(51, 65, 85, 0.2);
+            border-left: 4px solid #2563eb;
+            padding: 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            background: rgba(51, 65, 85, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .price-up { color: #22c55e; }
+        .price-down { color: #ef4444; }
+
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab-button.active {
+            border-bottom-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .orderbook-table {
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .orderbook-bid {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .orderbook-ask {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .spread-indicator {
+            font-size: 11px;
+            padding: 4px 8px;
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .loading {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .depth-chart {
+            width: 100%;
+            height: 150px;
+            background: rgba(51, 65, 85, 0.2);
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+    </style>
+</head>
+<body>
+
+<div class="min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">OmniBus</h1>
+                    <p class="text-gray-400 mt-1">Enterprise Arbitrage Trading System</p>
+                </div>
+                <div class="text-right">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                        <span class="text-sm text-gray-300">System Live</span>
+                    </div>
+                    <p class="text-xs text-gray-500" id="current-time">--:--:--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-5 gap-4 mb-8">
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">Active Users</p>
+                <p id="stat-users" class="text-2xl font-bold text-blue-400">--</p>
+            </div>
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">Orderbook Updates</p>
+                <p id="stat-updates" class="text-2xl font-bold text-cyan-400">--</p>
+            </div>
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">BTC Price</p>
+                <p id="stat-btc" class="text-2xl font-bold price-up">$--,---</p>
+            </div>
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">Best Spread</p>
+                <p id="stat-spread" class="text-2xl font-bold text-yellow-400">-- bps</p>
+            </div>
+            <div class="stat-box">
+                <p class="text-gray-400 text-sm">API Latency</p>
+                <p id="stat-latency" class="text-2xl font-bold text-green-400">-- ms</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-6 border-b border-gray-700">
+            <button class="tab-button active" data-tab="prices">📈 Live Prices</button>
+            <button class="tab-button" data-tab="orderbooks">📚 Orderbooks</button>
+            <button class="tab-button" data-tab="analytics">📊 Analytics</button>
+            <button class="tab-button" data-tab="users">👥 Users</button>
+        </div>
+
+        <!-- TAB: Live Prices -->
+        <div id="tab-prices" class="tab-content">
+            <div class="grid grid-cols-3 gap-6">
+                <!-- BTC Card -->
+                <div class="glass rounded-lg p-6 border border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-blue-400">₿ Bitcoin</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-gray-400 text-sm">Price (USD)</p>
+                            <p id="price-btc" class="text-4xl font-bold price-up">$--,---</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <p class="text-gray-500">Bid</p>
+                                <p id="bid-btc" class="text-green-400 font-bold">$--,---</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Ask</p>
+                                <p id="ask-btc" class="text-red-400 font-bold">$--,---</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 pt-2 border-t border-gray-700">
+                            Volume: <span id="vol-btc" class="text-gray-300 font-bold">-- BTC</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETH Card -->
+                <div class="glass rounded-lg p-6 border border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-purple-400">Ξ Ethereum</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-gray-400 text-sm">Price (USD)</p>
+                            <p id="price-eth" class="text-4xl font-bold price-up">$--,---</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <p class="text-gray-500">Bid</p>
+                                <p id="bid-eth" class="text-green-400 font-bold">$--,---</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Ask</p>
+                                <p id="ask-eth" class="text-red-400 font-bold">$--,---</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 pt-2 border-t border-gray-700">
+                            Volume: <span id="vol-eth" class="text-gray-300 font-bold">-- ETH</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LCX Card -->
+                <div class="glass rounded-lg p-6 border border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-orange-400">LCX Token</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-gray-400 text-sm">Price (USD)</p>
+                            <p id="price-lcx" class="text-4xl font-bold price-up">$--</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <p class="text-gray-500">Bid</p>
+                                <p id="bid-lcx" class="text-green-400 font-bold">$--</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Ask</p>
+                                <p id="ask-lcx" class="text-red-400 font-bold">$--</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 pt-2 border-t border-gray-700">
+                            Volume: <span id="vol-lcx" class="text-gray-300 font-bold">-- LCX</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Orderbooks -->
+        <div id="tab-orderbooks" class="tab-content hidden">
+            <div class="mb-6">
+                <label class="text-gray-300 block mb-3 font-medium">Trading Pair:</label>
+                <div class="flex gap-3">
+                    <button class="pair-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition active" data-pair="BTC/USD">₿ BTC/USD</button>
+                    <button class="pair-btn px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition" data-pair="BTC/USDC">₿ BTC/USDC</button>
+                    <button class="pair-btn px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition" data-pair="ETH/USD">Ξ ETH/USD</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6">
+                <!-- Kraken Orderbook -->
+                <div class="glass rounded-lg p-6 border border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-blue-400">🔹 Kraken</h3>
+                    <div class="space-y-4">
+                        <!-- Bids -->
+                        <div>
+                            <h4 class="text-sm font-bold text-green-400 mb-2">Bids 📈</h4>
+                            <table class="orderbook-table">
+                                <tbody id="kraken-bids" class="text-xs">
+                                    <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Asks -->
+                        <div>
+                            <h4 class="text-sm font-bold text-red-400 mb-2">Asks 📉</h4>
+                            <table class="orderbook-table">
+                                <tbody id="kraken-asks" class="text-xs">
+                                    <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="spread-indicator">
+                            Spread: <span id="kraken-spread" class="font-bold">--</span> bps
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coinbase Orderbook -->
+                <div class="glass rounded-lg p-6 border border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-cyan-400">🔷 Coinbase</h3>
+                    <div class="space-y-4">
+                        <!-- Bids -->
+                        <div>
+                            <h4 class="text-sm font-bold text-green-400 mb-2">Bids 📈</h4>
+                            <table class="orderbook-table">
+                                <tbody id="coinbase-bids" class="text-xs">
+                                    <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Asks -->
+                        <div>
+                            <h4 class="text-sm font-bold text-red-400 mb-2">Asks 📉</h4>
+                            <table class="orderbook-table">
+                                <tbody id="coinbase-asks" class="text-xs">
+                                    <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="spread-indicator">
+                            Spread: <span id="coinbase-spread" class="font-bold">--</span> bps
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LCX Orderbook -->
+                <div class="glass rounded-lg p-6 border border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-orange-400">🔶 LCX</h3>
+                    <div class="space-y-4">
+                        <!-- Bids -->
+                        <div>
+                            <h4 class="text-sm font-bold text-green-400 mb-2">Bids 📈</h4>
+                            <table class="orderbook-table">
+                                <tbody id="lcx-bids" class="text-xs">
+                                    <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Asks -->
+                        <div>
+                            <h4 class="text-sm font-bold text-red-400 mb-2">Asks 📉</h4>
+                            <table class="orderbook-table">
+                                <tbody id="lcx-asks" class="text-xs">
+                                    <tr><td colspan="2" class="text-gray-500 text-center py-2">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="spread-indicator">
+                            Spread: <span id="lcx-spread" class="font-bold">--</span> bps
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Analytics -->
+        <div id="tab-analytics" class="tab-content hidden">
+            <div class="glass rounded-lg p-6 border border-gray-700">
+                <h3 class="text-xl font-bold mb-4">System Analytics</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-gray-400 text-sm mb-2">Connected Users</p>
+                        <p id="analytics-users" class="text-3xl font-bold text-blue-400">0</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-sm mb-2">Active Sessions</p>
+                        <p id="analytics-sessions" class="text-3xl font-bold text-cyan-400">0</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-sm mb-2">Orderbook Updates</p>
+                        <p id="analytics-updates" class="text-3xl font-bold text-green-400">0</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-sm mb-2">Best Spread (BTC)</p>
+                        <p id="analytics-spread" class="text-3xl font-bold text-yellow-400">-- bps</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Users -->
+        <div id="tab-users" class="tab-content hidden">
+            <div class="glass rounded-lg p-6 border border-gray-700 overflow-x-auto">
+                <h3 class="text-xl font-bold mb-4">Connected Users</h3>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-600">
+                            <th class="text-left py-3 px-4 text-gray-400">User ID</th>
+                            <th class="text-left py-3 px-4 text-gray-400">IP Address</th>
+                            <th class="text-left py-3 px-4 text-gray-400">OS</th>
+                            <th class="text-left py-3 px-4 text-gray-400">Browser</th>
+                            <th class="text-left py-3 px-4 text-gray-400">Sessions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-body">
+                        <tr><td colspan="5" class="text-center py-4 text-gray-500">No users connected</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+class DashboardV2 {
+    constructor() {
+        this.currentPair = 'BTC/USD';
+        this.refreshInterval = null;
+        this.init();
+    }
+
+    init() {
+        this.setupTabs();
+        this.setupPairSelector();
+        this.loadData();
+        this.updateClock();
+        setInterval(() => this.updateClock(), 1000);
+        setInterval(() => this.loadData(), 2000);
+    }
+
+    setupTabs() {
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                btn.classList.add('active');
+                const tabName = btn.dataset.tab;
+                document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            });
+        });
+    }
+
+    setupPairSelector() {
+        document.querySelectorAll('.pair-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.pair-btn').forEach(b => {
+                    b.classList.remove('bg-blue-600');
+                    b.classList.add('bg-gray-700');
+                });
+                btn.classList.remove('bg-gray-700');
+                btn.classList.add('bg-blue-600');
+                this.currentPair = btn.dataset.pair;
+                this.loadOrderbooks();
+            });
+        });
+    }
+
+    async loadData() {
+        try {
+            const response = await fetch('/metrics');
+            const metrics = await response.json();
+            document.getElementById('stat-users').textContent = metrics.active_users || 0;
+            document.getElementById('analytics-users').textContent = metrics.active_users || 0;
+            document.getElementById('analytics-sessions').textContent = metrics.active_connections || 0;
+
+            // Load prices
+            await this.loadPrices();
+            // Load orderbooks
+            await this.loadOrderbooks();
+            // Load users
+            await this.loadUsers();
+        } catch (e) {
+            console.error('Failed to load data:', e);
+        }
+    }
+
+    async loadPrices() {
+        try {
+            // Mock data for now - in production this would fetch from API
+            const btcPrice = Math.floor(Math.random() * 5000 + 69000);
+            const ethPrice = Math.floor(Math.random() * 500 + 2000);
+            const lcxPrice = (Math.random() * 0.05 + 0.04).toFixed(4);
+
+            document.getElementById('price-btc').textContent = `$${btcPrice.toLocaleString()}`;
+            document.getElementById('stat-btc').textContent = `$${btcPrice.toLocaleString()}`;
+            document.getElementById('bid-btc').textContent = `$${(btcPrice - 10).toLocaleString()}`;
+            document.getElementById('ask-btc').textContent = `$${(btcPrice + 10).toLocaleString()}`;
+            document.getElementById('vol-btc').textContent = (Math.random() * 100).toFixed(2) + ' BTC';
+
+            document.getElementById('price-eth').textContent = `$${ethPrice.toLocaleString()}`;
+            document.getElementById('bid-eth').textContent = `$${(ethPrice - 5).toLocaleString()}`;
+            document.getElementById('ask-eth').textContent = `$${(ethPrice + 5).toLocaleString()}`;
+            document.getElementById('vol-eth').textContent = (Math.random() * 1000).toFixed(2) + ' ETH';
+
+            document.getElementById('price-lcx').textContent = `$${lcxPrice}`;
+            document.getElementById('bid-lcx').textContent = `$${(parseFloat(lcxPrice) - 0.001).toFixed(4)}`;
+            document.getElementById('ask-lcx').textContent = `$${(parseFloat(lcxPrice) + 0.001).toFixed(4)}`;
+            document.getElementById('vol-lcx').textContent = (Math.random() * 10000).toFixed(0) + ' LCX';
+        } catch (e) {
+            console.error('Failed to load prices:', e);
+        }
+    }
+
+    async loadOrderbooks() {
+        try {
+            const response = await fetch(`/api/orderbook?pair=${encodeURIComponent(this.currentPair)}`);
+            const data = await response.json();
+
+            this.updateOrderbookDisplay(data, 'kraken');
+            this.updateOrderbookDisplay(data, 'coinbase');
+            this.updateOrderbookDisplay(data, 'lcx');
+
+            if (data.kraken && data.kraken.spread) {
+                document.getElementById('stat-spread').textContent = data.kraken.spread.toFixed(2) + ' bps';
+            }
+        } catch (e) {
+            console.error('Failed to load orderbooks:', e);
+        }
+    }
+
+    updateOrderbookDisplay(data, exchange) {
+        const ob = data[exchange];
+        if (!ob) return;
+
+        const bidsBody = document.getElementById(`${exchange}-bids`);
+        const asksBody = document.getElementById(`${exchange}-asks`);
+
+        if (ob.bids && ob.bids.length > 0) {
+            bidsBody.innerHTML = ob.bids.slice(0, 5).map((bid, i) => `
+                <tr class="orderbook-bid border-b border-gray-600">
+                    <td class="px-3 py-1">\$${bid.price.toFixed(2)}</td>
+                    <td class="px-3 py-1 text-right">${bid.size.toFixed(4)}</td>
+                </tr>
+            `).join('');
+        }
+
+        if (ob.asks && ob.asks.length > 0) {
+            asksBody.innerHTML = ob.asks.slice(0, 5).map((ask, i) => `
+                <tr class="orderbook-ask border-b border-gray-600">
+                    <td class="px-3 py-1">\$${ask.price.toFixed(2)}</td>
+                    <td class="px-3 py-1 text-right">${ask.size.toFixed(4)}</td>
+                </tr>
+            `).join('');
+        }
+
+        const spreadElem = document.getElementById(`${exchange}-spread`);
+        if (spreadElem && ob.spread !== null) {
+            spreadElem.textContent = ob.spread.toFixed(2);
+        }
+    }
+
+    async loadUsers() {
+        try {
+            const response = await fetch('/api/users');
+            const data = await response.json();
+            const tbody = document.getElementById('users-body');
+
+            if (data.users && data.users.length > 0) {
+                tbody.innerHTML = data.users.map(user => `
+                    <tr class="border-b border-gray-600 hover:bg-gray-700/50">
+                        <td class="px-4 py-3 font-mono text-xs">${user.user_id.substring(0, 12)}...</td>
+                        <td class="px-4 py-3 font-mono">${user.ip_address}</td>
+                        <td class="px-4 py-3">${user.os}</td>
+                        <td class="px-4 py-3">${user.browser}</td>
+                        <td class="px-4 py-3 font-bold">${user.sessions}</td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('analytics-sessions').textContent = data.total_connections || 0;
+        } catch (e) {
+            console.error('Failed to load users:', e);
+        }
+    }
+
+    updateClock() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString();
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    new DashboardV2();
+});
+</script>
+
+</body>
+</html>

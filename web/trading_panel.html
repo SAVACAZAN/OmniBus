@@ -1,0 +1,62 @@
+<div class="space-y-3">
+    <div class="flex justify-between items-center border-b border-omnibus-accent pb-2">
+        <h2 class="text-lg font-bold text-omnibus-accent">📈 TRADING</h2>
+        <span class="text-xs text-gray-400">Grid OS</span>
+    </div>
+
+    {% if data and data.get('grid', {}).get('valid') %}
+        {% set grid = data.grid %}
+        <div class="space-y-2">
+            <!-- Status -->
+            <div class="flex justify-between items-center p-2 bg-black rounded">
+                <span class="text-sm">Status</span>
+                <span class="font-bold {% if grid.active %}text-omnibus-success{% else %}text-gray-500{% endif %}">
+                    {% if grid.active %}● ACTIVE{% else %}○ IDLE{% endif %}
+                </span>
+            </div>
+
+            <!-- Profit Display -->
+            <div class="p-3 bg-black rounded border {% if grid.profit_usd >= 0 %}border-omnibus-success{% else %}border-omnibus-danger{% endif %}">
+                <div class="text-xs text-gray-400 mb-1">Net P&L</div>
+                <div class="text-2xl font-bold {% if grid.profit_usd >= 0 %}text-omnibus-success{% else %}text-omnibus-danger{% endif %}">
+                    ${{ "%.2f"|format(grid.profit_usd) }}
+                </div>
+            </div>
+
+            <!-- Trading Metrics -->
+            <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="p-2 bg-black rounded">
+                    <div class="text-xs text-gray-400">Levels</div>
+                    <div class="text-lg font-bold text-omnibus-accent">{{ grid.levels }}</div>
+                </div>
+                <div class="p-2 bg-black rounded">
+                    <div class="text-xs text-gray-400">Orders</div>
+                    <div class="text-lg font-bold text-omnibus-accent">{{ grid.orders }}</div>
+                </div>
+            </div>
+
+            <!-- Arbitrage Opportunities -->
+            {% if data and data.get('arb_opps') %}
+                <div class="mt-3 p-2 bg-black rounded border-l-2 border-omnibus-success">
+                    <div class="text-xs text-omnibus-success font-bold mb-2">ARB OPPORTUNITIES</div>
+                    {% for opp in data.arb_opps %}
+                        <div class="text-xs mb-1 p-1 bg-omnibus-dark rounded">
+                            <div class="flex justify-between">
+                                <span>{{ opp.pair }} {{ opp.buy_ex }} → {{ opp.sell_ex }}</span>
+                                <span class="font-bold {% if opp.net_bps > 0 %}text-omnibus-success{% else %}text-omnibus-danger{% endif %}">
+                                    {{ opp.net_bps }}bps
+                                </span>
+                            </div>
+                            <div class="text-gray-400">~${{ "%.2f"|format(opp.profit_usd) }}/unit</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="p-4 bg-black rounded border border-gray-600 text-center text-gray-400">
+            <p class="text-sm">Waiting for Grid OS data...</p>
+            <p class="text-xs mt-2 text-gray-500">Run dashboard with --shm flag</p>
+        </div>
+    {% endif %}
+</div>

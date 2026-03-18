@@ -1,0 +1,73 @@
+<div class="space-y-3">
+    <div class="flex justify-between items-center border-b border-omnibus-accent pb-2">
+        <h2 class="text-lg font-bold text-omnibus-accent">🧠 NEURO OS</h2>
+        <span class="text-xs text-gray-400">Genetic Algorithm</span>
+    </div>
+
+    {% if data and data.get('neuro', {}).get('valid') %}
+        {% set neuro = data.neuro %}
+        <div class="space-y-2">
+            <!-- Active Status -->
+            <div class="flex justify-between items-center p-2 bg-black rounded">
+                <span class="text-sm">Status</span>
+                <span class="font-bold {% if neuro.active %}text-omnibus-success{% else %}text-gray-500{% endif %}">
+                    {% if neuro.active %}● EVOLVING{% else %}○ IDLE{% endif %}
+                </span>
+            </div>
+
+            <!-- Generation Counter -->
+            <div class="p-3 bg-black rounded border border-omnibus-accent">
+                <div class="text-xs text-gray-400 mb-1">Current Generation</div>
+                <div class="text-3xl font-bold text-omnibus-accent">{{ neuro.generation }}</div>
+            </div>
+
+            <!-- Fitness Display -->
+            <div class="grid grid-cols-2 gap-2">
+                <div class="p-2 bg-black rounded">
+                    <div class="text-xs text-gray-400">Best Fitness</div>
+                    <div class="text-lg font-bold {% if neuro.best_fitness > 0 %}text-omnibus-success{% else %}text-gray-400{% endif %}">
+                        {{ "%.4f"|format(neuro.best_fitness) }}
+                    </div>
+                </div>
+                <div class="p-2 bg-black rounded">
+                    <div class="text-xs text-gray-400">Range</div>
+                    <div class="text-lg font-bold text-omnibus-accent">
+                        Var
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evolution Progress -->
+            <div class="p-2 bg-black rounded">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs text-gray-400">Evolution Progress</span>
+                    <span class="text-xs text-omnibus-accent font-bold">Active</span>
+                </div>
+                <div class="w-full bg-omnibus-dark rounded-full h-2">
+                    <div class="bg-gradient-to-r from-omnibus-accent to-omnibus-success h-2 rounded-full" style="width: 65%;"></div>
+                </div>
+            </div>
+
+            <!-- Algorithm Info -->
+            <div class="text-xs space-y-1 p-2 bg-black rounded">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Algorithm</span>
+                    <span class="font-bold text-omnibus-accent">Genetic</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Population</span>
+                    <span class="font-bold text-omnibus-accent">256</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Mutation Rate</span>
+                    <span class="font-bold text-omnibus-accent">0.15</span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="p-4 bg-black rounded border border-gray-600 text-center text-gray-400">
+            <p class="text-sm">Waiting for NeuroOS data...</p>
+            <p class="text-xs mt-2 text-gray-500">Evolution engine not yet initialized</p>
+        </div>
+    {% endif %}
+</div>

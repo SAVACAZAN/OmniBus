@@ -1,0 +1,55 @@
+V "GNAT Lib v13"
+P ZX
+
+RN
+RV NO_DIRECT_BOOLEAN_OPERATORS
+
+U memory_mgmt%b		memory_mgmt.adb		150cde9b NE OO PK
+W interfaces%s		interfac.ads		interfac.ali
+
+U memory_mgmt%s		memory_mgmt.ads		35cef960 EE NE OO PK
+W interfaces%s		interfac.ads		interfac.ali
+W system%s		system.ads		system.ali
+
+D interfac.ads		20240521074738 15f799c2 interfaces%s
+D memory_mgmt.ads	20260309214912 6254cf1a memory_mgmt%s
+D memory_mgmt.adb	20260309214937 62af8843 memory_mgmt%b
+D system.ads		20240521074738 426dafb8 system%s
+G a e
+G c Z s b [is_access_valid memory_mgmt 41 13 none]
+G c Z s b [initialize_page_tables memory_mgmt 47 14 none]
+G c Z s b [flush_tlb memory_mgmt 50 14 none]
+G c Z s b [get_page_directory memory_mgmt 57 13 none]
+G c Z s b [is_paging_enabled memory_mgmt 60 13 none]
+X 1 interfac.ads
+38K9*Interfaces 232e15 2|8w6 10r5 3|4w6 5r5
+80M9*Unsigned_32 2|18r32 19r32 20r32 21r32 24r28 25r28 27r28 28r28 30r31
+. 31r31 33r31 34r31 42r14 43r14 57r39 3|14r14 15r14 18r18 19r18 75r39
+X 2 memory_mgmt.ads
+12K9*Memory_Mgmt 62l5 62e16 3|7b14 88l5 88t16
+18m4*MEMORY_MGMT_BASE{1|80M9}
+19m4*PAGE_SIZE{1|80M9}
+20m4*PAGE_DIRECTORY{1|80M9} 3|78r14
+21m4*PAGE_TABLES_BASE{1|80M9}
+24m4*KERNEL_START{1|80M9} 3|24r32 25r32
+25m4*KERNEL_SIZE{1|80M9} 3|25r47
+27m4*GRID_START{1|80M9} 3|29r32 30r32
+28m4*GRID_SIZE{1|80M9} 3|30r45
+30m4*ANALYTICS_START{1|80M9} 3|34r32 35r32
+31m4*ANALYTICS_SIZE{1|80M9} 3|35r50
+33m4*EXECUTION_START{1|80M9} 3|39r32 40r32
+34m4*EXECUTION_SIZE{1|80M9} 3|40r50
+41V13*Is_Access_Valid{boolean} 42>7 43>7 44>7 3|13b13 45l8 45t23
+42m7 Addr{1|80M9} 3|14b7 18r33
+43m7 Size{1|80M9} 3|15b7 19r44
+44i7 Task_Id{natural} 3|16b7 21r12
+47U14*Initialize_Page_Tables 3|51b14 56l8 56t30
+50U14*Flush_TLB 3|62b14 69l8 69t17
+57V13*Get_Page_Directory{1|80M9} 3|75b13 79l8 79t26
+60V13*Is_Paging_Enabled{boolean} 3|81b13 86l8 86t25
+X 3 memory_mgmt.adb
+18m7 Addr_Int{1|80M9} 19r33 24r20 29r20 34r20 39r20
+19m7 End_Addr{1|80M9} 25r20 30r20 35r20 40r20
+X 4 system.ads
+37K9*System 2|7w6 9r5 4|153e11
+
