@@ -193,10 +193,10 @@ pub fn process_usdc_to_omni_mint(transfer_idx: u8) bool {
     state.successful_mints += 1;
     state.pending_transfers -|= 1;
 
-    // Find client by ERC20 address (sender) and record OMNI transfer to quantum address
+    // Find client by ERC20 address (sender) and record OMNI transfer
     if (client_wallet.find_client_by_erc20(transfer.from_address[0..], transfer.from_len)) |found_client| {
-        // Record OMNI transfer to the client's quantum address
-        _ = client_wallet.record_omni_transfer(found_client.quantum_address[0..], found_client.quantum_len, omni_amount);
+        // Record OMNI transfer to the client's OMNI address (identified by client ID)
+        _ = client_wallet.record_omni_transfer(found_client.id, omni_amount);
     }
 
     return true;
@@ -384,22 +384,15 @@ fn print_u64_uart(val: u64) void {
 }
 
 fn print_u128_uart(val: u128) void {
-    if (val == 0) {
-        uart_write('0');
-        return;
-    }
+    // Print u128 as two u64 parts to avoid __udivti3 builtin
+    const hi: u64 = @as(u64, @intCast(val >> 64));
+    const lo: u64 = @as(u64, @intCast(val & 0xFFFFFFFFFFFFFFFF));
 
-    var divisor: u128 = 1;
-    var temp = val;
-    while (temp >= 10) {
-        divisor *= 10;
-        temp /= 10;
-    }
-
-    temp = val;
-    while (divisor > 0) {
-        uart_write(@as(u8, @intCast((temp / divisor) % 10)) + '0');
-        divisor /= 10;
+    if (hi > 0) {
+        print_u64_uart(hi);
+        print_u64_uart(lo);
+    } else {
+        print_u64_uart(lo);
     }
 }
 
